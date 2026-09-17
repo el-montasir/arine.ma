@@ -1,0 +1,131 @@
+// Prisma schema — مكتبة أرين للكتب الشرعية
+// PostgreSQL backed by Docker Compose (or an equivalent local instance).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id           Int         @id @default(autoincrement())
+  title        String
+  author       String
+  categoryId   Int
+  // Prices are whole Moroccan dirhams (the store sells in whole DH).
+  price        Int
+  // Purchase/cost price — Admin-only. Never exposed through public APIs.
+  costPrice    Int?
+  oldPrice     Int?
+  discount     Int         @default(0)
+  image        String?
+  availability String      @default("in-stock")
+  description  String?
+  rating       Int         @default(5)
+  isNew        Boolean     @default(false)
+  isPopular    Boolean     @default(false)
+  pages        Int?
+  publisher    String?
+  year         String?
+  category     Category    @relation(fields: [categoryId], references: [id])
+  orderItems   OrderItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("products")
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  orderNumber   String        @unique
+  fullName      String
+  phone         String
+  city          String
+  address       String
+  note          String?
+  paymentMethod PaymentMethod @default(CASH_ON_DELIVERY)
+  status        OrderStatus   @default(PENDING)
+  subtotal      Int
+  shipping      Int
+  total         Int
+  items         OrderItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           Int     @id @default(autoincrement())
+  orderId      Int
+  productId    Int
+  // Product snapshots — keep old orders historically correct even if the
+  // product's title/price change later.
+  productTitle String
+  quantity     Int
+  // Selling-price snapshot. Admin profit math uses: unitPrice − unitCostPrice.
+  unitPrice     Int
+  totalPrice    Int
+  // Purchase-cost snapshot taken at order time (Admin-only, never public).
+  // NULL for orders created before cost tracking existed.
+  unitCostPrice Int?
+  order        Order   @relation(fields: [orderId], references: [id])
+  product      Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Admin {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  name         String?
+  // bcrypt hash — never plaintext, never exposed by any API.
+  passwordHash String
+  role         AdminRole @default(ADMIN)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("admins")
+}
+
+// Key/value store for non-secret Admin Panel settings.
+// Secrets (API tokens, delivery credentials) must stay in server-side env vars.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

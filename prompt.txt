@@ -1,0 +1,814 @@
+مكتبة أرين للكتب الشرعية — Phase 3
+Real Backend + PostgreSQL + Prisma + Checkout Orders
+You are working on an existing React/Vite ecommerce project for:
+مكتبة أرين للكتب الشرعية
+The frontend is already built and visually finalized.
+Your task is to add a real self-hosted backend and database, then connect the existing checkout to real orders.
+1. VERY IMPORTANT — DO NOT BREAK THE EXISTING FRONTEND
+The current frontend uses:
+
+React 19
+Vite 8
+React Router 7
+Tailwind CSS 4
+JavaScript / JSX
+lucide-react
+DO NOT migrate the project to Next.js.
+DO NOT redesign the UI.
+DO NOT replace the existing design.
+DO NOT remove existing functionality.
+DO NOT use Supabase.
+DO NOT use Firebase.
+DO NOT use Clerk.
+DO NOT use any paid SaaS backend.
+The backend must be self-hosted.
+Target architecture:
+
+React + Vite
+      ↓
+REST API
+      ↓
+Node.js + Express
+      ↓
+Prisma
+      ↓
+PostgreSQL
+2. FIRST — INSPECT THE EXISTING PROJECT
+Before changing anything:
+Inspect:
+
+package.json
+src/App.jsx
+src/context/CartContext.jsx
+src/data/books.js
+src/pages/Checkout.jsx
+src/pages/CartPage.jsx
+src/pages/Shop.jsx
+src/pages/BookDetails.jsx
+Understand how the existing cart, products, routing and checkout work.
+Do not blindly overwrite existing files.
+Preserve the current architecture whenever possible.
+3. CREATE THE BACKEND
+Create:
+
+server/
+Recommended structure:
+
+server/
+├── src/
+│   ├── app.js
+│   ├── server.js
+│   ├── routes/
+│   │   ├── products.routes.js
+│   │   ├── categories.routes.js
+│   │   └── orders.routes.js
+│   ├── controllers/
+│   ├── services/
+│   ├── middleware/
+│   └── utils/
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.js
+├── package.json
+└── .env.example
+Keep the backend modular but simple.
+Do not over-engineer it.
+4. BACKEND STACK
+Use:
+
+Node.js
+Express
+Prisma
+PostgreSQL
+Zod
+CORS
+dotenv
+Only install dependencies that are actually necessary.
+5. POSTGRESQL WITH DOCKER
+Create a root-level:
+
+docker-compose.yml
+Use PostgreSQL with persistent storage.
+Example concept:
+
+services:
+  postgres:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: arine
+      POSTGRES_USER: arine
+      POSTGRES_PASSWORD: change_this_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+Use environment variables instead of hardcoding production credentials.
+The database must survive container restarts.
+6. ENVIRONMENT VARIABLES
+Create:
+
+server/.env.example
+with:
+
+DATABASE_URL="postgresql://arine:change_this_password@localhost:5432/arine"
+PORT=4000
+FRONTEND_URL="http://localhost:5173"
+Create frontend:
+
+.env.example
+with:
+
+VITE_API_URL="http://localhost:4000/api"
+Never commit real .env files.
+Make sure .gitignore contains:
+
+.env
+.env.*
+!.env.example
+If this conflicts with an existing .gitignore, preserve the existing rules and add only what is necessary.
+7. DATABASE SCHEMA
+Create:
+
+server/prisma/schema.prisma
+Use PostgreSQL.
+The database needs these models:
+
+Product
+Fields:
+
+id
+title
+author
+categoryId
+price
+oldPrice
+discount
+image
+availability
+description
+rating
+isNew
+isPopular
+pages
+publisher
+year
+createdAt
+updatedAt
+Use an integer ID so the existing frontend numeric product IDs can remain compatible.
+Category
+Fields:
+
+id
+name
+slug
+createdAt
+updatedAt
+Relation:
+
+Category 1 → many Products
+Order
+The checkout does NOT require customer accounts.
+There is NO email field.
+There is NO customer authentication.
+The order itself stores the delivery information.
+Fields:
+
+id
+orderNumber
+fullName
+phone
+city
+address
+note
+paymentMethod
+status
+subtotal
+shipping
+total
+createdAt
+updatedAt
+Important:
+
+note
+is optional.
+The customer can leave it empty.
+OrderItem
+Fields:
+
+id
+orderId
+productId
+productTitle
+quantity
+unitPrice
+totalPrice
+Relationships:
+
+Order 1 → many OrderItems
+Product 1 → many OrderItems
+IMPORTANT:
+productTitle and unitPrice must be stored as snapshots.
+If a book's title or price changes later, old orders must remain historically correct.
+8. ORDER STATUS
+Use these statuses:
+
+PENDING
+CONFIRMED
+SHIPPING
+DELIVERED
+CANCELLED
+Default:
+
+PENDING
+9. PAYMENT METHOD
+For now there is only:
+
+CASH_ON_DELIVERY
+Display in Arabic:
+
+الدفع عند الاستلام
+Do not implement online payment yet.
+Do not add Stripe.
+Do not add PayPal.
+The architecture should allow additional payment methods later.
+10. SEED PRODUCTS
+The current product source is:
+
+src/data/books.js
+It contains the existing bookstore books.
+Use it as the initial source for the database seed.
+Create:
+
+server/prisma/seed.js
+Seed:
+
+all existing products
+all existing categories
+Do not manually invent a different product catalog.
+The seed must be safe to run more than once without creating duplicates.
+Preserve the existing numeric product IDs where possible.
+11. PRODUCT API
+Create:
+
+GET /api/products
+GET /api/products/:id
+GET /api/categories
+Support:
+
+GET /api/products?search=...
+GET /api/products?category=...
+Return clean JSON.
+Handle:
+
+invalid product ID
+product not found
+database errors
+empty results
+with appropriate HTTP status codes.
+12. ORDER API
+Create:
+
+POST /api/orders
+GET /api/orders/:orderNumber
+The frontend should send:
+
+{
+  "fullName": "محمد أمين",
+  "phone": "0612345678",
+  "city": "فاس",
+  "address": "شارع ...",
+  "note": "اتصل بي قبل التوصيل",
+  "paymentMethod": "CASH_ON_DELIVERY",
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    }
+  ]
+}
+note is optional.
+The following are required:
+
+fullName
+phone
+city
+address
+items
+paymentMethod
+note is optional.
+There is NO:
+
+email
+region
+customer account
+password
+13. NEVER TRUST FRONTEND PRICES
+This is extremely important.
+The frontend must NOT be trusted for:
+
+subtotal
+shipping
+total
+unitPrice
+The backend must calculate everything.
+When an order is submitted:
+
+Validate request.
+Load products from PostgreSQL.
+Check every product exists.
+Check every product is available.
+Check quantity is valid.
+Read the real product price from PostgreSQL.
+Calculate each OrderItem total.
+Calculate subtotal.
+Calculate shipping.
+Calculate final total.
+Create the order.
+Create order items.
+Return order number.
+All order creation must happen inside a Prisma transaction.
+14. SHIPPING RULE
+Keep the existing store logic:
+
+subtotal >= 300 DH
+→ FREE SHIPPING
+
+subtotal < 300 DH
+→ 25 DH SHIPPING
+Backend is authoritative.
+Do not trust shipping value from the browser.
+15. ORDER NUMBER
+Generate a unique human-readable order number.
+Example:
+
+AR-20260916-4821
+Use a collision-safe implementation.
+The order number must be unique.
+Return it after successful checkout.
+16. VALIDATION WITH ZOD
+Use Zod.
+Validate:
+
+Full name
+Required.
+
+Phone
+Required.
+Accept normal Moroccan phone formats reasonably.
+Do not make the validation unnecessarily restrictive.
+
+City
+Required.
+
+Address
+Required.
+
+Note
+Optional.
+
+Payment method
+Must be:
+
+CASH_ON_DELIVERY
+Items
+Must contain at least one item.
+Each item:
+
+productId → valid integer
+quantity → positive integer
+Return HTTP 400 for invalid requests.
+Do not expose stack traces.
+17. UPDATE CHECKOUT.JSX
+Modify:
+
+src/pages/Checkout.jsx
+Keep the existing visual design.
+Do not redesign the checkout.
+The form must contain exactly these customer fields:
+
+1. الاسم الكامل
+Required.
+
+2. رقم الهاتف
+Required.
+
+3. المدينة
+Required.
+
+4. العنوان
+Required.
+
+5. ملاحظة للطلب
+Optional.
+For example:
+
+ملاحظة للطلب (اختياري)
+Remove:
+
+البريد الإلكتروني
+Remove:
+
+المنطقة
+Do not add unnecessary customer fields.
+18. CHECKOUT STATE
+Convert the checkout inputs into controlled React state.
+Maintain:
+
+fullName
+phone
+city
+address
+note
+paymentMethod
+Example initial state:
+
+{
+  fullName: '',
+  phone: '',
+  city: '',
+  address: '',
+  note: '',
+  paymentMethod: 'CASH_ON_DELIVERY'
+}
+19. CHECKOUT SUBMISSION
+The current button currently does:
+
+clearCart()
+showToast()
+navigate('/')
+Replace that behavior.
+The new flow must be:
+
+1. Validate form.
+2. Check cart is not empty.
+3. Disable submit button.
+4. Show loading state.
+5. Send POST /api/orders.
+6. Wait for backend response.
+7. If successful:
+      clearCart()
+      save returned order number
+      navigate to /order-success
+8. If failed:
+      DO NOT clear cart
+      DO NOT lose form data
+      show an error
+      enable button again
+Never clear the cart before the server confirms the order.
+20. API UTILITY
+Create:
+
+src/utils/api.js
+Use:
+
+VITE_API_URL
+Do not hardcode the backend URL throughout the application.
+Create a reusable API helper.
+Example concept:
+
+const API_URL = import.meta.env.VITE_API_URL
+Handle JSON responses and errors consistently.
+21. ORDER SUCCESS PAGE
+Create:
+
+src/pages/OrderSuccess.jsx
+Route:
+
+/order-success
+Display:
+
+تم استلام طلبك بنجاح
+Then:
+
+رقم الطلب:
+AR-XXXXXXXX
+Also show:
+
+customer name
+city
+order total
+payment method
+Do NOT display database IDs.
+Add:
+
+العودة للمكتبة
+and:
+
+متابعة التسوق
+Keep the same brand style:
+
+RTL
+Arabic
+dark purple brand color
+clean premium bookstore appearance
+22. CART CONTEXT
+Do NOT remove:
+
+src/context/CartContext.jsx
+Keep the current localStorage cart:
+
+arine-cart
+Keep favorites:
+
+arine-favorites
+The cart can remain client-side for now.
+At checkout, send only:
+
+productId
+quantity
+to the backend.
+The backend retrieves the real product information.
+Do not move cart state into PostgreSQL yet.
+23. PRODUCTS FROM DATABASE
+After the backend is working, connect the frontend product listing to:
+
+GET /api/products
+instead of relying exclusively on:
+
+src/data/books.js
+However, migrate carefully.
+Do not break:
+
+Home
+Shop
+Book Details
+Cart
+Favorites
+Search
+Categories
+If necessary, keep books.js temporarily as a fallback during development.
+The final architecture should use PostgreSQL as the source of truth for products.
+24. LOADING STATES
+When products are fetched from the API, implement appropriate:
+
+loading state
+error state
+empty state
+Do not show a blank screen while the API is loading.
+Keep the existing visual design.
+25. CORS
+Configure CORS using:
+
+FRONTEND_URL
+During development:
+
+http://localhost:5173
+Do not use unrestricted CORS such as:
+
+origin: '*'
+for the application.
+26. ERROR HANDLING
+Create centralized Express error handling.
+Use consistent responses.
+Success:
+
+{
+  "success": true,
+  "order": {
+    "orderNumber": "AR-20260916-4821",
+    "total": 295
+  }
+}
+Error:
+
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "بيانات الطلب غير صحيحة"
+  }
+}
+Do not return:
+
+stack traces
+database credentials
+Prisma internals
+sensitive server information
+27. DATABASE COMMANDS
+Configure useful backend scripts:
+
+npm run dev
+npm run start
+npm run db:migrate
+npm run db:seed
+Use Prisma migrations properly.
+Do not rely on prisma db push as the final production database workflow.
+28. DOCKER WORKFLOW
+The local development workflow should be:
+
+docker compose up -d
+Then:
+
+cd server
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev
+Frontend:
+
+npm install
+npm run dev
+Make sure both frontend and backend work together.
+29. README
+Update the README with exact setup instructions.
+Include:
+
+Requirements
+Node.js
+Docker
+Docker Compose
+Start PostgreSQL
+docker compose up -d
+Backend
+cd server
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev
+Frontend
+npm install
+npm run dev
+Also document:
+
+environment variables
+API URL
+database connection
+Prisma migration
+seed
+troubleshooting
+30. SECURITY
+Implement basic production-safe practices:
+
+Zod validation
+Prisma transactions
+server-side price calculation
+server-side shipping calculation
+server-side total calculation
+no sensitive information in frontend
+no database credentials in frontend
+.env ignored by git
+clean API errors
+proper HTTP status codes
+Do not implement authentication yet.
+31. DO NOT IMPLEMENT THESE YET
+Do NOT implement:
+
+Admin Panel
+Admin authentication
+Customer accounts
+Online payment
+Stripe
+PayPal
+Supabase
+Firebase
+WhatsApp API
+Google Sheets
+Email notifications
+Coupons
+Reviews
+3D library
+These belong to later phases.
+32. ADMIN PANEL PREPARATION
+Although Admin Panel is NOT being built now, structure the database so it can later manage:
+
+Orders
+Products
+Categories
+Customers/orders
+Order status
+The future admin will need to change:
+
+PENDING
+CONFIRMED
+SHIPPING
+DELIVERED
+CANCELLED
+Do not build the UI yet.
+33. TEST THE COMPLETE ORDER FLOW
+After implementation, test:
+
+1. Start PostgreSQL
+2. Start backend
+3. Start frontend
+4. Open bookstore
+5. Open Shop
+6. Add a book
+7. Change quantity
+8. Open cart
+9. Go to Checkout
+10. Enter name
+11. Enter Moroccan phone number
+12. Enter city
+13. Enter address
+14. Optionally enter note
+15. Keep Cash on Delivery
+16. Click تأكيد الطلب
+Expected:
+
+Frontend → POST /api/orders
+Backend validates request
+Backend reads products from PostgreSQL
+Backend calculates prices
+Backend calculates shipping
+Backend creates Order
+Backend creates OrderItems
+Backend returns order number
+Frontend clears cart
+Frontend opens OrderSuccess
+Order number is displayed
+34. TEST FAILED CHECKOUT
+Also test when backend is unavailable.
+Expected:
+
+API fails
+↓
+Cart remains intact
+↓
+Form data remains
+↓
+Error message appears
+↓
+User can retry
+Never clear the cart on failure.
+35. TEST DATABASE
+After placing a test order, verify PostgreSQL contains:
+
+Order
+OrderItems
+Verify:
+
+fullName
+phone
+city
+address
+note
+paymentMethod
+subtotal
+shipping
+total
+status
+are correct.
+Verify OrderItems contain:
+
+productId
+productTitle
+quantity
+unitPrice
+totalPrice
+36. BUILD VERIFICATION
+Before finishing, run:
+
+npm run build
+for the frontend.
+Also verify the backend starts without errors.
+Run Prisma migration.
+Run seed.
+Test API endpoints.
+Fix any errors you encounter.
+Do NOT simply say "done" without actually testing the implementation.
+37. IMPORTANT FINAL REQUIREMENT
+At the end, report clearly:
+
+Files created
+Files modified
+Database models
+API endpoints
+Environment variables
+Docker commands
+Prisma commands
+How to run frontend
+How to run backend
+How to test an order
+Any remaining issues
+The result must be a real working ecommerce backend for:
+مكتبة أرين للكتب الشرعية
+with:
+
+React/Vite
++
+Node.js/Express
++
+Prisma
++
+PostgreSQL
++
+Docker
+and a working Arabic RTL checkout using ONLY:
+
+الاسم الكامل
+رقم الهاتف
+المدينة
+العنوان
+ملاحظة اختيارية
+with:
+
+الدفع عند الاستلام
+as the current payment method.
+Do not add email.
+Do not add region.
+Do not add customer accounts.
+Do not redesign the existing website.

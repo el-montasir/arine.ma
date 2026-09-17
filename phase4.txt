@@ -1,0 +1,1448 @@
+Continue developing the Arine Islamic Bookstore Admin Panel from the exact current state of the project.
+
+IMPORTANT:
+- Do NOT rebuild the project from scratch.
+- Do NOT delete working code.
+- Do NOT reset or recreate the database.
+- First inspect the existing implementation and continue from what is already completed.
+- Do not implement Dashboard, Orders, Products, Categories, Customers, Finance, Settings, or DIGYLOG in this phase.
+
+PROJECT:
+
+Project name:
+مكتبة أرين للكتب الشرعية
+
+Project root:
+~/Desktop/arine
+
+Architecture:
+
+arine/
+├── src/              # Customer Store frontend
+├── admin/            # Separate Admin Panel frontend
+├── server/           # Shared backend
+├── public/
+├── screenshots/
+├── package.json
+└── ...
+
+Architecture:
+
+Store Frontend
+      ↓
+Shared Express API
+      ↓
+Prisma
+      ↓
+PostgreSQL
+
+Admin Panel
+      ↓
+Shared Express API
+      ↓
+Prisma
+      ↓
+PostgreSQL
+
+The Admin Panel MUST remain a separate Vite application inside admin/.
+
+Do NOT merge the Admin Panel into the Store frontend.
+
+Do NOT connect the Admin frontend directly to PostgreSQL.
+
+CURRENT BACKEND:
+
+Location:
+~/Desktop/arine/server
+
+Stack:
+- Node.js
+- Express
+- Prisma
+- PostgreSQL
+- Zod
+- CORS
+
+Backend:
+http://localhost:4000
+
+Database:
+- PostgreSQL
+- database: arine
+- host: localhost
+- port: 5432
+- schema: public
+
+Previously verified database data:
+
+Categories: 9
+Products: 18
+Orders: 8
+OrderItems: 8
+
+This is real project data.
+
+DO NOT delete, reset, recreate, or overwrite this data.
+
+Existing public APIs:
+
+GET /api/products
+GET /api/categories
+POST /api/orders
+GET /api/orders/:orderNumber
+GET /api/orders
+
+These APIs are already working.
+
+Do not introduce breaking changes to the Store API.
+
+ADMIN FRONTEND:
+
+Location:
+~/Desktop/arine/admin
+
+Separate Vite application.
+
+Development URL:
+http://localhost:5174/
+
+The Admin Panel must remain independent from the Store.
+
+DESIGN DIRECTION:
+
+Build a professional modern 2D SaaS-style Admin Panel.
+
+Requirements:
+- RTL-first
+- Arabic-friendly
+- Professional
+- Modern
+- Clean
+- Responsive
+- Desktop, tablet and mobile support
+- Dark purple / near-black purple brand identity
+- Excellent spacing
+- Strong visual hierarchy
+- Professional typography
+- Consistent components
+- Subtle animations only when useful
+- No excessive gradients
+- No 3D
+- No 3D libraries
+- No generic AI-looking dashboard
+- No visual clutter
+- No overlapping elements
+- No broken responsive layouts
+
+FIRST TASK — AUDIT:
+
+Before changing anything, inspect the actual implementation.
+
+Inspect:
+
+admin/
+admin/package.json
+server/src/
+server/prisma/schema.prisma
+server/prisma/migrations/
+server/package.json
+
+Determine:
+
+- What Admin features already exist?
+- What authentication code already exists?
+- What Admin API routes already exist?
+- What database models already exist?
+- What frontend pages/components already exist?
+- Is there already a session implementation?
+- Is there already authentication middleware?
+- Is there already role authorization?
+- Is there already an Admin API client?
+- Are there build/runtime errors?
+- What is incomplete?
+
+Do NOT assume something is missing.
+
+Inspect the actual code and database first.
+
+Do not make architectural changes during the audit.
+
+If something already works, preserve it.
+
+ADMIN AUTHENTICATION:
+
+Security is a CORE architectural requirement.
+
+There is already:
+
+server/prisma/seed-admin.js
+
+It uses:
+
+ADMIN_INITIAL_USERNAME
+ADMIN_INITIAL_PASSWORD
+ADMIN_INITIAL_NAME
+
+from:
+
+server/.env
+
+The password is hashed using bcrypt.
+
+The initial account role is:
+
+SUPER_ADMIN
+
+Verify whether the current project already has a complete authentication/session implementation.
+
+If authentication is incomplete, complete it securely.
+
+Do NOT create a second authentication system if one already exists.
+
+Never expose:
+
+DATABASE_URL
+ADMIN_INITIAL_PASSWORD
+SESSION_SECRET
+API TOKENS
+PRIVATE KEYS
+PASSWORD HASHES
+OTHER SERVER SECRETS
+
+Never put secrets inside:
+
+VITE_* variables
+frontend JavaScript
+frontend source code
+localStorage
+public/
+
+Never log passwords or secrets.
+
+ADMIN API SECURITY:
+
+All Admin APIs must live under:
+
+/api/admin/*
+
+Login may be public only for authentication.
+
+Every other Admin API endpoint must be protected server-side.
+
+Requirements:
+
+- Secure authentication/session handling
+- HTTP-only authentication cookies where appropriate
+- Appropriate SameSite configuration
+- Logout must invalidate the session
+- Server-side authorization
+- Database verification of the Admin account
+- Role-based authorization
+- Never trust frontend role information
+- Never trust localStorage for authorization
+- Never expose sensitive server information in errors
+- Never log passwords or secrets
+- Public Store APIs remain public where intended
+- Private Admin information stays behind protected Admin endpoints
+- costPrice must never be exposed through public Store APIs
+
+If an authentication/security implementation already exists, inspect and improve it instead of unnecessarily replacing it.
+
+ADMIN ROLES:
+
+Support:
+
+SUPER_ADMIN
+ADMIN
+
+Authorization must happen on the backend.
+
+Do not rely on frontend checks alone.
+
+Sensitive financial information such as costPrice must only be available through authorized Admin endpoints.
+
+ADMIN ROUTE STRUCTURE:
+
+Keep Admin routes separate from public routes.
+
+Expected structure:
+
+/api/admin/auth/*
+/api/admin/dashboard/*
+/api/admin/orders/*
+/api/admin/products/*
+/api/admin/categories/*
+/api/admin/customers/*
+/api/admin/finance/*
+/api/admin/settings/*
+
+For this phase, focus only on authentication infrastructure.
+
+Do not implement the feature modules yet.
+
+Public routes remain:
+
+/api/products
+/api/categories
+/api/orders
+
+ADMIN SHELL:
+
+Build or complete the Admin layout.
+
+Include:
+
+- Sidebar
+- Top navigation
+- Admin profile/menu
+- Logout
+- Main content area
+- Responsive navigation
+- RTL layout
+- Consistent page structure
+- Breadcrumbs where useful
+
+Prepare navigation for:
+
+Dashboard
+Orders
+Products
+Categories
+Customers
+Profit / Finance
+Settings
+
+For this phase, navigation items can point to placeholder/protected pages.
+
+Do NOT build the actual feature pages yet.
+
+CENTRALIZED ADMIN API CLIENT:
+
+If one does not already exist, create a centralized Admin API client/service.
+
+It should handle:
+
+- API base URL
+- credentials/cookies
+- JSON parsing
+- common errors
+- 401 Unauthorized
+- 403 Forbidden
+
+Avoid duplicating raw fetch authentication logic throughout the frontend.
+
+If an API client already exists, reuse and improve it.
+
+ERROR STATES:
+
+Handle:
+
+Loading
+Success
+Error
+401 Unauthorized
+403 Forbidden
+Session expired
+
+Never show a completely blank screen when authentication/API requests fail.
+
+Use clear messages such as:
+
+"Session expired. Please log in again."
+
+"You do not have permission to access this page."
+
+"Unable to connect to the server."
+
+Do not expose internal server errors or secrets.
+
+DATABASE SAFETY:
+
+NEVER run:
+
+npx prisma migrate reset
+npx prisma db push
+npx prisma db init
+npm run db:reset
+
+Do not delete:
+
+- products
+- categories
+- orders
+- order items
+
+Do not recreate the database.
+
+Do not modify the Prisma schema unless absolutely required for this authentication phase.
+
+If a schema change is genuinely required:
+
+1. Inspect schema.prisma.
+2. Inspect existing migrations.
+3. Make the smallest safe change.
+4. Preserve all existing records.
+5. Create a proper migration.
+6. Verify the result.
+
+CODE QUALITY:
+
+Use maintainable architecture.
+
+Prefer reusable:
+
+components/
+layouts/
+pages/
+services/
+hooks/
+utils/
+types/
+
+Avoid:
+
+- giant components
+- duplicated API logic
+- hardcoded business data
+- fake authentication
+- fake API responses
+- unnecessary dependencies
+- inline secrets
+- direct database access from frontend
+
+SECURITY TESTING:
+
+Test unauthenticated access to:
+
+GET /api/admin/products
+GET /api/admin/orders
+GET /api/admin/dashboard
+
+They must return an appropriate unauthorized response.
+
+Then:
+
+- Login with configured Admin credentials
+- Verify protected endpoints work
+- Verify role restrictions are enforced server-side
+- Verify logout invalidates access
+- Verify public Store APIs still work
+
+Verify:
+
+GET /api/products
+GET /api/categories
+GET /api/orders
+
+DEVELOPMENT PROCESS:
+
+Follow this exact order:
+
+1. Audit the current codebase.
+2. Complete/fix authentication.
+3. Complete backend authorization.
+4. Protect /api/admin/*.
+5. Complete login/logout.
+6. Complete protected routing.
+7. Complete Admin shell.
+8. Complete RTL/theme/responsive layout.
+9. Run authentication and API tests.
+10. Run Admin build.
+
+Do NOT implement:
+
+- Dashboard business statistics
+- Orders management
+- Product CRUD
+- Category CRUD
+- Customers management
+- Finance
+- Profit calculations
+- Historical cost-price migration
+- Settings functionality
+- DIGYLOG integration
+
+Those features will be implemented later.
+
+FINAL REPORT:
+
+At the end, report:
+
+1. What was already implemented
+2. What you changed
+3. Files changed
+4. Authentication status
+5. Authorization status
+6. Security status
+7. Tests performed
+8. Remaining issues
+9. How to run backend
+10. How to run Admin Panel
+
+Then STOP.
+
+Do not continue to the next feature phase.
+
+Start now by auditing the current codebase.
+Continue developing the Arine Islamic Bookstore Admin Panel from the current project state.
+
+IMPORTANT:
+- Continue from the existing implementation.
+- Do NOT rebuild the project from scratch.
+- Do NOT replace working authentication/security unnecessarily.
+- Do NOT reset or recreate the database.
+- Preserve all existing data.
+- The Admin Panel remains a separate Vite application inside admin/.
+- Do NOT modify the Store unnecessarily.
+- Do NOT implement DIGYLOG yet.
+
+PROJECT:
+
+Project root:
+~/Desktop/arine
+
+Architecture:
+
+Store Frontend
+      ↓
+Shared Express API
+      ↓
+Prisma
+      ↓
+PostgreSQL
+
+Admin Panel
+      ↓
+Shared Express API
+      ↓
+Prisma
+      ↓
+PostgreSQL
+
+Backend:
+http://localhost:4000
+
+Admin:
+~/Desktop/arine/admin
+
+Database:
+
+PostgreSQL
+database: arine
+host: localhost
+port: 5432
+schema: public
+
+Previously verified:
+
+Categories: 9
+Products: 18
+Orders: 8
+OrderItems: 8
+
+Existing public APIs:
+
+GET /api/products
+GET /api/categories
+POST /api/orders
+GET /api/orders/:orderNumber
+GET /api/orders
+
+The Store API must remain compatible.
+
+SECURITY:
+
+The Admin Panel uses protected Admin APIs under:
+
+/api/admin/*
+
+Authentication and authorization must remain server-side.
+
+Do not weaken existing authentication.
+
+Do not expose:
+
+DATABASE_URL
+SESSION_SECRET
+ADMIN_INITIAL_PASSWORD
+password hashes
+API tokens
+private keys
+costPrice through public APIs
+
+Never trust frontend authorization or localStorage for permissions.
+
+DESIGN:
+
+The Admin Panel must remain:
+
+- 2D only
+- RTL-first
+- Arabic-friendly
+- Dark purple / near-black purple
+- Professional
+- Modern
+- Clean
+- Responsive
+- No 3D
+- No generic AI dashboard
+- No overlapping UI
+- Consistent spacing
+- Strong visual hierarchy
+
+Before implementing each feature, inspect the existing implementation and reuse existing components/services where possible.
+
+==================================================
+1. DASHBOARD
+==================================================
+
+Create or complete:
+
+/api/admin/dashboard/*
+
+Dashboard should use REAL database data.
+
+Show:
+
+- Total orders
+- Total revenue
+- Total products
+- Total categories
+- Total customers
+- Recent orders
+- Order status distribution
+- Revenue summary
+- Profit summary only if reliable profit data is already available
+
+Do NOT use fake hardcoded business numbers.
+
+Create backend endpoints/services as necessary.
+
+Use reusable API services/hooks.
+
+Handle:
+
+Loading
+Empty
+Error
+401
+403
+
+==================================================
+2. ORDERS MANAGEMENT
+==================================================
+
+Create or complete:
+
+/api/admin/orders/*
+
+Admin Orders page must include:
+
+- Orders table/list
+- Order number
+- Customer name
+- Phone
+- City/address where appropriate
+- Order total
+- Order status
+- Creation date
+- Order details
+- Order items
+- Quantity
+- Unit price
+- Total price
+
+Add:
+
+- Search
+- Filtering
+- Sorting where useful
+- Order detail drawer/modal/page
+
+The UI must be professional and responsive.
+
+Orders must come from the real database.
+
+Do not use mock orders.
+
+==================================================
+3. ORDER CONFIRMATION
+==================================================
+
+The Admin must be able to manually review an order before delivery dispatch.
+
+The intended workflow is:
+
+Customer places order
+↓
+Order saved in PostgreSQL
+↓
+Admin reviews order
+↓
+Admin manually confirms order
+↓
+Future DIGYLOG integration
+↓
+Tracking ID
+↓
+Webhook status updates
+
+For this phase:
+
+- Implement the Admin-side confirmation workflow if the current schema supports it.
+- Do NOT automatically send orders to DIGYLOG.
+- Do NOT create fake DIGYLOG API calls.
+- Do NOT add fake credentials.
+- Keep the architecture ready for future delivery integration.
+
+==================================================
+4. PRODUCTS MANAGEMENT
+==================================================
+
+Create or complete:
+
+/api/admin/products/*
+
+Products must support:
+
+- Title
+- Image
+- Description
+- Author
+- Selling price
+- Cost price
+- Category
+- Availability
+- Existing stock-related fields if supported by the current schema
+
+Required functionality:
+
+Create
+Read
+Update
+Delete
+
+Use proper backend validation.
+
+Admin frontend must communicate only through the Express API.
+
+Never connect frontend directly to PostgreSQL.
+
+When an Admin changes a product, the Store must receive the updated product from the same database.
+
+==================================================
+5. COST PRICE SECURITY
+==================================================
+
+costPrice is private business information.
+
+It must NOT appear in:
+
+GET /api/products
+GET /api/categories
+POST /api/orders responses
+other public Store responses
+
+It may only appear through authorized Admin endpoints.
+
+If necessary, separate:
+
+Public Product serialization
+
+from:
+
+Admin Product serialization
+
+Public product example:
+
+title
+description
+author
+price
+image
+category
+availability
+
+Admin product example:
+
+title
+description
+author
+price
+costPrice
+profit
+category
+availability
+
+Never expose private financial data accidentally.
+
+==================================================
+6. CATEGORIES
+==================================================
+
+Create or complete:
+
+/api/admin/categories/*
+
+Support:
+
+Create
+Read
+Update
+Delete
+
+Use the existing Category model.
+
+Do NOT create duplicate category systems.
+
+Handle product relationships safely.
+
+Do not allow category deletion to silently break existing products.
+
+Use proper validation and clear errors.
+
+==================================================
+7. CUSTOMERS
+==================================================
+
+Create or complete:
+
+/api/admin/customers/*
+
+Use the existing database structure.
+
+Do not create unnecessary duplicate customer models.
+
+Show useful information such as:
+
+- Customer name
+- Phone
+- City
+- Number of orders
+- Total order value
+- Last order date
+
+Avoid exposing unnecessary sensitive information.
+
+Use real database data.
+
+==================================================
+8. REUSABLE COMPONENTS
+==================================================
+
+Create/reuse components for:
+
+- Tables
+- Cards
+- Forms
+- Inputs
+- Buttons
+- Modals
+- Drawers
+- Status badges
+- Confirmation dialogs
+- Loading states
+- Empty states
+- Error states
+
+Avoid giant components and duplicated code.
+
+Create reusable services/hooks for API requests.
+
+==================================================
+9. DATABASE SAFETY
+==================================================
+
+NEVER run:
+
+npx prisma migrate reset
+npx prisma db push
+npx prisma db init
+npm run db:reset
+
+Do not delete existing products, categories, orders, or order items.
+
+If a schema change is required:
+
+1. Inspect schema.prisma.
+2. Inspect migrations.
+3. Make the smallest safe migration.
+4. Preserve existing data.
+5. Verify the result.
+
+==================================================
+10. RESPONSIVENESS
+==================================================
+
+Test:
+
+Desktop
+Tablet
+Mobile
+
+Pay special attention to:
+
+- Sidebar
+- Tables
+- Forms
+- Drawers
+- Modals
+- Product forms
+- Arabic RTL layout
+- Navigation
+
+Nothing should overlap.
+
+==================================================
+11. STORE SAFETY
+==================================================
+
+Do not redesign or rewrite the Store.
+
+Only modify Store code if an actual API compatibility issue requires it.
+
+Verify after Admin changes:
+
+GET /api/products
+GET /api/categories
+GET /api/orders
+
+still work.
+
+==================================================
+12. TESTING
+==================================================
+
+Run:
+
+- Backend checks
+- API tests
+- Admin build
+- Store build where relevant
+- Authentication tests
+- Authorization tests
+- CRUD tests
+- Error handling tests
+
+Fix real errors.
+
+Do not hide errors with fake fallback data.
+
+==================================================
+FINAL REPORT
+==================================================
+
+Report:
+
+1. Dashboard status
+2. Orders status
+3. Products status
+4. Categories status
+5. Customers status
+6. Files changed
+7. Database changes
+8. Security verification
+9. Tests performed
+10. Remaining issues
+
+Do NOT implement Finance, Settings, or DIGYLOG in this phase.
+
+STOP after completing this phase.
+Continue developing the Arine Islamic Bookstore Admin Panel from the current project state.
+
+IMPORTANT:
+- Do NOT rebuild the project.
+- Preserve all working code.
+- Preserve all existing database data.
+- Do NOT weaken existing authentication/security.
+- Do NOT reset or recreate PostgreSQL.
+- Admin remains a separate Vite application inside admin/.
+- Do NOT redesign the Store unnecessarily.
+- DIGYLOG integration is NOT being implemented yet.
+
+PROJECT:
+
+Root:
+~/Desktop/arine
+
+Architecture:
+
+Store Frontend
+      ↓
+Shared Express API
+      ↓
+Prisma
+      ↓
+PostgreSQL
+
+Admin Panel
+      ↓
+Shared Express API
+      ↓
+Prisma
+      ↓
+PostgreSQL
+
+Backend:
+http://localhost:4000
+
+Admin:
+~/Desktop/arine/admin
+
+Database:
+PostgreSQL
+database: arine
+host: localhost
+port: 5432
+schema: public
+
+Previously verified:
+
+Categories: 9
+Products: 18
+Orders: 8
+OrderItems: 8
+
+Continue from the actual current implementation.
+
+Before changing anything, inspect the existing code and schema.
+
+==================================================
+1. FINANCE / PROFIT
+==================================================
+
+Create or complete:
+
+/api/admin/finance/*
+
+Create a professional Finance / Profit section.
+
+Calculate:
+
+Revenue
+Product Cost
+Gross Profit
+Profit Margin
+
+Formula:
+
+Unit Profit = Selling Price - Cost Price
+
+Revenue:
+
+sum(unitPrice × quantity)
+
+Product Cost:
+
+sum(costPrice × quantity)
+
+Gross Profit:
+
+Revenue - Product Cost
+
+Profit Margin:
+
+Gross Profit / Revenue × 100
+
+Show useful information such as:
+
+- Total revenue
+- Total product cost
+- Total gross profit
+- Overall profit margin
+- Revenue by product
+- Profit by product
+- Revenue by period
+- Profit by period
+- Best/worst performing products based on actual data without presenting subjective rankings
+
+Use real database data.
+
+Do NOT use fake numbers.
+
+==================================================
+2. HISTORICAL PROFIT ACCURACY
+==================================================
+
+This is extremely important.
+
+Existing OrderItem data already contains historical selling information such as:
+
+productTitle
+quantity
+unitPrice
+totalPrice
+
+Inspect the current Prisma schema.
+
+Determine whether historical cost price is stored for each OrderItem.
+
+If historical cost price is NOT stored, current product costPrice cannot safely be used to calculate historical profit because an Admin may change the product cost later.
+
+If a schema change is required:
+
+1. Inspect schema.prisma.
+2. Inspect all existing migrations.
+3. Determine the smallest safe migration.
+4. Add only the required historical cost field.
+5. Preserve all existing orders and order items.
+6. Do NOT reset the database.
+7. Do NOT delete existing records.
+8. Verify migration status.
+9. Verify existing data after migration.
+
+Do not blindly rewrite the schema.
+
+For NEW orders, snapshot the product cost price into OrderItem when the order is created.
+
+This allows historical profit to remain accurate even if the current product cost changes later.
+
+For OLD orders where historical cost is unavailable:
+
+- Do not invent historical costs.
+- Clearly identify unavailable historical cost data.
+- Do not pretend the calculated profit is historically exact.
+
+==================================================
+3. COST PRICE SECURITY
+==================================================
+
+Verify again that costPrice is never exposed through public Store endpoints.
+
+Check:
+
+GET /api/products
+GET /api/categories
+GET /api/orders
+GET /api/orders/:orderNumber
+
+Public responses must not expose private cost information.
+
+Admin finance/product endpoints may expose cost information only to authorized Admin users.
+
+==================================================
+4. FINANCE PERMISSIONS
+==================================================
+
+Financial information should be protected server-side.
+
+Do not rely only on hiding UI elements.
+
+Enforce permissions in backend middleware/controllers.
+
+If the existing role system supports different permissions for:
+
+SUPER_ADMIN
+ADMIN
+
+use it appropriately for sensitive financial data.
+
+Never trust a role sent from the frontend.
+
+==================================================
+5. SETTINGS
+==================================================
+
+Create or complete:
+
+/api/admin/settings/*
+
+Create a professional Settings section.
+
+At minimum support a structure for:
+
+- Admin account
+- Security
+- Session/logout
+- Store settings where appropriate
+
+Do not expose:
+
+DATABASE_URL
+SESSION_SECRET
+password hashes
+API tokens
+private keys
+other server secrets
+
+Do not display environment variables in the UI.
+
+==================================================
+6. ADMIN ACCOUNT SECURITY
+==================================================
+
+Verify:
+
+- Passwords are hashed with bcrypt or the existing secure mechanism.
+- Passwords are never logged.
+- Password hashes are never returned to frontend.
+- Sessions are securely invalidated on logout.
+- Protected routes require authentication.
+- Role authorization is server-side.
+- Unauthorized users receive 401/403 appropriately.
+
+Do not create duplicate authentication systems.
+
+==================================================
+7. FINAL ADMIN UI POLISH
+==================================================
+
+Review the entire Admin Panel.
+
+The design must remain:
+
+- 2D
+- RTL-first
+- Arabic-friendly
+- Dark purple / near-black purple
+- Professional
+- Clean
+- Modern
+- Responsive
+- Consistent
+
+Check:
+
+- Typography
+- Spacing
+- Sidebar
+- Header
+- Tables
+- Forms
+- Modals
+- Drawers
+- Cards
+- Buttons
+- Status badges
+- Empty states
+- Loading states
+- Error states
+
+Fix:
+
+- overlapping elements
+- broken spacing
+- inconsistent sizing
+- broken RTL
+- mobile layout problems
+- unnecessary visual clutter
+
+Do not introduce unnecessary redesigns.
+
+==================================================
+8. RESPONSIVENESS
+==================================================
+
+Verify:
+
+Desktop
+Tablet
+Mobile
+
+Especially:
+
+- Sidebar
+- Tables
+- Finance cards
+- Product forms
+- Order details
+- Settings
+- Modals/drawers
+- RTL navigation
+
+==================================================
+9. DATABASE SAFETY
+==================================================
+
+NEVER run:
+
+npx prisma migrate reset
+npx prisma db push
+npx prisma db init
+npm run db:reset
+
+If a migration is required, use a proper Prisma migration.
+
+Preserve all existing data.
+
+Verify:
+
+npx prisma migrate status
+
+after schema changes.
+
+==================================================
+10. FULL SECURITY AUDIT
+==================================================
+
+Perform a final security review.
+
+Verify:
+
+- Admin APIs are protected
+- Login is protected against obvious misuse
+- Sessions use secure HTTP-only cookies where appropriate
+- SameSite is configured appropriately
+- Logout invalidates sessions
+- Roles are checked server-side
+- Public APIs remain public
+- Private Admin data stays private
+- costPrice is not public
+- Finance endpoints are protected
+- Secrets are not in frontend code
+- Secrets are not in VITE_* variables
+- Passwords are not logged
+- Password hashes are not returned
+- Database credentials are not exposed
+
+==================================================
+11. FULL FUNCTIONAL TESTING
+==================================================
+
+Test:
+
+Authentication
+Authorization
+Login
+Logout
+Dashboard
+Orders
+Order details
+Order confirmation
+Products CRUD
+Categories CRUD
+Customers
+Finance
+Settings
+
+Test unauthorized requests.
+
+Test forbidden requests.
+
+Test successful authorized requests.
+
+Test invalid inputs.
+
+Test empty database states where relevant.
+
+Test API errors.
+
+Test frontend loading/error states.
+
+==================================================
+12. PUBLIC STORE REGRESSION TEST
+==================================================
+
+Verify that the Store has not been broken.
+
+Test:
+
+GET /api/products
+GET /api/categories
+POST /api/orders
+GET /api/orders
+GET /api/orders/:orderNumber
+
+Verify the Store still receives only public-safe data.
+
+Verify costPrice is not exposed.
+
+Do not redesign the Store unless an actual regression requires it.
+
+==================================================
+13. BUILD VERIFICATION
+==================================================
+
+Run appropriate builds/checks for:
+
+- Backend
+- Admin frontend
+- Store frontend
+- Prisma
+
+Fix real errors.
+
+Do not hide build errors.
+
+Do not use fake fallback data to make builds appear successful.
+
+==================================================
+14. DIGYLOG
+==================================================
+
+Do NOT implement DIGYLOG API integration in this phase.
+
+Do NOT invent endpoints.
+
+Do NOT add fake credentials.
+
+Do NOT send real orders to DIGYLOG.
+
+The future architecture remains:
+
+Customer Order
+↓
+Database
+↓
+Admin Review
+↓
+Manual Confirmation
+↓
+DIGYLOG
+↓
+Tracking ID
+↓
+Webhook
+
+Only make sure the Admin architecture can support this future workflow.
+
+==================================================
+15. FINAL VERIFICATION
+==================================================
+
+Verify:
+
+Store frontend works
+Admin frontend builds
+Backend starts
+Database remains intact
+Admin login works
+Logout works
+Protected Admin APIs are protected
+Products CRUD works
+Categories CRUD works
+Orders work
+Dashboard uses real data
+Customers use real data
+Finance uses real data
+Historical profit handling is correct
+Cost price remains private
+Settings work
+No destructive database operation was performed
+
+==================================================
+FINAL REPORT
+==================================================
+
+Give a concise final report:
+
+1. What was already implemented
+2. What was implemented in this phase
+3. Files changed
+4. Database/schema changes
+5. Security changes
+6. Finance implementation
+7. Historical profit handling
+8. Tests performed
+9. Build results
+10. How to run backend
+11. How to run Admin Panel
+12. What remains for future work
+
+DIGYLOG should be listed as future work unless it was already implemented previously.
+
+Do not rebuild the project.
+
+Do not reset the database.
+
+Finish this phase and provide the final report.
