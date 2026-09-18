@@ -2,8 +2,9 @@ import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
 import { orderFinance } from '../../utils/admin-finance.js'
 import { ORDER_STATUSES } from '../../validators/admin/order.validator.js'
+import { shippingService } from '../shipping/index.js'
 
-const INCLUDE_ITEMS = { items: true }
+const INCLUDE_ITEMS = { items: true, packageItems: true }
 
 // Admin-only order shape. Embeds the finance block (per-line + order totals)
 // that is never sent to the public store API.
@@ -41,6 +42,20 @@ export function serializeAdminOrder(order) {
       lineRevenue: item.revenue,
       lineCost: item.cost,
       lineProfit: item.lineProfit,
+      type: 'book',
+    })),
+    packageItems: finance.packageItems.map((item) => ({
+      id: item.id,
+      packageId: item.packageId,
+      packageTitle: item.packageTitle,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      unitCostPrice: item.unitCostPrice ?? null,
+      lineRevenue: item.revenue,
+      lineCost: item.cost,
+      lineProfit: item.lineProfit,
+      type: 'package',
     })),
   }
 }
@@ -72,8 +87,8 @@ export async function getOrder(id) {
 }
 
 // Single admin-facing status change. Validates the enum server-side so the
-// frontend can never inject an unknown status. A delivery-company dispatch
-// hook will land HERE on CONFIRMED in a future phase — never at creation.
+// frontend can never inject an unknown status. Delegates dispatch to the
+// active shipping provider via shippingService abstraction.
 export async function updateOrderStatus(id, status) {
   if (!ORDER_STATUSES.includes(status)) {
     throw new ApiError(400, 'INVALID_STATUS', 'الحالة غير صحيحة')
@@ -86,5 +101,9 @@ export async function updateOrderStatus(id, status) {
     data: { status },
     include: INCLUDE_ITEMS,
   })
+
+  // Provider-independent dispatch hook (safe, logs errors without blocking status update)
+  await shippingService.onOrderStatusChange(updated, status).catch(() => {})
+
   return serializeAdminOrder(updated)
 }

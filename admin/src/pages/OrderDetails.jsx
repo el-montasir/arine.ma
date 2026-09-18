@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowRight, Save, MapPin, Phone, User, StickyNote, Truck } from 'lucide-react'
+import { ArrowRight, Save, MapPin, Phone, User, StickyNote, Truck, Package as PackageIcon } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
 import { formatMoney, formatDate, PAYMENT_LABEL, orderStatus, ORDER_STATUS } from '../lib/format.js'
@@ -54,8 +54,33 @@ export default function OrderDetails() {
 
   const st = orderStatus(order.status)
   const fin = order.finance
+  const bookItems = order.items || []
+  const packageItems = order.packageItems || []
+
   const itemsCols = [
     { key: 'product', label: 'الكتاب', render: (r) => <span className="font-medium">{r.productTitle}</span> },
+    { key: 'qty', label: 'الكمية', render: (r) => r.quantity },
+    { key: 'unitPrice', label: 'سعر البيع', render: (r) => <span className="tabular-nums">{formatMoney(r.unitPrice)}</span> },
+    { key: 'unitCost', label: 'سعر الشراء', render: (r) => <span className="tabular-nums text-[#a79cc4]">{formatMoney(r.unitCostPrice)}</span> },
+    { key: 'revenue', label: 'الإيراد', render: (r) => <span className="tabular-nums">{formatMoney(r.lineRevenue)}</span> },
+    { key: 'profit', label: 'الربح', render: (r) => (
+      <span className={`tabular-nums ${r.lineProfit == null ? 'text-[#6f6488]' : r.lineProfit < 0 ? 'text-danger-400' : 'text-ok-400'}`}>
+        {r.lineProfit == null ? '—' : formatMoney(r.lineProfit)}
+      </span>
+    ) },
+  ]
+
+  const packageCols = [
+    {
+      key: 'package',
+      label: 'الباقة',
+      render: (r) => (
+        <div className="flex items-center gap-2">
+          <PackageIcon className="h-4 w-4 text-brand-400" />
+          <span className="font-medium">{r.packageTitle}</span>
+        </div>
+      )
+    },
     { key: 'qty', label: 'الكمية', render: (r) => r.quantity },
     { key: 'unitPrice', label: 'سعر البيع', render: (r) => <span className="tabular-nums">{formatMoney(r.unitPrice)}</span> },
     { key: 'unitCost', label: 'سعر الشراء', render: (r) => <span className="tabular-nums text-[#a79cc4]">{formatMoney(r.unitCostPrice)}</span> },
@@ -132,24 +157,39 @@ export default function OrderDetails() {
 
           <Card>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-              <Truck className="h-4 w-4 text-brand-400" aria-hidden="true" /> التوصيل
+              <Truck className="h-4 w-4 text-brand-400" aria-hidden="true" /> التوصيل والشحن
             </h2>
             <p className="text-xs leading-relaxed text-[#8b80a8]">
-              لا يُرسل الطلب لأي شركة توصيل عند إنشائه. عند تأكيد الطلب في مرحلة لاحقة
-              سيتم إرساله تلقائياً إلى DIGYLOG وحفظ رقم التتبع — هذه الميزة قيد التحضير.
+              نظام التوصيل يعمل بنمط مستقل عن المزودين. في الوضع الحالي تتم معالجة الطلب يدوياً عبر الهاتف.
+              عند تفعيل مزود API خارجي من الإعدادات، يتم إرسال بيانات الشحنة وتتبعها تلقائياً عند تغيير الحالة.
             </p>
           </Card>
         </div>
 
         {/* Left column — items + finance */}
         <div className="space-y-5 lg:col-span-2">
-          <Card>
-            <h2 className="mb-1 text-sm font-semibold text-white">المنتجات</h2>
-            <p className="mb-4 text-xs text-[#8b80a8]">
-              تكلفة الشراء وربح كل سطر تظهر للمدير فقط ولا تُرسل للمتجر.
-            </p>
-            <Table columns={itemsCols} rows={order.items} rowKey={(r) => r.id} empty="لا توجد منتجات" />
-          </Card>
+          {bookItems.length > 0 && (
+            <Card>
+              <h2 className="mb-1 text-sm font-semibold text-white">الكتب المطلوبة</h2>
+              <p className="mb-4 text-xs text-[#8b80a8]">
+                تكلفة الشراء وربح كل سطر تظهر للمدير فقط ولا تُرسل للمتجر.
+              </p>
+              <Table columns={itemsCols} rows={bookItems} rowKey={(r) => r.id} empty="لا توجد كتب" />
+            </Card>
+          )}
+
+          {packageItems.length > 0 && (
+            <Card>
+              <h2 className="mb-1 text-sm font-semibold text-white flex items-center gap-2">
+                <PackageIcon className="h-4 w-4 text-brand-400" />
+                الباقات المطلوبة
+              </h2>
+              <p className="mb-4 text-xs text-[#8b80a8]">
+                باقات الكتب المجمعة مع أسعارها وأرباحها الخاصة
+              </p>
+              <Table columns={packageCols} rows={packageItems} rowKey={(r) => r.id} empty="لا توجد باقات" />
+            </Card>
+          )}
 
           <Card>
             <h2 className="mb-4 text-sm font-semibold text-white">خلاصة الطلب</h2>

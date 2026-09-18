@@ -1,7 +1,22 @@
-import { Link } from 'react-router-dom'
-import { ArrowLeft, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
 
-export default function Hero({ onExplore, onBestsellers }) {
+export default function Hero({ onExplore, onBestsellers, heroConfig }) {
+  const { t, isRTL } = useLanguage()
+
+  const badge = heroConfig?.badge || t('appName') + ' — ' + t('appTagline')
+  const title = heroConfig?.title || (isRTL ? 'اكتشف كتابك القادم' : t('appTagline'))
+  const subtitle =
+    heroConfig?.subtitle ||
+    (isRTL
+      ? 'مجموعة مختارة من الكتب الشرعية والمعرفية لعشاق القراءة وطلب العلم.'
+      : t('footerAbout'))
+  const statBooks = heroConfig?.statBooks || t('statBooksDefault')
+  const statDelivery = heroConfig?.statDelivery || t('statDeliveryDefault')
+  const statCustomers = heroConfig?.statCustomers || t('statCustomersDefault')
+
+  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
+
   return (
     <section className="relative overflow-hidden">
       {/* Decorative background */}
@@ -43,16 +58,15 @@ export default function Hero({ onExplore, onBestsellers }) {
         <div className="max-w-2xl mx-auto text-center">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-brand-100 text-brand-800 text-[0.82rem] font-medium rounded-full mb-7">
             <Sparkles className="w-3.5 h-3.5" />
-            مكتبة أرين للكتب الشرعية
+            {badge}
           </span>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground lg:leading-[1.15] leading-[1.25]">
-            اكتشف
-            <span className="text-brand-700"> كتابك القادم </span>
+            {title}
           </h1>
 
           <p className="mt-5 text-lg text-muted leading-relaxed max-w-xl mx-auto">
-            مجموعة مختارة من الكتب الشرعية والمعرفية لعشاق القراءة وطلب العلم.
+            {subtitle}
           </p>
 
           <div className="mt-10 flex items-center justify-center gap-3 flex-wrap">
@@ -60,23 +74,23 @@ export default function Hero({ onExplore, onBestsellers }) {
               onClick={onExplore}
               className="inline-flex items-center gap-2 px-7 py-4 bg-brand-700 hover:bg-brand-800 text-white text-[0.95rem] font-semibold rounded-2xl transition-all shadow-lg shadow-brand-700/25 hover:shadow-brand-800/30 hover:-translate-y-0.5"
             >
-              استكشف الكتب
-              <ArrowLeft className="w-4 h-4" />
+              <span>{t('exploreBooks')}</span>
+              <ArrowIcon className="w-4 h-4" />
             </button>
             <button
               onClick={onBestsellers}
               className="px-7 py-4 bg-white border border-border hover:border-brand-300 text-foreground text-[0.95rem] font-semibold rounded-2xl transition-all hover:text-brand-700"
             >
-              الأكثر مبيعاً
+              {t('bestsellers')}
             </button>
           </div>
 
           {/* Trust markers */}
           <div className="mt-16 grid grid-cols-3 gap-4 max-w-md mx-auto">
             {[
-              { label: 'كتاب', value: '+2000' },
-              { label: 'توصيل سريع', value: '24/48h' },
-              { label: 'عملاء', value: '+5000' },
+              { label: t('statBooksLabel'), value: statBooks },
+              { label: t('statDeliveryLabel'), value: statDelivery },
+              { label: t('statCustomersLabel'), value: statCustomers },
             ].map((stat) => (
               <div
                 key={stat.label}

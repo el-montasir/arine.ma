@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom'
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
+import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 
-export default function ProductCard({ book, onQuickView }) {
+export default function ProductCard({ book }) {
   const { addToCart, toggleFavorite, isFavorite } = useCart()
+  const { t } = useLanguage()
   const fav = isFavorite(book.id)
   const outOfStock = book.availability === 'out-of-stock'
 
@@ -24,17 +26,17 @@ export default function ProductCard({ book, onQuickView }) {
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
           {book.discount > 0 && (
             <span className="bg-brand-700 text-white text-[0.72rem] font-bold px-2.5 py-0.5 rounded-lg shadow-sm">
-              -{book.discount}%
+              {t('saveDiscount', { percent: book.discount })}
             </span>
           )}
           {book.isNew && (
             <span className="bg-emerald-600 text-white text-[0.72rem] font-bold px-2.5 py-0.5 rounded-lg shadow-sm">
-              جديد
+              {t('newBadge')}
             </span>
           )}
           {outOfStock && (
             <span className="bg-zinc-600 text-white text-[0.72rem] font-bold px-2.5 py-0.5 rounded-lg shadow-sm">
-              غير متوفر
+              {t('outOfStock')}
             </span>
           )}
         </div>
@@ -51,7 +53,7 @@ export default function ProductCard({ book, onQuickView }) {
               ? 'bg-brand-100 text-brand-700 shadow-sm'
               : 'bg-white/90 text-muted hover:text-brand-700 hover:bg-white shadow-sm'
           }`}
-          aria-label={fav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+          aria-label={fav ? t('favorites') : t('addToCart')}
         >
           <Heart
             key={fav ? 'fav' : 'not'}
@@ -64,7 +66,7 @@ export default function ProductCard({ book, onQuickView }) {
         {/* Quick add overlay */}
         {outOfStock ? (
           <div className="absolute bottom-3 inset-x-3 z-10 py-2.5 rounded-xl text-[0.82rem] font-medium text-white/80 flex items-center justify-center gap-2 pointer-events-none">
-            غير متوفر حالياً
+            {t('outOfStockDesc')}
           </div>
         ) : (
           <button
@@ -76,7 +78,7 @@ export default function ProductCard({ book, onQuickView }) {
             className="absolute bottom-3 inset-x-3 z-10 py-2.5 bg-brand-700/95 hover:bg-brand-700 text-white text-[0.82rem] font-medium rounded-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 backdrop-blur-sm shadow-md flex items-center justify-center gap-2"
           >
             <ShoppingCart className="w-4 h-4" />
-            أضف للسلة
+            {t('addToCart')}
           </button>
         )}
       </Link>
@@ -131,7 +133,7 @@ export default function ProductCard({ book, onQuickView }) {
           }`}
         >
           <ShoppingCart className="w-4 h-4" />
-          {outOfStock ? 'غير متوفر' : 'أضف للسلة'}
+          {outOfStock ? t('outOfStock') : t('addToCart')}
         </button>
       </div>
     </article>

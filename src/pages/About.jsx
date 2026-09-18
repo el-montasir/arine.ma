@@ -1,19 +1,34 @@
 import { MapPin, Phone, Mail, Clock, BookOpen } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
+import { useStoreConfig } from '../hooks/useStoreConfig'
 
 export default function About() {
+  const { t } = useLanguage()
+  const { config } = useStoreConfig()
+
+  const storeName = config?.store?.name || 'مكتبة أرين للكتب الشرعية'
+  const storeDesc = config?.store?.description || 'منصة مغربية متخصصة في توفير الكتب الشرعية والمعرفية لعشاق القراءة وطلب العلم.'
+  const address = config?.store?.address || 'الدار البيضاء، المغرب'
+  const phone = config?.store?.phone || '+212 600 00 00 00'
+  const email = config?.store?.email || 'info@arine.ma'
+
+  const statBooks = config?.hero?.statBooks || '+2000'
+  const statCustomers = config?.hero?.statCustomers || '+5000'
+  const statDelivery = config?.hero?.statDelivery || '24/48'
+
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-10 lg:py-12">
       {/* Hero */}
       <div className="text-center max-w-2xl mx-auto mb-16">
         <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-brand-100 text-brand-700 text-[0.82rem] font-medium rounded-full mb-5">
           <BookOpen className="w-3.5 h-3.5" />
-          من نحن
+          {t('about') || 'من نحن'}
         </span>
         <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
-          مكتبة <span className="text-brand-700">أرين</span> للكتب الشرعية
+          {storeName}
         </h1>
         <p className="text-muted text-lg mt-4 leading-relaxed">
-          منصة مغربية متخصصة في توفير الكتب الشرعية والمعرفية لعشاق القراءة وطلب العلم.
+          {storeDesc}
         </p>
       </div>
 
@@ -37,9 +52,9 @@ export default function About() {
         <div className="bg-gradient-to-br from-brand-50 to-brand-100/50 rounded-3xl p-8 lg:p-12">
           <div className="grid grid-cols-2 gap-4">
             {[
-              { value: '+2000', label: 'كتاب متاح' },
-              { value: '+5000', label: 'عميل سعيد' },
-              { value: '24/48', label: 'ساعة توصيل' },
+              { value: statBooks, label: 'كتاب متاح' },
+              { value: statCustomers, label: 'عميل سعيد' },
+              { value: statDelivery, label: 'ساعة توصيل' },
               { value: '+95%', label: 'رضا العملاء' },
             ].map((s) => (
               <div key={s.label} className="bg-white rounded-2xl p-4 text-center">
@@ -75,10 +90,10 @@ export default function About() {
         <h2 className="text-2xl font-bold text-foreground text-center mb-8">تواصل معنا</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: MapPin, label: 'العنوان', value: 'الدار البيضاء، المغرب' },
-            { icon: Phone, label: 'الهاتف', value: '+212 600 00 00 00' },
-            { icon: Mail, label: 'البريد', value: 'info@arine.ma' },
-            { icon: Clock, label: 'ساعات العمل', value: 'الاثنين - السبت، 9-18' },
+            { icon: MapPin, label: 'العنوان', value: address, isLtr: false },
+            { icon: Phone, label: 'الهاتف', value: phone, isLtr: true },
+            { icon: Mail, label: 'البريد', value: email, isLtr: true },
+            { icon: Clock, label: 'ساعات العمل', value: 'الاثنين - السبت، 9-18', isLtr: false },
           ].map((c) => (
             <div key={c.label} className="flex items-start gap-3">
               <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -86,7 +101,7 @@ export default function About() {
               </div>
               <div>
                 <div className="text-[0.78rem] text-muted">{c.label}</div>
-                <div className="font-semibold text-foreground text-[0.88rem] mt-0.5">{c.value}</div>
+                <div className="font-semibold text-foreground text-[0.88rem] mt-0.5" dir={c.isLtr ? "ltr" : undefined}>{c.value}</div>
               </div>
             </div>
           ))}

@@ -1,9 +1,21 @@
 import { prisma } from '../lib/prisma.js'
 import { errorResponse } from '../utils/api-response.js'
 
-// Shape a Prisma product row into the exact JSON shape the React frontend
-// already consumes (category exposed as a display string, matching books.js).
+// Shape a Prisma product row into the exact JSON shape the React frontend consumes
 export function serializeProduct(product) {
+  const images = (product.images || []).map((img) => ({
+    id: img.id,
+    url: img.url,
+    sortOrder: img.sortOrder,
+    isPrimary: img.isPrimary,
+  }))
+
+  const primaryImage =
+    images.find((img) => img.isPrimary)?.url ||
+    images[0]?.url ||
+    product.image ||
+    null
+
   return {
     id: product.id,
     title: product.title,
@@ -13,7 +25,8 @@ export function serializeProduct(product) {
     price: product.price,
     oldPrice: product.oldPrice,
     discount: product.discount,
-    image: product.image,
+    image: primaryImage,
+    images,
     availability: product.availability,
     description: product.description,
     rating: product.rating,
@@ -22,6 +35,8 @@ export function serializeProduct(product) {
     pages: product.pages,
     publisher: product.publisher,
     year: product.year,
+    shippingMode: product.shippingMode ?? null,
+    customShipping: product.customShipping ?? null,
   }
 }
 
@@ -56,8 +71,6 @@ export async function getProducts(req, res, next) {
       ]
     }
     if (category) {
-      // Accept a slug, an exact category name, or a partial name — matching
-      // the tolerant behaviour of the existing frontend filters.
       where.category = {
         OR: [
           { slug: category },
@@ -70,7 +83,10 @@ export async function getProducts(req, res, next) {
     const products = await prisma.product.findMany({
       where,
       orderBy: buildOrderBy(sort),
-      include: { category: true },
+      include: {
+        category: true,
+        images: { orderBy: { sortOrder: 'asc' } },
+      },
     })
 
     return res.json({
@@ -92,7 +108,10 @@ export async function getProductById(req, res, next) {
     }
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { category: true },
+      include: {
+        category: true,
+        images: { orderBy: { sortOrder: 'asc' } },
+      },
     })
     if (!product) {
       return errorResponse(res, 404, 'NOT_FOUND', 'الكتاب غير موجود')

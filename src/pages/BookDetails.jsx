@@ -1,11 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Star, ShoppingCart, ArrowRight, Minus, Plus, BookOpen, Box, Truck, Shield, RotateCcw } from 'lucide-react'
+import { Star, ShoppingCart, Minus, Plus, Box, Truck, Shield, RotateCcw, Image as ImageIcon } from 'lucide-react'
 import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
 import { formatPrice } from '../utils/format'
 import books from '../data/books'
-import categories from '../data/categories'
 import api from '../utils/api'
 
 export default function BookDetails() {
@@ -15,24 +14,53 @@ export default function BookDetails() {
   const localBook = useMemo(() => books.find((b) => b.id === Number(id)), [id])
   const { addToCart } = useCart()
   const [qty, setQty] = useState(1)
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0)
 
   // Pull the canonical product data from PostgreSQL; fall back to the bundled
-  // catalog while the request is in flight or if the API is unreachable.
+  // catalog ONLY while the request is in flight or if the API is unreachable.
+  const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState(false)
+
   useEffect(() => {
     let cancelled = false
     setApiBook(null)
+    setLoading(true)
+    setApiError(false)
+    setSelectedImageIdx(0)
     api
       .get(`/products/${id}`)
       .then((res) => {
-        if (!cancelled) setApiBook(res.data || null)
+        if (!cancelled) {
+          setApiBook(res.data || null)
+          setLoading(false)
+          setApiError(false)
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) {
+          setApiError(true)
+          setLoading(false)
+        }
+      })
     return () => {
       cancelled = true
     }
   }, [id])
 
-  const book = apiBook || localBook
+  // CRITICAL: API data takes absolute priority when loaded successfully.
+  // Only use local book during loading or when API genuinely failed.
+  const book = apiBook || (loading || apiError ? localBook : null)
+
+  const imagesList = useMemo(() => {
+    if (!book) return []
+    if (Array.isArray(book.images) && book.images.length > 0) {
+      return book.images.map((img) => (typeof img === 'string' ? img : img.url)).filter(Boolean)
+    }
+    if (book.image) {
+      return [book.image]
+    }
+    return []
+  }, [book])
 
   if (!book) {
     return (
@@ -49,9 +77,36 @@ export default function BookDetails() {
     )
   }
 
-  const relatedBooks = books
-    .filter((b) => b.category === book.category && b.id !== book.id)
-    .slice(0, 4)
+  const currentImageUrl = imagesList[selectedImageIdx] || imagesList[0] || null
+
+  const [apiRelated, setApiRelated] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (book?.category) {
+      api.get(`/products?category=${encodeURIComponent(book.category)}`)
+        .then((res) => {
+          if (!cancelled && Array.isArray(res.data)) {
+            setApiRelated(res.data.filter((b) => b.id !== book.id).slice(0, 4))
+          }
+        })
+        .catch(() => {})
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [book?.category, book?.id])
+
+  const relatedBooks = useMemo(() => {
+    if (Array.isArray(apiRelated) && apiRelated.length > 0) {
+      return apiRelated
+    }
+    return books
+      .filter((b) => b.category === book?.category && b.id !== book?.id)
+      .slice(0, 4)
+  }, [apiRelated, book?.category, book?.id])
+
+  const isFreeShipping = book.shippingMode === 'free' || book.shippingMode === 'FREE'
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6 lg:py-10">
@@ -66,22 +121,65 @@ export default function BookDetails() {
 
       {/* Main content */}
       <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 overflow-hidden mt-2">
-        {/* Cover */}
+        {/* Cover / Image Gallery */}
         <div className="lg:w-[340px] flex-shrink-0 max-w-full">
-          <div className="lg:sticky lg:top-28 max-w-[340px] mx-auto lg:mx-0">
-            <BookCover book={book} size="lg" className="w-56 lg:w-full mx-auto lg:mx-0" />
+          <div className="lg:sticky lg:top-28 max-w-[340px] mx-auto lg:mx-0 space-y-3">
+            {currentImageUrl ? (
+              <div className="relative aspect-[3/4] w-56 lg:w-full mx-auto lg:mx-0 overflow-hidden rounded-2xl bg-[#F3F4F6] border border-border shadow-md">
+                <img
+                  src={currentImageUrl}
+                  alt={book.title}
+                  className="h-full w-full object-cover transition-all"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+            ) : (
+              <BookCover book={book} size="lg" className="w-56 lg:w-full mx-auto lg:mx-0" />
+            )}
+
+            {/* Thumbnails list if multiple images exist */}
+            {imagesList.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 max-w-[340px] mx-auto lg:mx-0">
+                {imagesList.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedImageIdx(idx)}
+                    className={`h-16 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                      selectedImageIdx === idx
+                        ? 'border-brand-600 shadow-sm scale-105'
+                        : 'border-border/80 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img
+                      src={url}
+                      alt={`صورة ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Info */}
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="px-2.5 py-1 bg-brand-100 text-brand-700 text-[0.75rem] font-semibold rounded-full">
               {book.category}
             </span>
             {book.isNew && (
               <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[0.75rem] font-semibold rounded-full">
                 جديد
+              </span>
+            )}
+            {isFreeShipping && (
+              <span className="px-2.5 py-1 bg-ok-50 text-ok-600 border border-ok-200 text-[0.75rem] font-semibold rounded-full flex items-center gap-1">
+                <Truck className="w-3 h-3" />
+                توصيل مجاني
               </span>
             )}
             {book.availability === 'out-of-stock' ? (
@@ -133,9 +231,9 @@ export default function BookDetails() {
           {/* Meta */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             {[
-              { label: 'الناشر', value: book.publisher },
-              { label: 'الصفحات', value: book.pages },
-              { label: 'السنة', value: book.year },
+              { label: 'الناشر', value: book.publisher || 'دار نشر إسلامية' },
+              { label: 'الصفحات', value: book.pages || '—' },
+              { label: 'السنة', value: book.year || '—' },
             ].map((m) => (
               <div key={m.label} className="bg-[#F3F4F6] rounded-xl px-3 py-3 text-center">
                 <div className="text-[0.72rem] text-muted">{m.label}</div>
@@ -237,7 +335,13 @@ function ProductCardMini({ book }) {
   return (
     <Link to={`/book/${book.id}`} className="group block bg-white rounded-xl border border-border/60 hover:border-brand-200 hover:shadow-md transition-all overflow-hidden">
       <div className="bg-[#F3F4F6] p-3">
-        <BookCover book={book} size="md" />
+        {book.image ? (
+          <div className="aspect-[3/4] w-full overflow-hidden rounded-lg bg-surface-900">
+            <img src={book.image} alt={book.title} className="h-full w-full object-cover" />
+          </div>
+        ) : (
+          <BookCover book={book} size="md" />
+        )}
       </div>
       <div className="p-3">
         <div className="text-[0.72rem] text-brand-600 mb-1">{book.category}</div>

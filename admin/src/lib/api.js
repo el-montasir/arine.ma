@@ -5,12 +5,14 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/admin'
 
 async function request(path, { method = 'GET', body: payload } = {}) {
   let res
+  const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData
+
   try {
     res = await fetch(`${BASE}${path}`, {
       method,
       credentials: 'include',
-      headers: payload ? { 'Content-Type': 'application/json' } : undefined,
-      body: payload ? JSON.stringify(payload) : undefined,
+      headers: isFormData ? undefined : (payload ? { 'Content-Type': 'application/json' } : undefined),
+      body: isFormData ? payload : (payload ? JSON.stringify(payload) : undefined),
     })
   } catch {
     const err = new Error('تعذر الاتصال بالخادم')
@@ -41,4 +43,5 @@ export const api = {
   put: (path, body) => request(path, { method: 'PUT', body }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),
   del: (path) => request(path, { method: 'DELETE' }),
+  upload: (path, formData) => request(path, { method: 'POST', body: formData }),
 }

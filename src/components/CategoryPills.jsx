@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
-import categories from '../data/categories'
+import useCategories from '../hooks/useCategories'
 
 export default function CategoryPills({ onSelect, includeAll = false }) {
   const [active, setActive] = useState(includeAll ? 'all' : null)
   const [scrollPos, setScrollPos] = useState(0)
+  const { categories = [] } = useCategories()
 
   const handleSelect = (slug) => {
     if (onSelect) {

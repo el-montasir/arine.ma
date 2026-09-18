@@ -24,7 +24,7 @@ export function orderFinance(order) {
   let cost = 0
   let costUnknownItems = 0
 
-  const items = order.items.map((item) => {
+  const items = (order.items || []).map((item) => {
     const f = itemFinance(item)
     revenue += f.revenue
     if (f.hasCost) {
@@ -32,11 +32,23 @@ export function orderFinance(order) {
     } else {
       costUnknownItems += 1
     }
-    return { ...item, ...f }
+    return { ...item, ...f, type: 'book' }
+  })
+
+  const packageItems = (order.packageItems || []).map((item) => {
+    const f = itemFinance(item)
+    revenue += f.revenue
+    if (f.hasCost) {
+      cost += f.cost
+    } else {
+      costUnknownItems += 1
+    }
+    return { ...item, ...f, type: 'package' }
   })
 
   return {
     items,
+    packageItems,
     revenue, // goods revenue (sum of selling-price sold)
     cost, // known purchase cost
     costUnknownItems,

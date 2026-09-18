@@ -9,9 +9,14 @@ import Orders from './pages/Orders.jsx'
 import OrderDetails from './pages/OrderDetails.jsx'
 import Products from './pages/Products.jsx'
 import ProductForm from './pages/ProductForm.jsx'
+import Packages from './pages/Packages.jsx'
+import PackageForm from './pages/PackageForm.jsx'
 import Categories from './pages/Categories.jsx'
 import Finance from './pages/Finance.jsx'
 import Customers from './pages/Customers.jsx'
+import Banners from './pages/Banners.jsx'
+import StoreSettings from './pages/StoreSettings.jsx'
+import ShippingSettings from './pages/ShippingSettings.jsx'
 import Settings from './pages/Settings.jsx'
 
 function RequireAuth({ children }) {
@@ -46,9 +51,15 @@ export default function App() {
         <Route path="products" element={<Products />} />
         <Route path="products/new" element={<ProductForm />} />
         <Route path="products/:id/edit" element={<ProductForm />} />
+        <Route path="packages" element={<Packages />} />
+        <Route path="packages/new" element={<PackageForm />} />
+        <Route path="packages/:id/edit" element={<PackageForm />} />
         <Route path="categories" element={<Categories />} />
         <Route path="finance" element={<Finance />} />
         <Route path="customers" element={<Customers />} />
+        <Route path="banners" element={<Banners />} />
+        <Route path="store-settings" element={<StoreSettings />} />
+        <Route path="shipping-settings" element={<ShippingSettings />} />
         <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<NotFound />} />

@@ -1,0 +1,2277 @@
+You are working inside the existing Arine bookstore project.
+
+PROJECT ROOT:
+~/Desktop/arine
+
+YOUR MAIN TASK:
+Perform a COMPLETE, DEEP, SYSTEMATIC AUDIT of the ENTIRE project.
+
+The goal is NOT simply to find syntax errors.
+
+The goal is to identify:
+- runtime errors
+- build errors
+- TypeScript/JavaScript errors
+- React errors
+- routing errors
+- API errors
+- authentication errors
+- authorization errors
+- Prisma/database errors
+- migration problems
+- validation problems
+- security problems
+- frontend/backend integration problems
+- broken imports
+- broken exports
+- incorrect environment variable usage
+- CORS problems
+- session/cookie problems
+- Admin Panel problems
+- Store frontend problems
+- responsive UI problems
+- state management problems
+- API response mismatches
+- error handling problems
+- loading state problems
+- empty state problems
+- incorrect database queries
+- incorrect Prisma relations
+- incorrect calculations
+- incorrect finance/profit calculations
+- order management problems
+- product management problems
+- category management problems
+- customer management problems
+- admin authentication problems
+- settings problems
+- deployment-related problems
+- Git problems
+- accidental secrets
+- dead code
+- duplicated logic
+- inconsistent naming
+- broken configuration
+- dependency issues
+- outdated or incompatible code
+- accessibility issues
+- obvious UX problems
+- architectural inconsistencies
+
+IMPORTANT:
+Do not assume the project is correct just because it builds.
+
+Inspect the actual implementation.
+
+Do not blindly follow old documentation if the actual code differs.
+
+The actual codebase is the source of truth.
+
+==================================================
+PHASE 0 — SAFETY RULES
+==================================================
+
+Before doing anything:
+
+Read:
+~/Desktop/arine/phase4.txt
+
+Read:
+~/Desktop/arine/README.md
+
+Read:
+~/Desktop/arine/.gitignore
+
+Read:
+~/Desktop/arine/.env.example
+
+Read:
+~/Desktop/arine/server/.env.example
+
+Read:
+~/Desktop/arine/admin/.env.example
+
+Do NOT ask me to paste these files.
+
+Open and read them yourself.
+
+Do NOT expose secrets in your final report.
+
+If you find a secret:
+- do not print the complete secret
+- report the file and approximate location
+- recommend rotating it if necessary
+
+NEVER run:
+
+prisma migrate reset
+
+prisma db push
+
+DROP DATABASE
+
+DROP SCHEMA
+
+DROP TABLE
+
+TRUNCATE
+
+Any destructive database reset command
+
+Do NOT delete database data.
+
+Do NOT recreate the database.
+
+Do NOT change PostgreSQL credentials.
+
+Do NOT change the production database configuration.
+
+Do NOT modify .env files unless explicitly necessary.
+
+Prefer .env.example for configuration documentation.
+
+Do NOT commit secrets.
+
+Do NOT commit:
+.env
+.env.*
+database dumps
+backup files
+private keys
+SSH keys
+API tokens
+session secrets
+real admin passwords
+
+Do NOT modify the existing database structure unless a real migration is required.
+
+If a migration is required:
+- inspect current migration state first
+- create a proper Prisma migration
+- do not reset the database
+- explain what the migration changes
+
+==================================================
+PHASE 1 — INITIAL PROJECT AUDIT
+==================================================
+
+Start by checking:
+
+pwd
+
+git status
+
+git branch -avv
+
+git remote -v
+
+git log --oneline --decorate --graph --all -20
+
+Then inspect:
+
+find . -maxdepth 2 -type f
+
+Do not include:
+node_modules
+.git
+dist
+build
+coverage
+
+Then inspect the project tree.
+
+Identify:
+
+ROOT FRONTEND
+
+ADMIN FRONTEND
+
+BACKEND
+
+PRISMA
+
+MIGRATIONS
+
+CONFIGURATION
+
+STATIC ASSETS
+
+DOCUMENTATION
+
+SCRIPTS
+
+BACKUPS
+
+ENVIRONMENT FILES
+
+==================================================
+PHASE 2 — GIT AUDIT
+==================================================
+
+Check:
+
+git status --short
+
+git ls-files
+
+Check tracked environment files.
+
+Check:
+
+git ls-files | grep -Ei '(^|/)\.env($|\.)'
+
+Check suspicious files:
+
+git ls-files | grep -Ei 'secret|credential|password|token|apikey|private|\.pem|\.key|id_rsa'
+
+Check history for sensitive files.
+
+Check:
+
+git log --all --name-only --pretty=format:
+
+Search history for:
+.env
+.env.local
+.env.production
+credentials
+private keys
+database dumps
+backup files
+
+Do not modify Git history automatically.
+
+If a historical secret is discovered:
+- report it
+- do not expose its value
+- explain remediation
+
+Check whether the repository is clean.
+
+==================================================
+PHASE 3 — ROOT PACKAGE AUDIT
+==================================================
+
+Read:
+
+package.json
+
+package-lock.json
+
+vite.config.js
+
+index.html
+
+Inspect:
+
+scripts
+
+dependencies
+
+devDependencies
+
+versions
+
+React version
+
+Vite version
+
+ESLint/Oxlint configuration
+
+Check whether scripts actually work.
+
+Run appropriate:
+
+npm install
+
+only if dependencies are missing.
+
+Do not unnecessarily reinstall everything.
+
+Then run:
+
+npm run build
+
+If a test script exists:
+
+npm test
+
+If lint exists:
+
+npm run lint
+
+If check exists:
+
+npm run check
+
+If typecheck exists:
+
+npm run typecheck
+
+Do not invent scripts.
+
+Use existing scripts first.
+
+Record every failure.
+
+==================================================
+PHASE 4 — STORE FRONTEND AUDIT
+==================================================
+
+Inspect:
+
+src/
+
+Read:
+
+src/App.jsx
+
+src/App.css
+
+src/index.css
+
+src/main.jsx
+
+Inspect every component.
+
+Especially:
+
+AnnouncementBar.jsx
+BookCover.jsx
+CartDrawer.jsx
+CategoryPills.jsx
+FeaturedBook.jsx
+Footer.jsx
+Hero.jsx
+LibraryBanner.jsx
+Navbar.jsx
+Newsletter.jsx
+ProductCard.jsx
+ProductGrid.jsx
+Toast.jsx
+
+Inspect:
+
+src/context/
+
+src/hooks/
+
+src/pages/
+
+src/utils/
+
+src/data/
+
+Check every import.
+
+Check every export.
+
+Check component props.
+
+Check state management.
+
+Check React hooks.
+
+Look for:
+
+useEffect dependency issues
+
+stale closures
+
+missing keys
+
+unnecessary effects
+
+infinite render loops
+
+incorrect state updates
+
+race conditions
+
+unhandled promises
+
+incorrect async functions
+
+missing loading states
+
+missing error states
+
+broken empty states
+
+incorrect conditional rendering
+
+incorrect navigation
+
+broken links
+
+invalid routes
+
+incorrect route parameters
+
+broken checkout flow
+
+broken cart flow
+
+broken product details
+
+broken shop filters
+
+broken categories
+
+broken account page
+
+broken contact page
+
+broken order success page
+
+broken library page
+
+broken responsive layouts
+
+broken mobile layouts
+
+hardcoded API URLs
+
+incorrect environment variable names
+
+frontend secrets
+
+unnecessary duplicated data
+
+static data that should come from API
+
+API response mismatch
+
+==================================================
+PHASE 5 — STORE API INTEGRATION
+==================================================
+
+Inspect:
+
+src/utils/api.js
+
+src/hooks/useProducts.js
+
+Every component calling the API.
+
+Check:
+
+HTTP methods
+
+URLs
+
+headers
+
+JSON parsing
+
+error handling
+
+timeouts
+
+response structures
+
+status codes
+
+loading states
+
+authentication behavior
+
+CORS expectations
+
+API base URL
+
+Environment variables
+
+Check whether frontend expects:
+
+data
+
+data.data
+
+results
+
+items
+
+products
+
+categories
+
+or another structure.
+
+Compare this with backend implementation.
+
+Do not assume the response shape.
+
+==================================================
+PHASE 6 — ADMIN FRONTEND AUDIT
+==================================================
+
+Inspect the entire:
+
+admin/
+
+Read:
+
+admin/package.json
+
+admin/vite.config.js
+
+admin/index.html
+
+admin/src/main.jsx
+
+admin/src/App.jsx
+
+admin/src/index.css
+
+Inspect:
+
+admin/src/context/AuthContext.jsx
+
+admin/src/lib/api.js
+
+admin/src/lib/format.js
+
+admin/src/lib/useFetch.js
+
+Inspect:
+
+admin/src/layouts/
+
+admin/src/components/
+
+admin/src/components/ui/
+
+admin/src/pages/
+
+Audit:
+
+Login
+
+Dashboard
+
+Orders
+
+OrderDetails
+
+Products
+
+ProductForm
+
+Categories
+
+Customers
+
+Finance
+
+Settings
+
+NotFound
+
+Check every route.
+
+Check route guards.
+
+Check authentication state.
+
+Check logout.
+
+Check session persistence.
+
+Check unauthorized handling.
+
+Check 401 handling.
+
+Check 403 handling.
+
+Check 404 handling.
+
+Check 500 handling.
+
+Check loading behavior.
+
+Check error banners.
+
+Check modals.
+
+Check forms.
+
+Check validation.
+
+Check pagination if implemented.
+
+Check filters.
+
+Check sorting.
+
+Check search.
+
+Check table rendering.
+
+Check mobile behavior.
+
+Check RTL.
+
+Check Arabic text.
+
+Check formatting.
+
+Check currency.
+
+Check dates.
+
+Check number formatting.
+
+Check empty states.
+
+Check confirmation dialogs.
+
+Check destructive actions.
+
+Check duplicate submissions.
+
+Check button disabled states.
+
+Check accessibility.
+
+==================================================
+PHASE 7 — ADMIN AUTHENTICATION AUDIT
+==================================================
+
+Inspect:
+
+server/src/controllers/admin/auth.controller.js
+
+server/src/services/admin/auth.service.js
+
+server/src/routes/admin/auth.routes.js
+
+server/src/middleware/auth.middleware.js
+
+server/src/lib/session.js
+
+server/src/utils/password.js
+
+server/src/validators/admin/auth.validator.js
+
+seed-admin.js
+
+Check:
+
+password hashing
+
+password comparison
+
+session creation
+
+session expiration
+
+cookie configuration
+
+HttpOnly
+
+SameSite
+
+Secure
+
+CORS
+
+credentials
+
+logout
+
+session destruction
+
+admin lookup
+
+role checks
+
+authorization
+
+rate limiting
+
+login validation
+
+failed login behavior
+
+timing issues
+
+session fixation risks
+
+CSRF considerations
+
+Do not weaken security to make development easier.
+
+Do not put admin credentials in frontend code.
+
+Do not hardcode passwords.
+
+Do not expose password hashes through APIs.
+
+Do not expose session secrets.
+
+Do not expose internal database errors to users.
+
+==================================================
+PHASE 8 — BACKEND APPLICATION AUDIT
+==================================================
+
+Inspect:
+
+server/src/app.js
+
+server/src/server.js
+
+All controllers.
+
+All routes.
+
+All services.
+
+All middleware.
+
+All utilities.
+
+All validators.
+
+Check:
+
+Express configuration
+
+JSON parsing
+
+CORS
+
+sessions
+
+cookies
+
+rate limiting
+
+error middleware
+
+404 behavior
+
+async error handling
+
+logging
+
+environment variables
+
+port configuration
+
+shutdown handling
+
+database connection
+
+Prisma client lifecycle
+
+Check for:
+
+uncaught promises
+
+unhandled rejections
+
+incorrect middleware ordering
+
+missing middleware
+
+incorrect middleware
+
+duplicate routes
+
+route conflicts
+
+wrong HTTP methods
+
+wrong status codes
+
+incorrect response shapes
+
+inconsistent API errors
+
+security issues
+
+==================================================
+PHASE 9 — PUBLIC API AUDIT
+==================================================
+
+Inspect:
+
+server/src/routes/categories.routes.js
+
+server/src/routes/products.routes.js
+
+server/src/routes/orders.routes.js
+
+Relevant controllers/services.
+
+Check:
+
+GET products
+
+GET product
+
+GET categories
+
+GET category
+
+POST order
+
+Order validation
+
+Order calculations
+
+Shipping calculation
+
+Payment method validation
+
+Order status
+
+Order number generation
+
+Stock/availability behavior
+
+Check that public APIs do NOT expose:
+
+costPrice
+
+admin passwords
+
+password hashes
+
+sessions
+
+internal secrets
+
+private configuration
+
+admin-only information
+
+Check authorization boundaries.
+
+==================================================
+PHASE 10 — ADMIN API AUDIT
+==================================================
+
+Inspect all:
+
+server/src/routes/admin/
+
+Inspect:
+
+auth.routes.js
+categories.routes.js
+customers.routes.js
+dashboard.routes.js
+orders.routes.js
+products.routes.js
+profit.routes.js
+settings.routes.js
+index.js
+
+Check:
+
+authentication middleware
+
+authorization middleware
+
+SUPER_ADMIN behavior
+
+admin roles
+
+validation
+
+HTTP methods
+
+status codes
+
+response format
+
+error handling
+
+database queries
+
+pagination
+
+filters
+
+search
+
+sorting
+
+security
+
+Check every endpoint.
+
+Create an endpoint inventory.
+
+For each endpoint identify:
+
+METHOD
+
+PATH
+
+AUTH REQUIRED
+
+ROLE REQUIRED
+
+VALIDATION
+
+SERVICE
+
+DATABASE TABLES
+
+RESPONSE
+
+POSSIBLE ERRORS
+
+==================================================
+PHASE 11 — PRISMA SCHEMA AUDIT
+==================================================
+
+Read:
+
+server/prisma/schema.prisma
+
+Inspect every model.
+
+Inspect:
+
+fields
+
+types
+
+defaults
+
+indexes
+
+unique constraints
+
+relations
+
+onDelete
+
+onUpdate
+
+enum definitions
+
+timestamps
+
+nullable fields
+
+optional fields
+
+Check whether schema matches application code.
+
+Look for:
+
+wrong field names
+
+wrong relation names
+
+missing indexes
+
+incorrect optionality
+
+incorrect defaults
+
+missing unique constraints
+
+incorrect cascade behavior
+
+N+1 query risks
+
+incorrect relation queries
+
+incorrect Prisma syntax
+
+==================================================
+PHASE 12 — MIGRATION AUDIT
+==================================================
+
+Inspect:
+
+server/prisma/migrations/
+
+Read every migration.sql.
+
+Check:
+
+migration order
+
+schema changes
+
+indexes
+
+foreign keys
+
+constraints
+
+enum changes
+
+nullable changes
+
+data migrations
+
+migration lock
+
+Check current migration state.
+
+Use:
+
+cd server
+npx prisma migrate status
+
+This is a READ-ONLY CHECK.
+
+Do NOT reset the database.
+
+Do NOT use:
+
+npx prisma migrate reset
+
+Do NOT use:
+
+npx prisma db push
+
+Check whether database schema and migrations are consistent.
+
+==================================================
+PHASE 13 — DATABASE AUDIT
+==================================================
+
+The database already exists.
+
+DO NOT DELETE IT.
+
+DO NOT RESET IT.
+
+DO NOT DROP IT.
+
+DO NOT TRUNCATE IT.
+
+Only perform read-only inspection unless a migration is explicitly required.
+
+Check:
+
+database connectivity
+
+migration state
+
+tables
+
+relations
+
+indexes
+
+constraints
+
+expected columns
+
+Check whether application queries match actual schema.
+
+If PostgreSQL is unavailable:
+- report it
+- do not attempt destructive repair
+
+==================================================
+PHASE 14 — PRODUCT LOGIC AUDIT
+==================================================
+
+Inspect product logic.
+
+Check:
+
+title
+
+author
+
+category
+
+price
+
+oldPrice
+
+discount
+
+image
+
+availability
+
+description
+
+rating
+
+isNew
+
+isPopular
+
+pages
+
+publisher
+
+year
+
+costPrice
+
+Check calculations.
+
+Verify:
+
+discount calculations
+
+displayed prices
+
+old price behavior
+
+profit calculations
+
+availability behavior
+
+product filtering
+
+category filtering
+
+search
+
+sorting
+
+admin product creation
+
+admin product editing
+
+admin product deletion
+
+public product visibility
+
+Check for inconsistencies between Store and Admin.
+
+==================================================
+PHASE 15 — ORDER LOGIC AUDIT
+==================================================
+
+Inspect:
+
+order service
+
+order controller
+
+order validator
+
+admin order service
+
+admin order controller
+
+order number utility
+
+shipping utility
+
+Prisma order model
+
+Check:
+
+customer information
+
+phone validation
+
+city
+
+address
+
+note
+
+payment method
+
+status
+
+subtotal
+
+shipping
+
+total
+
+order items
+
+product snapshot
+
+unit price
+
+total price
+
+createdAt
+
+updatedAt
+
+Check:
+
+subtotal calculation
+
+shipping calculation
+
+total calculation
+
+quantity validation
+
+negative quantities
+
+zero quantities
+
+invalid products
+
+missing products
+
+duplicate products
+
+price manipulation
+
+client-side price trust
+
+server-side price verification
+
+order number collisions
+
+status transitions
+
+admin status changes
+
+public order creation
+
+error handling
+
+==================================================
+PHASE 16 — FINANCE AUDIT
+==================================================
+
+Inspect:
+
+server/src/controllers/admin/profit.controller.js
+
+server/src/services/admin/profit.service.js
+
+server/src/utils/admin-finance.js
+
+Admin Finance page.
+
+Check:
+
+revenue
+
+cost
+
+profit
+
+shipping
+
+discount
+
+order status inclusion/exclusion
+
+cancelled orders
+
+pending orders
+
+delivered orders
+
+date filtering
+
+aggregation
+
+rounding
+
+currency formatting
+
+database calculations
+
+frontend calculations
+
+Ensure sensitive financial information is admin-only.
+
+Do not expose finance APIs publicly.
+
+==================================================
+PHASE 17 — CUSTOMER AUDIT
+==================================================
+
+Inspect customer-related functionality.
+
+Check:
+
+customer extraction
+
+customer aggregation
+
+phone
+
+name
+
+orders
+
+total spent
+
+order count
+
+latest order
+
+search
+
+pagination
+
+duplicates
+
+privacy
+
+API exposure
+
+Make sure customer information is not unnecessarily exposed publicly.
+
+==================================================
+PHASE 18 — CATEGORY AUDIT
+==================================================
+
+Check:
+
+category creation
+
+category editing
+
+category deletion
+
+slug generation
+
+duplicate slugs
+
+duplicate names
+
+product relations
+
+empty categories
+
+category filtering
+
+public categories
+
+admin categories
+
+validation
+
+error handling
+
+==================================================
+PHASE 19 — SETTINGS AUDIT
+==================================================
+
+Inspect settings implementation.
+
+Check:
+
+authorization
+
+validation
+
+storage
+
+defaults
+
+frontend loading
+
+frontend saving
+
+error handling
+
+security
+
+Do not allow ordinary users to modify admin-only settings.
+
+==================================================
+PHASE 20 — SECURITY AUDIT
+==================================================
+
+Perform a security review.
+
+Look for:
+
+hardcoded passwords
+
+hardcoded tokens
+
+API keys
+
+private keys
+
+database URLs
+
+session secrets
+
+unsafe CORS
+
+wildcard CORS with credentials
+
+missing authentication
+
+missing authorization
+
+IDOR vulnerabilities
+
+SQL injection
+
+Prisma injection risks
+
+unsafe raw SQL
+
+XSS risks
+
+dangerouslySetInnerHTML
+
+unsafe redirects
+
+CSRF concerns
+
+session fixation
+
+weak cookies
+
+missing HttpOnly
+
+missing SameSite
+
+missing Secure in production
+
+rate limit bypasses
+
+unvalidated input
+
+mass assignment
+
+overly permissive updates
+
+sensitive error messages
+
+stack traces exposed to clients
+
+password exposure
+
+hash exposure
+
+admin data exposure
+
+costPrice exposure
+
+finance data exposure
+
+customer data exposure
+
+order data exposure
+
+==================================================
+PHASE 21 — SECRET SCAN
+==================================================
+
+Search tracked files for suspicious secrets.
+
+Search patterns such as:
+
+AWS keys
+
+GitHub tokens
+
+Google API keys
+
+OpenAI keys
+
+private keys
+
+JWT secrets
+
+database URLs
+
+password assignments
+
+token assignments
+
+secret assignments
+
+Do not print full values.
+
+If something looks like a real credential:
+- identify file
+- identify line
+- mask value
+- recommend rotation
+
+Remember:
+.env.example is allowed.
+
+Placeholder values are allowed.
+
+Code that reads process.env is allowed.
+
+A password utility file is allowed.
+
+==================================================
+PHASE 22 — DEPENDENCY AUDIT
+==================================================
+
+Inspect package.json files:
+
+root package.json
+
+admin/package.json
+
+server/package.json
+
+Check dependency versions.
+
+Look for:
+
+unused dependencies
+
+missing dependencies
+
+incorrect dependencies
+
+duplicate dependencies
+
+incompatible versions
+
+deprecated packages
+
+security-sensitive packages
+
+Run appropriate package audit commands if available.
+
+Do not automatically upgrade major dependencies.
+
+Do not introduce breaking changes without necessity.
+
+==================================================
+PHASE 23 — BUILD AUDIT
+==================================================
+
+Run:
+
+npm run build
+
+for root frontend.
+
+Run:
+
+cd admin
+npm run build
+
+Run backend validation/startup checks.
+
+If server has a lint/test script, run it.
+
+Do not hide errors.
+
+Record exact failures.
+
+Fix actual errors where safe.
+
+After fixing, rerun the checks.
+
+==================================================
+PHASE 24 — RUNTIME AUDIT
+==================================================
+
+Start backend using the existing development command.
+
+Verify:
+
+API starts
+
+database connects
+
+Prisma works
+
+routes load
+
+middleware loads
+
+Admin routes load
+
+Public routes load
+
+No startup exception
+
+Do not leave unnecessary processes running.
+
+If the server is already running:
+- do not start duplicate processes unnecessarily
+- inspect the existing process if possible
+
+==================================================
+PHASE 25 — API FUNCTIONAL AUDIT
+==================================================
+
+Test safe read-only endpoints first.
+
+Check:
+
+GET categories
+
+GET products
+
+GET product
+
+Admin login
+
+Admin authenticated endpoint
+
+Dashboard
+
+Products
+
+Categories
+
+Customers
+
+Orders
+
+Finance
+
+Settings
+
+Do not create destructive test data.
+
+Do not delete real data.
+
+For write endpoints:
+- inspect implementation
+- use safe test behavior only if appropriate
+- do not create junk data in the real database
+
+==================================================
+PHASE 26 — ERROR HANDLING AUDIT
+==================================================
+
+Every API should have predictable errors.
+
+Check:
+
+400
+
+401
+
+403
+
+404
+
+409
+
+422
+
+429
+
+500
+
+Check whether frontend handles them correctly.
+
+Check whether errors are localized where appropriate.
+
+Check whether server logs useful diagnostics.
+
+Do not expose stack traces in production responses.
+
+==================================================
+PHASE 27 — UI/UX AUDIT
+==================================================
+
+Check Store UI.
+
+Check Admin UI.
+
+Look for:
+
+broken layouts
+
+overflow
+
+mobile problems
+
+desktop problems
+
+RTL problems
+
+font problems
+
+button problems
+
+modal problems
+
+table problems
+
+form problems
+
+loading problems
+
+error problems
+
+empty states
+
+bad spacing
+
+inconsistent components
+
+broken navigation
+
+unreachable controls
+
+missing confirmations
+
+duplicate submissions
+
+Poor keyboard navigation
+
+==================================================
+PHASE 28 — RESPONSIVE AUDIT
+==================================================
+
+Inspect CSS.
+
+Check:
+
+mobile
+
+tablet
+
+desktop
+
+wide desktop
+
+RTL
+
+navigation
+
+tables
+
+forms
+
+modals
+
+cards
+
+product grids
+
+cart
+
+checkout
+
+Admin sidebar
+
+Admin topbar
+
+Admin tables
+
+Do not rewrite the entire design.
+
+Preserve existing visual identity.
+
+==================================================
+PHASE 29 — CODE QUALITY AUDIT
+==================================================
+
+Search for:
+
+TODO
+
+FIXME
+
+temporary hacks
+
+console.log
+
+debug code
+
+commented-out large blocks
+
+duplicated code
+
+dead code
+
+unused imports
+
+unused variables
+
+unused components
+
+unreachable code
+
+magic numbers
+
+inconsistent naming
+
+inconsistent response formats
+
+inconsistent error handling
+
+inconsistent validation
+
+Do not remove useful logs.
+
+Do not remove code merely because it looks unused without checking imports/routes.
+
+==================================================
+PHASE 30 — ARCHITECTURE AUDIT
+==================================================
+
+Determine whether architecture is consistent.
+
+Expected general structure:
+
+Store frontend
+Admin frontend
+Backend
+Prisma
+
+Verify separation.
+
+Verify public APIs and admin APIs are separated.
+
+Verify admin authentication is server-side.
+
+Verify business logic is not duplicated unnecessarily.
+
+Verify Prisma is accessed through the intended backend layer.
+
+==================================================
+PHASE 31 — ENVIRONMENT AUDIT
+==================================================
+
+Inspect environment variable usage.
+
+Compare:
+
+.env.example
+
+server/.env.example
+
+admin/.env.example
+
+Actual process.env usage.
+
+Identify variables that are:
+
+missing from examples
+
+unused
+
+incorrectly named
+
+used in frontend but unavailable to Vite
+
+used in backend incorrectly
+
+hardcoded
+
+Do not print real .env values.
+
+Do not commit real .env files.
+
+==================================================
+PHASE 32 — DOCUMENTATION AUDIT
+==================================================
+
+Read README.md.
+
+Check whether README matches actual project.
+
+Check:
+
+installation
+
+environment variables
+
+database setup
+
+migration setup
+
+seed setup
+
+frontend start
+
+admin start
+
+backend start
+
+ports
+
+URLs
+
+deployment instructions
+
+Do not invent unsupported instructions.
+
+If documentation is outdated:
+- update it if safe
+- keep it concise
+
+==================================================
+PHASE 33 — PHASE4 AUDIT
+==================================================
+
+Read phase4.txt again after understanding the project.
+
+Create an internal checklist:
+
+DONE
+
+PARTIALLY DONE
+
+MISSING
+
+BROKEN
+
+NOT REQUIRED
+
+Compare actual implementation against phase4.txt.
+
+Do not blindly implement everything in phase4.txt if it already exists.
+
+Do not implement future phases automatically.
+
+Respect explicit exclusions in phase4.txt.
+
+==================================================
+PHASE 34 — FIX STRATEGY
+==================================================
+
+After the audit:
+
+Categorize findings:
+
+CRITICAL
+
+HIGH
+
+MEDIUM
+
+LOW
+
+COSMETIC
+
+Fix:
+
+CRITICAL first
+
+HIGH second
+
+MEDIUM third
+
+LOW when safe
+
+COSMETIC only if it does not create unnecessary scope
+
+Do not change architecture unnecessarily.
+
+Do not rewrite working components without reason.
+
+Do not introduce a new framework.
+
+Do not replace Prisma.
+
+Do not replace React.
+
+Do not replace Express.
+
+Do not replace the current styling system.
+
+==================================================
+PHASE 35 — SAFE FIXES
+==================================================
+
+For every fix:
+
+Understand the root cause.
+
+Make the smallest correct change.
+
+Do not hide the error.
+
+Do not disable validation.
+
+Do not remove security controls.
+
+Do not bypass authentication.
+
+Do not bypass authorization.
+
+Do not disable rate limiting.
+
+Do not silence errors with empty catch blocks.
+
+Do not use any unsafe workaround.
+
+==================================================
+PHASE 36 — DATABASE SAFETY
+==================================================
+
+Before ANY database-related change:
+
+Run:
+
+cd server
+npx prisma migrate status
+
+Inspect schema.
+
+Inspect migrations.
+
+Only then decide whether a migration is needed.
+
+Never reset.
+
+Never drop.
+
+Never truncate.
+
+Never use db push against the existing database.
+
+If no migration is required:
+leave database structure untouched.
+
+==================================================
+PHASE 37 — FINAL BUILD
+==================================================
+
+After fixes:
+
+Run root frontend build.
+
+Run Admin frontend build.
+
+Run backend checks.
+
+Run Prisma validation.
+
+Run appropriate tests.
+
+Run appropriate lint/check commands.
+
+Fix remaining errors.
+
+Repeat until checks are clean or remaining issues are documented.
+
+==================================================
+PHASE 38 — FINAL SECURITY CHECK
+==================================================
+
+Run another secret scan.
+
+Check:
+
+git ls-files
+
+Check:
+
+git status
+
+Check:
+
+git diff
+
+Check:
+
+git diff --cached
+
+Ensure:
+
+.env is not tracked
+
+database dumps are not tracked
+
+backup files are not tracked
+
+private keys are not tracked
+
+tokens are not tracked
+
+real passwords are not tracked
+
+==================================================
+PHASE 39 — GIT DIFF REVIEW
+==================================================
+
+Review EVERY changed file.
+
+Do not blindly commit.
+
+Check:
+
+git status --short
+
+git diff --stat
+
+git diff
+
+Look for accidental changes.
+
+Look for:
+
+debug code
+
+credentials
+
+large unrelated changes
+
+deleted files
+
+renamed files
+
+generated files
+
+lockfile changes
+
+database files
+
+configuration changes
+
+If something is unrelated to the task:
+do not modify it unnecessarily.
+
+==================================================
+PHASE 40 — DO NOT COMMIT AUTOMATICALLY
+==================================================
+
+Do NOT run:
+
+git add .
+
+Do NOT run:
+
+git commit
+
+Do NOT run:
+
+git push
+
+unless I explicitly ask you.
+
+Your job is to inspect, fix, verify, and report.
+
+==================================================
+PHASE 41 — FINAL REPORT
+==================================================
+
+At the end, provide a structured report.
+
+Use exactly these sections:
+
+1. PROJECT STATUS
+
+2. CRITICAL ERRORS
+
+3. HIGH PRIORITY ERRORS
+
+4. MEDIUM PRIORITY ERRORS
+
+5. LOW PRIORITY ISSUES
+
+6. SECURITY FINDINGS
+
+7. DATABASE FINDINGS
+
+8. PRISMA FINDINGS
+
+9. STORE FRONTEND FINDINGS
+
+10. ADMIN PANEL FINDINGS
+
+11. BACKEND FINDINGS
+
+12. API FINDINGS
+
+13. BUILD RESULTS
+
+14. TEST RESULTS
+
+15. FILES CHANGED
+
+16. REMAINING WORK
+
+17. PHASE4 STATUS
+
+18. GIT STATUS
+
+19. FINAL RECOMMENDATIONS
+
+For each issue include:
+
+FILE
+
+LINE if known
+
+PROBLEM
+
+ROOT CAUSE
+
+FIX
+
+STATUS
+
+Do not include secret values.
+
+==================================================
+FINAL BEHAVIOR
+==================================================
+
+Be extremely careful.
+
+Do not rush.
+
+Do not assume.
+
+Inspect first.
+
+Understand second.
+
+Change third.
+
+Test fourth.
+
+Report fifth.
+
+Do not destroy existing data.
+
+Do not reset the database.
+
+Do not replace working architecture.
+
+Do not implement unrelated features.
+
+Do not start future phases.
+
+Do not commit automatically.
+
+Do not push automatically.
+
+The goal is to leave the existing Arine project in a stable, secure, working state and to identify everything that needs attention before continuing development of the Admin Panel.
+
+START NOW.
+
+First read phase4.txt and README.md.
+
+Then inspect the repository.
+
+Then inspect the code.
+
+Then inspect Prisma.
+
+Then inspect the Admin Panel.
+
+Then inspect the Store.
+
+Then inspect the Backend.
+
+Then inspect the API.
+
+Then inspect security.
+
+Then run safe checks.
+
+Then fix issues systematically.
+
+Then run checks again.
+
+Then provide the final report.

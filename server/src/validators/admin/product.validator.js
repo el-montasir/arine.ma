@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const AVAILABILITY = ['in-stock', 'out-of-stock', 'pre-order']
+export const SHIPPING_MODES = ['DEFAULT', 'FREE', 'CUSTOM', 'default', 'free', 'custom']
 
 const productFields = {
   title: z.string().trim().min(1, 'العنوان مطلوب').max(200, 'العنوان طويل جداً'),
@@ -17,6 +18,18 @@ const productFields = {
   oldPrice: z.number().int().min(0).max(1_000_000).nullable().optional(),
   discount: z.number().int().min(0).max(100).optional(),
   image: z.string().trim().max(500, 'رابط الصورة طويل جداً').nullable().optional(),
+  images: z
+    .array(
+      z.union([
+        z.string().trim().min(1),
+        z.object({
+          url: z.string().trim().min(1),
+          sortOrder: z.number().int().optional(),
+          isPrimary: z.boolean().optional(),
+        }),
+      ])
+    )
+    .optional(),
   availability: z.enum(AVAILABILITY).default('in-stock'),
   description: z.string().max(5000, 'الوصف طويل جداً').nullable().optional(),
   rating: z.number().int().min(1).max(5).optional(),
@@ -25,6 +38,19 @@ const productFields = {
   pages: z.number().int().positive().nullable().optional(),
   publisher: z.string().trim().max(200).nullable().optional(),
   year: z.string().trim().max(10).nullable().optional(),
+  shippingMode: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => {
+      if (!val || val === '' || val === 'default' || val === 'DEFAULT') return null
+      return val
+    })
+    .refine(
+      (val) => val === null || ['free', 'FREE', 'custom', 'CUSTOM'].includes(val),
+      { message: 'وضع التوصيل غير صحيح' }
+    ),
+  customShipping: z.number().int().min(0).max(10000).nullable().optional(),
 }
 
 export const createProductSchema = z.object(productFields)

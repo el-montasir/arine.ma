@@ -17,20 +17,29 @@ export class OrderError extends Error {
  * CRITICAL: prices, shipping, and total are computed entirely server-side
  * from the canonical product prices in PostgreSQL. Nothing from the frontend
  * is trusted for monetary calculations.
+ *
+ * Supports both regular book items and package items in the same cart.
  */
 export async function createOrder(input) {
   return prisma.$transaction(async (tx) => {
-    // 1. Fetch the products that the frontend claims are in the cart.
-    const ids = input.items.map((i) => i.productId)
+    // 1. Fetch the products (books) that the frontend claims are in the cart.
+    const bookIds = (input.items || []).map((i) => i.productId)
     const products = await tx.product.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: bookIds } },
       include: { category: true },
     })
-    const byId = new Map(products.map((p) => [p.id, p]))
+    const productById = new Map(products.map((p) => [p.id, p]))
 
-    // 2. Validate every product exists and is available.
-    for (const item of input.items) {
-      const product = byId.get(item.productId)
+    // 2. Fetch the packages that the frontend claims are in the cart.
+    const packageIds = (input.packages || []).map((i) => i.packageId)
+    const packages = await tx.package.findMany({
+      where: { id: { in: packageIds } },
+    })
+    const packageById = new Map(packages.map((p) => [p.id, p]))
+
+    // 3. Validate every book exists and is available.
+    for (const item of input.items || []) {
+      const product = productById.get(item.productId)
       if (!product) {
         throw new OrderError(404, 'PRODUCT_NOT_FOUND', 'أحد الكتب المطلوبة غير موجود')
       }
@@ -43,10 +52,25 @@ export async function createOrder(input) {
       }
     }
 
-    // 3. Server-side pricing — never trust the browser.
+    // 4. Validate every package exists and is available.
+    for (const item of input.packages || []) {
+      const pkg = packageById.get(item.packageId)
+      if (!pkg) {
+        throw new OrderError(404, 'PACKAGE_NOT_FOUND', 'إحدى الباقات المطلوبة غير موجودة')
+      }
+      if (pkg.availability !== 'in-stock') {
+        throw new OrderError(
+          409,
+          'PACKAGE_UNAVAILABLE',
+          `الباقة «${pkg.title}» غير متوفرة حالياً`
+        )
+      }
+    }
+
+    // 5. Server-side pricing — never trust the browser.
     let subtotal = 0
-    const orderItems = input.items.map((item) => {
-      const product = byId.get(item.productId)
+    const orderItems = (input.items || []).map((item) => {
+      const product = productById.get(item.productId)
       const unitPrice = product.price
       const totalPrice = unitPrice * item.quantity
       subtotal += totalPrice
@@ -62,10 +86,37 @@ export async function createOrder(input) {
       }
     })
 
-    const shipping = calcShipping(subtotal)
+    const packageItems = (input.packages || []).map((item) => {
+      const pkg = packageById.get(item.packageId)
+      const unitPrice = pkg.price
+      const totalPrice = unitPrice * item.quantity
+      subtotal += totalPrice
+      return {
+        packageId: pkg.id,
+        packageTitle: pkg.title, // snapshot
+        quantity: item.quantity,
+        unitPrice, // snapshot
+        totalPrice,
+        unitCostPrice: pkg.costPrice ?? null,
+      }
+    })
+
+    // Collect product-level and package-level shipping overrides for calcShipping
+    const shippingOverrides = [
+      ...products.map((p) => ({
+        shippingMode: p.shippingMode,
+        customShipping: p.customShipping,
+      })),
+      ...packages.map((p) => ({
+        shippingMode: p.shippingMode,
+        customShipping: p.customShipping,
+      })),
+    ]
+
+    const shipping = await calcShipping(subtotal, shippingOverrides)
     const total = subtotal + shipping
 
-    // 4. Create the order + items with a collision-safe order number.
+    // 6. Create the order + items with a collision-safe order number.
     let order = null
     for (let attempt = 0; attempt < 5 && !order; attempt++) {
       try {
@@ -83,8 +134,9 @@ export async function createOrder(input) {
             shipping,
             total,
             items: { create: orderItems },
+            packageItems: { create: packageItems },
           },
-          include: { items: true },
+          include: { items: true, packageItems: true },
         })
       } catch (e) {
         // Unique-violation on orderNumber → retry with a fresh random suffix.
@@ -108,7 +160,7 @@ export async function createOrder(input) {
  */
 export async function findOrders() {
   return prisma.order.findMany({
-    include: { items: true },
+    include: { items: true, packageItems: true },
     orderBy: { createdAt: 'desc' },
   })
 }
@@ -119,6 +171,6 @@ export async function findOrders() {
 export async function findOrder(orderNumber) {
   return prisma.order.findUnique({
     where: { orderNumber },
-    include: { items: true },
+    include: { items: true, packageItems: true },
   })
 }

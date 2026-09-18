@@ -79,9 +79,19 @@ export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
   }, [q, category, sort])
 
   const books = useMemo(() => {
+    // CRITICAL: API data ALWAYS takes priority when available.
+    // Only use local fallback during loading or when API genuinely failed.
     if (Array.isArray(apiBooks)) return apiBooks
-    return filterLocal(localBooks, { q, category, sort })
-  }, [apiBooks, q, category, sort])
+
+    // If loading or error with no API data yet, use filtered local catalog
+    // so the store never shows a blank screen.
+    if (loading || error) {
+      return filterLocal(localBooks, { q, category, sort })
+    }
+
+    // API returned successfully but empty array - respect that
+    return []
+  }, [apiBooks, q, category, sort, loading, error])
 
   return { books, loading, error, useFallback: !Array.isArray(apiBooks) }
 }

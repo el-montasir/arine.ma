@@ -1,22 +1,29 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, ShoppingCart, User, Menu, X, BookOpen, ChevronLeft } from 'lucide-react'
+import { Search, ShoppingCart, Heart, Menu, X, BookOpen, ChevronLeft, ChevronRight, Package as PackageIcon } from 'lucide-react'
 import { useCart } from '../context/CartContext'
-
-const NAV_LINKS = [
-  { key: 'home', label: 'الرئيسية', to: '/' },
-  { key: 'books', label: 'الكتب', to: '/shop' },
-  { key: 'categories', label: 'التصنيفات', to: '/shop' },
-  { key: 'about', label: 'من نحن', to: '/about' },
-  { key: 'contact', label: 'تواصل معنا', to: '/contact' },
-]
+import { useLanguage } from '../context/LanguageContext'
+import { useStoreConfig } from '../hooks/useStoreConfig'
 
 export default function Navbar() {
-  const { count, setIsCartOpen, isMenuOpen, setIsMenuOpen } = useCart()
+  const { count, setIsCartOpen, isMenuOpen, setIsMenuOpen, favorites } = useCart()
+  const { t, isRTL } = useLanguage()
+  const { config } = useStoreConfig()
+  const [logoError, setLogoError] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
   const { pathname } = useLocation()
+
+  const NAV_LINKS = [
+    { key: 'home', label: t('home') || 'الرئيسية', to: '/' },
+    { key: 'books', label: t('books') || 'الكتب', to: '/shop' },
+    { key: 'packages', label: t('packages') || 'الباقات', to: '/packages' },
+    { key: 'about', label: t('about') || 'من نحن', to: '/about' },
+    { key: 'contact', label: t('contact') || 'تواصل معنا', to: '/contact' },
+  ]
+
+  const ChevronIcon = isRTL ? ChevronLeft : ChevronRight
 
   useEffect(() => {
     if (searchOpen && inputRef.current) inputRef.current.focus()
@@ -50,15 +57,30 @@ export default function Navbar() {
 
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 flex items-center gap-2 select-none">
-              <div className="flex items-center gap-2.5">
-                <div className="bg-brand-700 w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
-                  <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
+              {config?.store?.logo && !logoError ? (
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={config.store.logo}
+                    alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
+                    className="h-9 lg:h-10 w-auto max-w-[170px] object-contain transition-all"
+                    onError={() => setLogoError(true)}
+                  />
                 </div>
-                <div className="leading-none">
-                  <div className="text-[1.15rem] font-bold text-brand-800 tracking-tight">أرين</div>
-                  <div className="text-[0.6rem] text-muted mt-px">مكتبة الكتب الشرعية</div>
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-brand-700 w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
+                    <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <div className="leading-none">
+                    <div className="text-[1.15rem] font-bold text-brand-800 tracking-tight">
+                      {config?.store?.name || t('appName') || 'مكتبة أرين'}
+                    </div>
+                    <div className="text-[0.6rem] text-muted mt-px">
+                      {t('appTagline') || 'للكتب والعلوم الشرعية'}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </Link>
 
             {/* Desktop nav */}
@@ -80,21 +102,38 @@ export default function Navbar() {
             </ul>
 
             {/* Actions */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {/* Search trigger */}
               <button
                 onClick={() => setSearchOpen(true)}
                 className="p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors"
-                aria-label="بحث"
+                aria-label={t('search') || 'بحث'}
               >
                 <Search className="w-[1.15rem] h-[1.15rem]" />
               </button>
+
+              {/* Favorites */}
+              <Link
+                to="/favorites"
+                className="p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors relative"
+                aria-label={t('favorites') || 'المفضلة'}
+              >
+                <Heart className="w-[1.15rem] h-[1.15rem]" />
+                {favorites.length > 0 && (
+                  <span
+                    key={favorites.length}
+                    className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-red-500 text-white text-[0.65rem] font-bold rounded-full flex items-center justify-center shadow-sm pop-in"
+                  >
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
 
               {/* Cart */}
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors relative"
-                aria-label="سلة المشتريات"
+                aria-label={t('cart') || 'سلة المشتريات'}
               >
                 <ShoppingCart className="w-[1.15rem] h-[1.15rem]" />
                 {count > 0 && (
@@ -106,15 +145,6 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-
-              {/* Account */}
-              <Link
-                to="/account"
-                className="hidden sm:flex p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors"
-                aria-label="حسابي"
-              >
-                <User className="w-[1.15rem] h-[1.15rem]" />
-              </Link>
             </div>
           </div>
         </div>
@@ -135,16 +165,24 @@ export default function Navbar() {
                   }`}
                 >
                   <span>{link.label}</span>
-                  <ChevronLeft className="w-4 h-4 opacity-30" />
+                  <ChevronIcon className="w-4 h-4 opacity-30" />
                 </Link>
               ))}
+
               <Link
-                to="/account"
+                to="/favorites"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[0.92rem] font-medium text-foreground/80 hover:bg-brand-50 sm:hidden"
+                className="flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] font-medium text-foreground/80 hover:bg-brand-50"
               >
-                <User className="w-4 h-4" />
-                <span>حسابي</span>
+                <div className="flex items-center gap-2.5">
+                  <Heart className="w-4 h-4 text-red-500" />
+                  <span>{t('favorites') || 'المفضلة'}</span>
+                </div>
+                {favorites.length > 0 && (
+                  <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-bold">
+                    {favorites.length}
+                  </span>
+                )}
               </Link>
             </div>
           </div>
@@ -163,11 +201,11 @@ export default function Navbar() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center border-b border-border px-4">
-              <Search className="w-5 h-5 text-muted ml-3 flex-shrink-0" />
+              <Search className="w-5 h-5 text-muted mx-3 flex-shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="ابحث عن كتاب أو مؤلف..."
+                placeholder={t('searchPlaceholder') || 'ابحث عن كتاب، مؤلف، أو باقة...'}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 py-4 text-[0.95rem] text-foreground placeholder:text-muted/70 outline-none bg-transparent"
@@ -176,14 +214,15 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setSearchOpen(false)}
                 className="text-sm text-muted hover:text-brand-700 transition-colors"
+                aria-label={t('close') || 'إغلاق'}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="px-5 py-4">
-              <p className="text-[0.78rem] text-muted mb-3">بحث شائع</p>
+              <p className="text-[0.78rem] text-muted mb-3">{t('popularSearches') || 'عمليات البحث الشائعة'}</p>
               <div className="flex flex-wrap gap-2">
-                {['صحيح البخاري', 'تفسير ابن كثير', 'الأربعين النووية'].map(
+                {['صحيح البخاري', 'تفسير ابن كثير', 'رياض الصالحين', 'باقة طالب العلم'].map(
                   (term) => (
                     <button
                       key={term}

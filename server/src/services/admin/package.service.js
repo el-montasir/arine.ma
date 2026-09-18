@@ -1,0 +1,290 @@
+import { prisma } from '../../lib/prisma.js'
+import { ApiError } from '../../utils/api-error.js'
+
+const INCLUDE = {
+  items: {
+    include: {
+      product: {
+        include: {
+          category: true,
+          images: { orderBy: { sortOrder: 'asc' } },
+        },
+      },
+    },
+    orderBy: { sortOrder: 'asc' },
+  },
+  images: {
+    orderBy: { sortOrder: 'asc' },
+  },
+}
+
+export function serializeAdminPackage(pkg) {
+  const images = (pkg.images || []).map((img) => ({
+    id: img.id,
+    url: img.url,
+    sortOrder: img.sortOrder,
+    isPrimary: img.isPrimary,
+  }))
+
+  const primaryImage =
+    images.find((img) => img.isPrimary)?.url ||
+    images[0]?.url ||
+    pkg.image ||
+    null
+
+  const books = (pkg.items || []).map((item) => {
+    const p = item.product
+    const bookImages = (p?.images || []).map((img) => ({
+      id: img.id,
+      url: img.url,
+      sortOrder: img.sortOrder,
+      isPrimary: img.isPrimary,
+    }))
+    const bookPrimaryImage =
+      bookImages.find((img) => img.isPrimary)?.url ||
+      bookImages[0]?.url ||
+      p?.image ||
+      null
+
+    return {
+      id: p.id,
+      title: p.title,
+      author: p.author,
+      price: p.price,
+      costPrice: p.costPrice ?? null,
+      category: p.category?.name ?? null,
+      image: bookPrimaryImage,
+      availability: p.availability,
+      sortOrder: item.sortOrder,
+    }
+  })
+
+  const sumBooksPrice = books.reduce((acc, b) => acc + (b.price || 0), 0)
+  const costPrice = pkg.costPrice ?? null
+  const profitPerUnit = costPrice != null ? pkg.price - costPrice : null
+
+  return {
+    id: pkg.id,
+    title: pkg.title,
+    description: pkg.description,
+    price: pkg.price,
+    costPrice,
+    profitPerUnit,
+    oldPrice: pkg.oldPrice ?? (pkg.discount > 0 && sumBooksPrice > pkg.price ? sumBooksPrice : null),
+    discount: pkg.discount,
+    image: primaryImage,
+    images,
+    availability: pkg.availability,
+    isNew: pkg.isNew,
+    isPopular: pkg.isPopular,
+    shippingMode: pkg.shippingMode ?? null,
+    customShipping: pkg.customShipping ?? null,
+    booksCount: books.length,
+    books,
+    sumBooksPrice,
+    createdAt: pkg.createdAt,
+    updatedAt: pkg.updatedAt,
+  }
+}
+
+export async function listPackages(filters = {}) {
+  const where = {}
+  if (filters.search) {
+    where.OR = [
+      { title: { contains: filters.search, mode: 'insensitive' } },
+      { description: { contains: filters.search, mode: 'insensitive' } },
+    ]
+  }
+  if (filters.availability) where.availability = filters.availability
+
+  const packages = await prisma.package.findMany({
+    where,
+    include: INCLUDE,
+    orderBy: { createdAt: 'desc' },
+  })
+  return packages.map(serializeAdminPackage)
+}
+
+export async function getPackage(id) {
+  const pkg = await prisma.package.findUnique({
+    where: { id: Number(id) },
+    include: INCLUDE,
+  })
+  if (!pkg) return null
+  return serializeAdminPackage(pkg)
+}
+
+export async function createPackage(inputData) {
+  const { images: rawImages, bookIds, items: rawItems, ...data } = inputData
+
+  if (!data.title || typeof data.title !== 'string' || !data.title.trim()) {
+    throw ApiError.badRequest('عنوان الباقة مطلوب')
+  }
+  if (typeof data.price !== 'number' || data.price < 0) {
+    throw ApiError.badRequest('سعر الباقة غير صحيح')
+  }
+
+  // Determine book IDs
+  let selectedBookIds = []
+  if (Array.isArray(bookIds)) {
+    selectedBookIds = bookIds.map(Number).filter(Boolean)
+  } else if (Array.isArray(rawItems)) {
+    selectedBookIds = rawItems.map((item) => Number(item.productId || item.id)).filter(Boolean)
+  }
+
+  // Validate existing books
+  if (selectedBookIds.length > 0) {
+    const existingBooks = await prisma.product.findMany({
+      where: { id: { in: selectedBookIds } },
+      select: { id: true },
+    })
+    const existingIds = new Set(existingBooks.map((b) => b.id))
+    selectedBookIds = selectedBookIds.filter((id) => existingIds.has(id))
+  }
+
+  const imagesList = Array.isArray(rawImages) ? rawImages.filter((img) => img && typeof img.url === 'string' && img.url.trim()) : []
+  const primaryImageUrl = imagesList.find((img) => img.isPrimary)?.url || imagesList[0]?.url || data.image || null
+
+  const created = await prisma.package.create({
+    data: {
+      title: data.title.trim(),
+      description: data.description?.trim() || null,
+      price: Math.round(data.price),
+      costPrice: data.costPrice != null ? Math.round(data.costPrice) : null,
+      oldPrice: data.oldPrice != null ? Math.round(data.oldPrice) : null,
+      discount: data.discount ? Math.max(0, Math.min(100, Math.round(data.discount))) : 0,
+      image: primaryImageUrl,
+      availability: data.availability || 'in-stock',
+      isNew: Boolean(data.isNew),
+      isPopular: Boolean(data.isPopular),
+      shippingMode: data.shippingMode || null,
+      customShipping: data.customShipping != null ? Math.round(data.customShipping) : null,
+      items: {
+        create: selectedBookIds.map((bookId, idx) => ({
+          productId: bookId,
+          sortOrder: idx,
+        })),
+      },
+      images: {
+        create: imagesList.map((img, idx) => ({
+          url: img.url.trim(),
+          sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+          isPrimary: Boolean(img.isPrimary) || (idx === 0 && !imagesList.some((i) => i.isPrimary)),
+        })),
+      },
+    },
+    include: INCLUDE,
+  })
+
+  return serializeAdminPackage(created)
+}
+
+export async function updatePackage(id, inputData) {
+  const pkgId = Number(id)
+  const existing = await prisma.package.findUnique({
+    where: { id: pkgId },
+    include: INCLUDE,
+  })
+  if (!existing) {
+    throw ApiError.notFound('الباقة غير موجودة')
+  }
+
+  const { images: rawImages, bookIds, items: rawItems, ...data } = inputData
+
+  const updateData = {}
+  if (data.title !== undefined) updateData.title = data.title.trim()
+  if (data.description !== undefined) updateData.description = data.description?.trim() || null
+  if (data.price !== undefined) updateData.price = Math.round(data.price)
+  if (data.costPrice !== undefined) updateData.costPrice = data.costPrice != null ? Math.round(data.costPrice) : null
+  if (data.oldPrice !== undefined) updateData.oldPrice = data.oldPrice != null ? Math.round(data.oldPrice) : null
+  if (data.discount !== undefined) updateData.discount = Math.max(0, Math.min(100, Math.round(data.discount || 0)))
+  if (data.availability !== undefined) updateData.availability = data.availability
+  if (data.isNew !== undefined) updateData.isNew = Boolean(data.isNew)
+  if (data.isPopular !== undefined) updateData.isPopular = Boolean(data.isPopular)
+  if (data.shippingMode !== undefined) updateData.shippingMode = data.shippingMode || null
+  if (data.customShipping !== undefined) updateData.customShipping = data.customShipping != null ? Math.round(data.customShipping) : null
+
+  // Process book associations if provided
+  let hasBookChanges = false
+  let selectedBookIds = []
+  if (Array.isArray(bookIds)) {
+    hasBookChanges = true
+    selectedBookIds = bookIds.map(Number).filter(Boolean)
+  } else if (Array.isArray(rawItems)) {
+    hasBookChanges = true
+    selectedBookIds = rawItems.map((item) => Number(item.productId || item.id)).filter(Boolean)
+  }
+
+  if (hasBookChanges) {
+    // Validate
+    const validBooks = await prisma.product.findMany({
+      where: { id: { in: selectedBookIds } },
+      select: { id: true },
+    })
+    const validSet = new Set(validBooks.map((b) => b.id))
+    selectedBookIds = selectedBookIds.filter((bId) => validSet.has(bId))
+  }
+
+  // Process images if provided
+  const hasImageChanges = Array.isArray(rawImages)
+  let imagesList = []
+  if (hasImageChanges) {
+    imagesList = rawImages.filter((img) => img && typeof img.url === 'string' && img.url.trim())
+    const primaryImg = imagesList.find((img) => img.isPrimary)?.url || imagesList[0]?.url || null
+    if (primaryImg) updateData.image = primaryImg
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (hasBookChanges) {
+      await tx.packageItem.deleteMany({ where: { packageId: pkgId } })
+      if (selectedBookIds.length > 0) {
+        await tx.packageItem.createMany({
+          data: selectedBookIds.map((bookId, idx) => ({
+            packageId: pkgId,
+            productId: bookId,
+            sortOrder: idx,
+          })),
+        })
+      }
+    }
+
+    if (hasImageChanges) {
+      await tx.packageImage.deleteMany({ where: { packageId: pkgId } })
+      if (imagesList.length > 0) {
+        await tx.packageImage.createMany({
+          data: imagesList.map((img, idx) => ({
+            packageId: pkgId,
+            url: img.url.trim(),
+            sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+            isPrimary: Boolean(img.isPrimary) || (idx === 0 && !imagesList.some((i) => i.isPrimary)),
+          })),
+        })
+      }
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      await tx.package.update({
+        where: { id: pkgId },
+        data: updateData,
+      })
+    }
+  })
+
+  const updated = await prisma.package.findUnique({
+    where: { id: pkgId },
+    include: INCLUDE,
+  })
+
+  return serializeAdminPackage(updated)
+}
+
+export async function deletePackage(id) {
+  const pkgId = Number(id)
+  const existing = await prisma.package.findUnique({ where: { id: pkgId } })
+  if (!existing) {
+    throw ApiError.notFound('الباقة غير موجودة')
+  }
+
+  await prisma.package.delete({ where: { id: pkgId } })
+  return { success: true }
+}

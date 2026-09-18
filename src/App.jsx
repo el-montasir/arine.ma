@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
+import { LanguageProvider } from './context/LanguageContext'
 import { CartProvider } from './context/CartContext'
 import AnnouncementBar from './components/AnnouncementBar'
 import Navbar from './components/Navbar'
@@ -9,12 +10,15 @@ import Toast from './components/Toast'
 import Home from './pages/Home'
 import Shop from './pages/Shop'
 import BookDetails from './pages/BookDetails'
+import Packages from './pages/Packages'
+import PackageDetails from './pages/PackageDetails'
 import CartPage from './pages/CartPage'
 import Checkout from './pages/Checkout'
 import OrderSuccess from './pages/OrderSuccess'
+import TrackOrder from './pages/TrackOrder'
+import Favorites from './pages/Favorites'
 import About from './pages/About'
 import Contact from './pages/Contact'
-import Account from './pages/Account'
 import LibraryEntry from './pages/LibraryEntry'
 
 function ScrollToTop() {
@@ -39,25 +43,31 @@ function Layout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <CartProvider>
-        <ScrollToTop />
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/book/:id" element={<BookDetails />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/order-success" element={<OrderSuccess />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/library" element={<LibraryEntry />} />
-          </Routes>
-        </Layout>
-        <CartDrawer />
-        <Toast />
-      </CartProvider>
+      <LanguageProvider>
+        <CartProvider>
+          <ScrollToTop />
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/book/:id" element={<BookDetails />} />
+              <Route path="/packages" element={<Packages />} />
+              <Route path="/package/:id" element={<PackageDetails />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-success" element={<OrderSuccess />} />
+              <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/account" element={<TrackOrder />} />
+              <Route path="/library" element={<LibraryEntry />} />
+            </Routes>
+          </Layout>
+          <CartDrawer />
+          <Toast />
+        </CartProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
 }

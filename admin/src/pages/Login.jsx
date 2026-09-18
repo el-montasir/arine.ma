@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { BookMarked, Lock } from 'lucide-react'
+import { BookMarked, Lock, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 import Button from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
+import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 
 export default function Login() {
   const { login } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const [username, setUsername] = useState('')
@@ -25,42 +29,52 @@ export default function Login() {
       const from = location.state?.from?.pathname || '/dashboard'
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err.message || 'تعذر تسجيل الدخول')
+      setError(err.message || t('loginError'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className="app-bg flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="app-bg relative flex min-h-screen items-center justify-center p-4">
+      {/* Top right quick controls */}
+      <div className="absolute top-4 end-4 flex items-center gap-2">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-md">
+        {/* Brand header */}
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-600 text-white">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-tr from-brand-700 to-brand-500 text-white shadow-lg shadow-brand-600/30">
             <BookMarked className="h-7 w-7" aria-hidden="true" />
           </span>
           <div>
-            <h1 className="text-xl font-bold text-white">لوحة تحكم أرين</h1>
-            <p className="mt-1 text-sm text-[#8b80a8]">إدارة متجر الكتب الشرعية</p>
+            <h1 className="text-2xl font-bold tracking-tight text-text-main">{t('appName')}</h1>
+            <p className="mt-1 text-sm text-text-muted">{t('appTagline')}</p>
           </div>
         </div>
 
-        <form
-          onSubmit={onSubmit}
-          className="rounded-2xl border border-line-soft bg-surface-900 p-6"
-          aria-label="تسجيل الدخول"
-        >
+        {/* Login form */}
+        <div className="rounded-2xl border border-line bg-surface-900 p-6 sm:p-8 shadow-xl">
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-text-main">{t('loginTitle')}</h2>
+            <p className="text-xs text-text-muted mt-1">{t('loginSubtitle')}</p>
+          </div>
+
           <ErrorBanner message={error} />
-          <div className="space-y-4">
+
+          <form onSubmit={onSubmit} className="space-y-4" aria-label="Sign In Form">
             <Input
-              label="اسم المستخدم"
+              label={t('emailField')}
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="admin@arine.ma"
               required
             />
             <Input
-              label="كلمة المرور"
+              label={t('passwordField')}
               type="password"
               autoComplete="current-password"
               value={password}
@@ -68,15 +82,26 @@ export default function Login() {
               placeholder="••••••••"
               required
             />
+
+            <Button type="submit" size="lg" disabled={busy} className="mt-6 w-full">
+              <Lock className="h-4 w-4" aria-hidden="true" />
+              {busy ? t('loading') : t('loginBtn')}
+            </Button>
+          </form>
+
+          {/* Demo helper */}
+          <div className="mt-6 rounded-xl border border-line bg-surface-800/70 p-3 text-center">
+            <p className="text-[11px] font-mono text-text-muted">
+              {t('loginDemoHint')}
+            </p>
           </div>
-          <Button type="submit" size="lg" disabled={busy} className="mt-6 w-full">
-            <Lock className="h-4 w-4" aria-hidden="true" />
-            {busy ? 'جارِ الدخول…' : 'تسجيل الدخول'}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-[11px] text-[#6f6488]">
-          منطقة محمية — الجلسة مشفرة ولا يمكن الوصول إلى البيانات إلا للمستخدمين المصرح لهم.
-        </p>
+        </div>
+
+        {/* Security badge */}
+        <div className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-text-subtle">
+          <ShieldCheck className="h-4 w-4 text-emerald-500" />
+          <span>جلسة إدارة مشفرة ومؤمنة بالكامل</span>
+        </div>
       </div>
     </div>
   )

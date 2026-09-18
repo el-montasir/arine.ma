@@ -3,75 +3,132 @@ import {
   LayoutDashboard,
   ShoppingBag,
   BookOpen,
+  Package,
   FolderTree,
   Wallet,
   Users,
+  Megaphone,
+  Store,
+  Truck,
   Settings,
   BookMarked,
   X,
+  ChevronRight,
+  ChevronLeft,
 } from 'lucide-react'
-
-const NAV = [
-  { to: '/dashboard', label: 'نظرة عامة', icon: LayoutDashboard, end: true },
-  { to: '/orders', label: 'الطلبات', icon: ShoppingBag },
-  { to: '/products', label: 'الكتب', icon: BookOpen },
-  { to: '/categories', label: 'التصنيفات', icon: FolderTree },
-  { to: '/finance', label: 'المالية والأرباح', icon: Wallet },
-  { to: '/customers', label: 'العملاء', icon: Users },
-  { to: '/settings', label: 'الإعدادات', icon: Settings },
-]
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 export function SidebarContent({ onNavigate }) {
+  const { t, isRTL } = useLanguage()
+
+  const NAV_SECTIONS = [
+    {
+      items: [
+        { to: '/dashboard', label: t('navDashboard'), icon: LayoutDashboard, end: true },
+      ],
+    },
+    {
+      title: t('navCatalog'),
+      items: [
+        { to: '/products', label: t('navProducts'), icon: BookOpen },
+        { to: '/packages', label: t('navPackages'), icon: Package },
+        { to: '/categories', label: t('navCategories'), icon: FolderTree },
+      ],
+    },
+    {
+      title: t('navSales'),
+      items: [
+        { to: '/orders', label: t('navOrders'), icon: ShoppingBag },
+        { to: '/customers', label: t('navCustomers'), icon: Users },
+        { to: '/finance', label: t('navFinance'), icon: Wallet },
+      ],
+    },
+    {
+      title: t('navMarketing'),
+      items: [
+        { to: '/banners', label: t('navBanners'), icon: Megaphone },
+        { to: '/store-settings', label: t('navStoreSettings'), icon: Store },
+      ],
+    },
+    {
+      title: t('navSystem'),
+      items: [
+        { to: '/shipping-settings', label: t('navShippingSettings'), icon: Truck },
+        { to: '/settings', label: t('navSettings'), icon: Settings },
+      ],
+    },
+  ]
+
   return (
-    <nav className="flex flex-col gap-1 p-3" aria-label="القائمة الرئيسية">
-      {NAV.map(({ to, label, icon: Icon, end }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-              isActive
-                ? 'bg-brand-600/15 text-brand-300'
-                : 'text-[#a79cc4] hover:bg-surface-800 hover:text-white'
-            }`
-          }
-        >
-          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-          {label}
-        </NavLink>
+    <nav className="flex flex-1 flex-col gap-4 p-3.5 overflow-y-auto" aria-label="Navigation Menu">
+      {NAV_SECTIONS.map((section, idx) => (
+        <div key={idx} className="space-y-1">
+          {section.title && (
+            <p className="px-3 py-1 text-[11px] font-bold text-text-subtle uppercase tracking-wider">
+              {section.title}
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {section.items.map(({ to, label, icon: Icon, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  `group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
+                    isActive
+                      ? 'bg-brand-600/15 text-brand-400 font-bold border border-brand-500/30 shadow-sm'
+                      : 'text-text-muted hover:bg-surface-800 hover:text-text-main border border-transparent'
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" aria-hidden="true" />
+                  <span>{label}</span>
+                </div>
+                {isRTL ? (
+                  <ChevronLeft className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-70" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-70" />
+                )}
+              </NavLink>
+            ))}
+          </div>
+        </div>
       ))}
     </nav>
   )
 }
 
 export default function Sidebar({ open, onClose }) {
+  const { t } = useLanguage()
+
   return (
     <>
-      {/* Desktop */}
-      <aside className="hidden w-60 shrink-0 border-e border-line-soft bg-ink-900 lg:flex lg:flex-col">
+      {/* Desktop Sidebar */}
+      <aside className="hidden w-64 shrink-0 border-e border-line bg-surface-900 lg:flex lg:flex-col shadow-sm">
         <Brand />
         <SidebarContent />
-        <div className="mt-auto p-3">
-          <p className="rounded-lg border border-line-soft bg-surface-900/50 px-3 py-2 text-[11px] leading-relaxed text-[#6f6488]">
-            تكامل التوصيل (DIGYLOG) سيُفعَّل في مرحلة لاحقة — لا يُرسل شيء لشركات
-            التوصيل تلقائياً.
-          </p>
+        <div className="mt-auto p-3.5 border-t border-line">
+          <div className="rounded-xl border border-line bg-surface-800/60 p-3 text-[11px] leading-relaxed text-text-muted">
+            <p className="font-semibold text-text-main mb-0.5">⚡ {t('appName')} v2.5</p>
+            <p className="text-[10px] text-text-subtle">{t('appTagline')}</p>
+          </div>
         </div>
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Mobile drawer */}
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
-          <aside className="absolute inset-y-0 start-0 flex w-64 flex-col bg-ink-900">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+          <aside className="absolute inset-y-0 start-0 flex w-72 flex-col bg-surface-900 shadow-2xl border-e border-line">
             <button
               onClick={onClose}
-              aria-label="إغلاق القائمة"
-              className="absolute end-3 top-3 rounded-md p-1.5 text-[#8b80a8] hover:bg-surface-800 hover:text-white"
+              aria-label={t('close')}
+              className="absolute end-3.5 top-4 rounded-xl border border-line bg-surface-800 p-2 text-text-muted hover:text-text-main"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
             <Brand />
             <SidebarContent onNavigate={onClose} />
@@ -83,14 +140,16 @@ export default function Sidebar({ open, onClose }) {
 }
 
 function Brand() {
+  const { t } = useLanguage()
+
   return (
-    <div className="flex items-center gap-2.5 border-b border-line-soft px-5 py-4">
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-600 text-white">
+    <div className="flex items-center gap-3 border-b border-line px-5 py-4.5 bg-surface-900">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-tr from-brand-700 to-brand-500 text-white shadow-md shadow-brand-600/25">
         <BookMarked className="h-5 w-5" aria-hidden="true" />
       </span>
       <div>
-        <p className="text-sm font-bold leading-none text-white">أرين</p>
-        <p className="mt-1 text-[11px] leading-none text-[#8b80a8]">لوحة التحكم</p>
+        <p className="text-sm font-bold leading-tight text-text-main">{t('appName')}</p>
+        <p className="text-[11px] font-medium leading-tight text-text-muted mt-0.5">{t('adminPanel')}</p>
       </div>
     </div>
   )

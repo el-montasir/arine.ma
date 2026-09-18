@@ -29,6 +29,22 @@ export function formatPercent(n) {
   return `${n}٪`
 }
 
+export function formatBookCount(count, lang = 'ar') {
+  const n = Number(count) || 0
+  if (lang === 'fr') {
+    return n <= 1 ? `${n} livre` : `${n} livres`
+  }
+  if (lang === 'en') {
+    return n === 1 ? `${n} book` : `${n} books`
+  }
+  // Arabic rules
+  if (n === 0) return '0 كتب'
+  if (n === 1) return 'كتاب واحد'
+  if (n === 2) return 'كتابان'
+  if (n >= 3 && n <= 10) return `${n} كتب`
+  return `${n} كتاباً`
+}
+
 export const ORDER_STATUS = {
   PENDING: { label: 'قيد الانتظار', color: 'status-warn' },
   CONFIRMED: { label: 'مؤكد', color: 'status-brand' },

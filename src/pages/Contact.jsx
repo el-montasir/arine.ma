@@ -1,7 +1,11 @@
 import { useState } from 'react'
-import { MapPin, Phone, Mail, Send } from 'lucide-react'
+import { MapPin, Phone, Mail, Send, MessageSquare } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext'
+import { useStoreConfig } from '../hooks/useStoreConfig'
 
 export default function Contact() {
+  const { t } = useLanguage()
+  const { config } = useStoreConfig()
   const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = (e) => {
@@ -10,37 +14,66 @@ export default function Contact() {
     setTimeout(() => setSubmitted(false), 4000)
   }
 
+  const phone = config?.store?.phone || '+212 600 00 00 00'
+  const email = config?.store?.email || 'info@arine.ma'
+  const address = config?.store?.address || 'المغرب — توصيل لجميع المدن'
+  const whatsapp = config?.store?.whatsapp
+
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-10 lg:py-16">
       <div className="text-center max-w-2xl mx-auto mb-12">
         <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
-          تواصل <span className="text-brand-700">معنا</span>
+          {t('contact') || 'تواصل معنا'}
         </h1>
         <p className="text-muted text-lg mt-3 leading-relaxed">
-          نحن هنا لمساعدتك. لا تتردد في التواصل معنا لأي استفسار.
+          {config?.store?.description || 'نحن هنا لمساعدتك. لا تتردد في التواصل معنا لأي استفسار.'}
         </p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Contact Info */}
         <div className="space-y-4">
-          {[
-            { icon: MapPin, title: 'العنوان', lines: ['شارع الحسن الثاني، رقم 123', 'الدار البيضاء، المغرب'] },
-            { icon: Phone, title: 'الهاتف', lines: ['+212 600 00 00 00', '+212 522 00 00 00'] },
-            { icon: Mail, title: 'البريد الإلكتروني', lines: ['info@arine.ma', 'support@arine.ma'] },
-          ].map((item) => (
-            <div key={item.title} className="flex items-start gap-4 p-5 bg-white border border-border/60 rounded-2xl">
-              <div className="w-11 h-11 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <item.icon className="w-5 h-5 text-brand-700" />
+          <div className="flex items-start gap-4 p-5 bg-white border border-border/60 rounded-2xl">
+            <div className="w-11 h-11 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-5 h-5 text-brand-700" />
+            </div>
+            <div>
+              <h4 className="font-bold text-foreground text-[0.92rem]">العنوان</h4>
+              <p className="text-muted text-[0.85rem] mt-0.5">{address}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4 p-5 bg-white border border-border/60 rounded-2xl">
+            <div className="w-11 h-11 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Phone className="w-5 h-5 text-brand-700" />
+            </div>
+            <div>
+              <h4 className="font-bold text-foreground text-[0.92rem]">الهاتف</h4>
+              <p className="text-muted text-[0.85rem] mt-0.5" dir="ltr">{phone}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4 p-5 bg-white border border-border/60 rounded-2xl">
+            <div className="w-11 h-11 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Mail className="w-5 h-5 text-brand-700" />
+            </div>
+            <div>
+              <h4 className="font-bold text-foreground text-[0.92rem]">البريد الإلكتروني</h4>
+              <p className="text-muted text-[0.85rem] mt-0.5" dir="ltr">{email}</p>
+            </div>
+          </div>
+
+          {whatsapp && (
+            <div className="flex items-start gap-4 p-5 bg-emerald-50 border border-emerald-200 rounded-2xl">
+              <div className="w-11 h-11 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="w-5 h-5 text-emerald-700" />
               </div>
               <div>
-                <h4 className="font-bold text-foreground text-[0.92rem]">{item.title}</h4>
-                {item.lines.map((l, i) => (
-                  <p key={i} className="text-muted text-[0.85rem] mt-0.5">{l}</p>
-                ))}
+                <h4 className="font-bold text-emerald-900 text-[0.92rem]">واتساب</h4>
+                <p className="text-emerald-700 text-[0.85rem] mt-0.5" dir="ltr">{whatsapp}</p>
               </div>
             </div>
-          ))}
+          )}
         </div>
 
         {/* Form */}

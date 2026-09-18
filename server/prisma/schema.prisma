@@ -39,7 +39,7 @@ model Category {
 }
 
 model Product {
-  id           Int         @id @default(autoincrement())
+  id           Int            @id @default(autoincrement())
   title        String
   author       String
   categoryId   Int
@@ -48,22 +48,92 @@ model Product {
   // Purchase/cost price — Admin-only. Never exposed through public APIs.
   costPrice    Int?
   oldPrice     Int?
-  discount     Int         @default(0)
+  discount     Int            @default(0)
   image        String?
-  availability String      @default("in-stock")
+  availability String         @default("in-stock")
   description  String?
-  rating       Int         @default(5)
-  isNew        Boolean     @default(false)
-  isPopular    Boolean     @default(false)
+  rating       Int            @default(5)
+  isNew        Boolean        @default(false)
+  isPopular    Boolean        @default(false)
   pages        Int?
   publisher    String?
   year         String?
-  category     Category    @relation(fields: [categoryId], references: [id])
+  // Shipping overrides: null = use default store settings, 'free' = free shipping, 'custom' = custom price
+  shippingMode String?
+  // Custom shipping price in DH (only applies when shippingMode = 'custom')
+  customShipping Int?
+  category     Category       @relation(fields: [categoryId], references: [id])
   orderItems   OrderItem[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  images       ProductImage[]
+  packageItems PackageItem[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   @@map("products")
+}
+
+model Package {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  price        Int
+  costPrice    Int?
+  oldPrice     Int?
+  discount     Int           @default(0)
+  image        String?
+  availability String        @default("in-stock")
+  isNew        Boolean       @default(false)
+  isPopular    Boolean       @default(false)
+  shippingMode String?
+  customShipping Int?
+  items        PackageItem[]
+  images       PackageImage[]
+  orderItems   PackageOrderItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("packages")
+}
+
+model PackageItem {
+  id        Int      @id @default(autoincrement())
+  packageId Int
+  productId Int
+  sortOrder Int      @default(0)
+  package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([packageId, productId])
+  @@map("package_items")
+}
+
+model PackageImage {
+  id        Int      @id @default(autoincrement())
+  packageId Int
+  url       String
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("package_images")
+  @@index([packageId])
+}
+
+model PackageOrderItem {
+  id             Int     @id @default(autoincrement())
+  orderId        Int
+  packageId      Int
+  packageTitle   String
+  quantity       Int
+  unitPrice      Int
+  totalPrice     Int
+  unitCostPrice  Int?
+  order          Order   @relation(fields: [orderId], references: [id])
+  package        Package @relation(fields: [packageId], references: [id])
+
+  @@map("package_order_items")
 }
 
 model Order {
@@ -80,6 +150,7 @@ model Order {
   shipping      Int
   total         Int
   items         OrderItem[]
+  packageItems  PackageOrderItem[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -128,4 +199,52 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  url       String
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("product_images")
+  @@index([productId])
+}
+
+model Banner {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  image       String?
+  link        String?
+  type        String    @default("promotional")
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("banners")
+}
+
+model StoreConfig {
+  key       String   @id
+  value     String
+  type      String   @default("string")
+  updatedAt DateTime @updatedAt
+
+  @@map("store_config")
+}
+
+model Session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+  @@map("session")
 }

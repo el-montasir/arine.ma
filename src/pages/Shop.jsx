@@ -2,24 +2,27 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SlidersHorizontal, Grid3X3, LayoutList, Loader2, Info } from 'lucide-react'
 import ProductGrid from '../components/ProductGrid'
-import categories from '../data/categories'
+import useCategories from '../hooks/useCategories'
 import useProducts from '../hooks/useProducts'
-
-const SORT_OPTIONS = [
-  { value: 'popular', label: 'الأكثر شعبية' },
-  { value: 'newest', label: 'الأحدث' },
-  { value: 'price-asc', label: 'السعر: من الأقل' },
-  { value: 'price-desc', label: 'السعر: من الأعلى' },
-]
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [mobileFilters, setMobileFilters] = useState(false)
   const [gridCols, setGridCols] = useState('4')
+  const { categories = [] } = useCategories()
+  const { t } = useLanguage()
 
   const q = searchParams.get('q') || ''
   const category = searchParams.get('category') || ''
   const sort = searchParams.get('sort') || 'popular'
+
+  const SORT_OPTIONS = [
+    { value: 'popular', label: t('sortPopular') },
+    { value: 'newest', label: t('sortNewest') },
+    { value: 'price-asc', label: t('sortPriceAsc') },
+    { value: 'price-desc', label: t('sortPriceDesc') },
+  ]
 
   const setFilter = (key, value) => {
     setSearchParams((prev) => {
@@ -41,21 +44,21 @@ export default function Shop() {
       <div className="mb-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
           {category
-            ? categories.find((c) => c.slug === category || c.name === category)?.name || 'الكتب'
+            ? categories.find((c) => c.slug === category || c.name === category)?.name || t('books')
             : q
-              ? `نتائج البحث عن "${q}"`
-              : 'جميع الكتب'}
+              ? `${t('search')}: "${q}"`
+              : t('exploreBooks')}
         </h1>
         <p className="text-muted text-[0.85rem] mt-1 flex items-center gap-1.5">
           {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          {filteredBooks.length} كتاب
+          {t('itemsCount', { count: filteredBooks.length })}
         </p>
       </div>
 
       {error && (
         <div className="mb-6 flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-[0.82rem] rounded-xl">
           <Info className="w-4 h-4 flex-shrink-0" />
-          تعذر الاتصال بالخادم — يتم عرض نسخة محلية من الكتالوج
+          {t('errorOccurred')}
         </div>
       )}
 
@@ -68,7 +71,7 @@ export default function Shop() {
             className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-[0.85rem] text-foreground/70 hover:border-brand-300 transition-colors"
           >
             <SlidersHorizontal className="w-4 h-4" />
-            تصفية
+            {t('filterCategory')}
           </button>
 
           {/* Category chips (desktop) */}
@@ -81,7 +84,7 @@ export default function Shop() {
                   : 'bg-white text-foreground/65 border-border hover:border-brand-300 hover:text-brand-700'
               }`}
             >
-              الكل
+              {t('all')}
             </button>
             {categories.map((cat) => (
               <button
@@ -118,14 +121,14 @@ export default function Shop() {
             <button
               onClick={() => setGridCols('3')}
               className={`p-2.5 transition-colors ${gridCols === '3' ? 'bg-brand-100 text-brand-700' : 'text-muted hover:text-foreground'}`}
-              aria-label="شبكة 3"
+              aria-label="3 Columns"
             >
               <Grid3X3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setGridCols('4')}
               className={`p-2.5 transition-colors ${gridCols === '4' ? 'bg-brand-100 text-brand-700' : 'text-muted hover:text-foreground'}`}
-              aria-label="شبكة 4"
+              aria-label="4 Columns"
             >
               <LayoutList className="w-4 h-4" />
             </button>
@@ -136,7 +139,7 @@ export default function Shop() {
       {/* Mobile filter panel */}
       {mobileFilters && (
         <div className="lg:hidden mb-6 p-4 bg-white border border-border rounded-xl">
-          <h4 className="font-semibold text-[0.88rem] text-foreground mb-3">التصنيفات</h4>
+          <h4 className="font-semibold text-[0.88rem] text-foreground mb-3">{t('categories')}</h4>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('category', '')}
@@ -146,7 +149,7 @@ export default function Shop() {
                   : 'bg-white text-foreground/65 border-border'
               }`}
             >
-              الكل
+              {t('all')}
             </button>
             {categories.map((cat) => (
               <button
