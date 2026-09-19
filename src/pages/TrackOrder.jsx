@@ -255,7 +255,7 @@ export default function TrackOrder() {
           <div className="bg-white border border-border/60 rounded-3xl p-6 lg:p-8 shadow-sm">
             <h3 className="font-bold text-foreground text-[1.05rem] mb-4 flex items-center gap-2">
               <Package className="w-5 h-5 text-brand-700" />
-              {t('orderSummary')} ({order.items?.length || 0})
+              {t('orderSummary')} ({((order.items?.length || 0) + (order.packageItems?.length || 0))})
             </h3>
 
             <div className="divide-y divide-border/60">
@@ -263,6 +263,24 @@ export default function TrackOrder() {
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.productTitle}</h4>
+                    <span className="text-[0.78rem] text-muted">
+                      {item.quantity} × {formatPrice(item.unitPrice)}
+                    </span>
+                  </div>
+                  <div className="text-[0.92rem] font-bold text-brand-800 shrink-0">
+                    {formatPrice(item.totalPrice)}
+                  </div>
+                </div>
+              ))}
+              {order.packageItems?.map((item) => (
+                <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[0.7rem] font-medium bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded">
+                        {t('package') || 'باقة'}
+                      </span>
+                      <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.packageTitle}</h4>
+                    </div>
                     <span className="text-[0.78rem] text-muted">
                       {item.quantity} × {formatPrice(item.unitPrice)}
                     </span>

@@ -93,7 +93,7 @@ export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
     return []
   }, [apiBooks, q, category, sort, loading, error])
 
-  return { books, loading, error, useFallback: !Array.isArray(apiBooks) }
+  return { books, products: books, loading, error, useFallback: !Array.isArray(apiBooks) }
 }
 
 export default useProducts

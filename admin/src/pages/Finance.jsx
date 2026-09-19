@@ -101,7 +101,7 @@ export default function Finance() {
         <div>
           <h2 className="mb-3 text-sm font-semibold text-white">الربح حسب المنتج</h2>
           <Card padded={false}>
-            <Table columns={productCols} rows={byProduct} rowKey={(r) => r.productId} empty="لا توجد مبيعات بعد" />
+            <Table columns={productCols} rows={byProduct} rowKey={(r) => r.id || r.productId} empty="لا توجد مبيعات بعد" />
           </Card>
         </div>
 

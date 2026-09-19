@@ -20,10 +20,18 @@ function publicOrder(order) {
     total: order.total,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
-    items: order.items.map((item) => ({
+    items: (order.items || []).map((item) => ({
       id: item.id,
       productId: item.productId,
       productTitle: item.productTitle,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+    })),
+    packageItems: (order.packageItems || []).map((item) => ({
+      id: item.id,
+      packageId: item.packageId,
+      packageTitle: item.packageTitle,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       totalPrice: item.totalPrice,

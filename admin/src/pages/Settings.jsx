@@ -11,9 +11,11 @@ import Button from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 export default function Settings() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const { theme, setTheme, toggleTheme } = useTheme()
   const isDark = theme === 'dark'
 
@@ -41,20 +43,20 @@ export default function Settings() {
   }
 
   const columns = [
-    { key: 'key', label: 'المفتاح', render: ([k]) => <span dir="ltr" className="font-mono text-xs text-brand-400">{k}</span> },
-    { key: 'value', label: 'القيمة', render: ([, v]) => <span className="break-all">{v}</span> },
-    { key: 'meta', label: 'النوع', render: () => <Badge kind="neutral">إعداد عام (غير سري)</Badge> },
+    { key: 'key', label: t('settingKey') || 'المفتاح', render: ([k]) => <span dir="ltr" className="font-mono text-xs text-brand-400">{k}</span> },
+    { key: 'value', label: t('settingValue') || 'القيمة', render: ([, v]) => <span className="break-all">{v}</span> },
+    { key: 'meta', label: t('settingType') || 'النوع', render: () => <Badge kind="neutral">{t('generalConfigType') || 'إعداد عام (غير سري)'}</Badge> },
   ]
 
   return (
     <div className="space-y-6 max-w-5xl">
       <PageHeader
-        title="الإعدادات والنظام"
-        subtitle="التحكم في مظهر لوحة التحكم، إعدادات التوصيل، وقواعد البيانات العامة"
+        title={t('generalSettingsTitle') || 'الإعدادات العامة والمظهر'}
+        subtitle={t('generalSettingsSubtitle') || 'تخصيص مظهر لوحة التحكم، اللغة، وإدارة المفاتيح العامة'}
         actions={
           <Button variant="primary" onClick={() => { setKey(''); setValue(''); setFormError(''); setModal(true) }}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            إضافة إعداد مخصص
+            {t('addCustomSetting') || 'إضافة إعداد مخصص'}
           </Button>
         }
       />
@@ -68,8 +70,8 @@ export default function Settings() {
             <Palette className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-white">مظهر لوحة التحكم (Theme)</h2>
-            <p className="text-xs text-[#8b80a8]">التبديل بين الوضع الداكن والوضع الفاتح مع حفظ التفضيلات تلقائياً</p>
+            <h2 className="text-sm font-semibold text-white">{t('secAppearance') || 'مظهر لوحة التحكم (Theme)'}</h2>
+            <p className="text-xs text-[#8b80a8]">{t('themeToggleDesc') || 'التبديل بين الوضع الداكن والوضع الفاتح مع حفظ التفضيلات تلقائياً'}</p>
           </div>
         </div>
 
@@ -89,11 +91,11 @@ export default function Settings() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">الوضع الداكن (Dark Theme)</span>
-                {isDark && <Badge kind="brand">المفعّل</Badge>}
+                <span className="text-sm font-bold text-white">{t('darkTheme') || 'الوضع الداكن (Dark Mode)'}</span>
+                {isDark && <Badge kind="brand">{t('active') || 'المفعّل'}</Badge>}
               </div>
               <p className="text-xs text-[#8b80a8] mt-1">
-                خلفية بنفسجية داكنة مريحة للعين ومناسبة للعمل الليلي
+                {t('darkThemeDesc') || 'واجهة مريحة وعصرية مع تباين عالي للعمل الليلي'}
               </p>
             </div>
           </button>
@@ -113,11 +115,11 @@ export default function Settings() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">الوضع الفاتح (Light Theme)</span>
-                {!isDark && <Badge kind="brand">المفعّل</Badge>}
+                <span className="text-sm font-bold text-white">{t('lightTheme') || 'الوضع الفاتح (Light Mode)'}</span>
+                {!isDark && <Badge kind="brand">{t('active') || 'المفعّل'}</Badge>}
               </div>
               <p className="text-xs text-[#8b80a8] mt-1">
-                واجهة ناصعة بتباين عالي مناسبة لبيئات الإضاءة القوية
+                {t('lightThemeDesc') || 'واجهة ناصعة بتباين واضح مناسبة للبيئات المضيئة'}
               </p>
             </div>
           </button>
@@ -132,12 +134,12 @@ export default function Settings() {
               <Truck className="h-5 w-5" />
             </span>
             <div>
-              <h3 className="text-sm font-bold text-white">إعدادات وقواعد التوصيل</h3>
-              <p className="text-xs text-[#8b80a8]">تحديد سعر التوصيل والحد الأدنى للشحن المجاني</p>
+              <h3 className="text-sm font-bold text-white">{t('navShippingSettings') || 'إعدادات وقواعد التوصيل'}</h3>
+              <p className="text-xs text-[#8b80a8]">{t('shippingSettingsDesc') || 'تحديد سعر التوصيل والحد الأدنى للشحن المجاني'}</p>
             </div>
           </div>
           <Button variant="secondary" size="sm" onClick={() => navigate('/shipping-settings')}>
-            <span>فتح</span>
+            <span>{t('open') || 'فتح'}</span>
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
         </Card>
@@ -148,12 +150,12 @@ export default function Settings() {
               <ShieldCheck className="h-5 w-5" />
             </span>
             <div>
-              <h3 className="text-sm font-bold text-white">إعدادات المتجر والواجهة</h3>
-              <p className="text-xs text-[#8b80a8]">نصوص الواجهة، هوية المتجر، والكتاب المميز</p>
+              <h3 className="text-sm font-bold text-white">{t('navStoreSettings') || 'إعدادات المتجر والواجهة'}</h3>
+              <p className="text-xs text-[#8b80a8]">{t('storeSettingsDesc') || 'نصوص الواجهة، هوية المتجر، والكتاب المميز'}</p>
             </div>
           </div>
           <Button variant="secondary" size="sm" onClick={() => navigate('/store-settings')}>
-            <span>فتح</span>
+            <span>{t('open') || 'فتح'}</span>
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
         </Card>
@@ -163,12 +165,12 @@ export default function Settings() {
       <Card padded={false}>
         <div className="p-4 border-b border-line flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-white">إعدادات النظام العامة (Key-Value)</h2>
-            <p className="text-xs text-[#8b80a8] mt-0.5">قائمة المتغيرات العامة المخزنة في قاعدة البيانات</p>
+            <h2 className="text-sm font-semibold text-white">{t('secCustomConfig') || 'إعدادات النظام المخصصة (Key-Value Store)'}</h2>
+            <p className="text-xs text-[#8b80a8] mt-0.5">{t('customConfigDesc') || 'قائمة المتغيرات العامة المخزنة في قاعدة البيانات'}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => reloadSettings()} disabled={settingsLoading}>
             <RefreshCw className={`h-3.5 w-3.5 ${settingsLoading ? 'animate-spin' : ''}`} />
-            تحديث
+            {t('refresh') || 'تحديث'}
           </Button>
         </div>
         <Table
@@ -176,21 +178,21 @@ export default function Settings() {
           rows={entries}
           rowKey={([k]) => k}
           loading={settingsLoading}
-          empty="لا توجد إعدادات مخصصة مسجلة بعد"
+          empty={t('noCustomSettings') || 'لا توجد إعدادات مخصصة مسجلة بعد'}
         />
       </Card>
 
       {/* Modal for adding custom settings */}
-      <Modal open={modal} onClose={() => setModal(false)} title="إضافة إعداد مخصص جديد">
+      <Modal open={modal} onClose={() => setModal(false)} title={t('addCustomSetting') || 'إضافة إعداد مخصص جديد'}>
         <div className="space-y-4">
           {formError ? <ErrorBanner message={formError} /> : null}
-          <Input label="المفتاح (Key)" dir="ltr" value={key} onChange={(e) => setKey(e.target.value)} placeholder="custom.setting_key" />
-          <Input label="القيمة (Value)" value={value} onChange={(e) => setValue(e.target.value)} placeholder="القيمة المراد حفظها..." />
+          <Input label={t('settingKey') || 'المفتاح (Key)'} dir="ltr" value={key} onChange={(e) => setKey(e.target.value)} placeholder="custom.setting_key" />
+          <Input label={t('settingValue') || 'القيمة (Value)'} value={value} onChange={(e) => setValue(e.target.value)} placeholder={t('valuePlaceholder') || 'القيمة المراد حفظها...'} />
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setModal(false)}>إلغاء</Button>
+          <Button variant="secondary" onClick={() => setModal(false)}>{t('cancel') || 'إلغاء'}</Button>
           <Button variant="primary" onClick={save} disabled={busy || !key.trim()}>
-            {busy ? 'جارِ الحفظ…' : 'حفظ الإعداد'}
+            {busy ? (t('saving') || 'جارِ الحفظ…') : (t('save') || 'حفظ الإعداد')}
           </Button>
         </div>
       </Modal>

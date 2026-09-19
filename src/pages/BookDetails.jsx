@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Star, ShoppingCart, Minus, Plus, Box, Truck, Shield, RotateCcw, Image as ImageIcon } from 'lucide-react'
+import { Star, ShoppingCart, Minus, Plus, Box, Truck, Shield, RotateCcw, Loader2, Heart, ArrowLeft, ArrowRight } from 'lucide-react'
 import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
+import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 import books from '../data/books'
 import api from '../utils/api'
@@ -10,9 +11,10 @@ import api from '../utils/api'
 export default function BookDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t, isRTL } = useLanguage()
   const [apiBook, setApiBook] = useState(null)
   const localBook = useMemo(() => books.find((b) => b.id === Number(id)), [id])
-  const { addToCart } = useCart()
+  const { addToCart, toggleFavorite, isFavorite } = useCart()
   const [qty, setQty] = useState(1)
   const [selectedImageIdx, setSelectedImageIdx] = useState(0)
 
@@ -54,37 +56,23 @@ export default function BookDetails() {
   const imagesList = useMemo(() => {
     if (!book) return []
     if (Array.isArray(book.images) && book.images.length > 0) {
-      return book.images.map((img) => (typeof img === 'string' ? img : img.url)).filter(Boolean)
+      return book.images
+        .map((img) => (typeof img === 'string' ? img.trim() : img?.url?.trim()))
+        .filter(Boolean)
     }
     if (book.image) {
-      return [book.image]
+      return [book.image.trim()]
     }
     return []
   }, [book])
-
-  if (!book) {
-    return (
-      <div className="max-w-[1440px] mx-auto px-4 py-24 text-center">
-        <div className="text-5xl mb-4 opacity-30">📚</div>
-        <h2 className="text-xl font-bold text-foreground mb-2">الكتاب غير موجود</h2>
-        <button
-          onClick={() => navigate('/shop')}
-          className="mt-4 px-6 py-3 bg-brand-700 text-white rounded-xl font-medium"
-        >
-          العودة للمكتبة
-        </button>
-      </div>
-    )
-  }
-
-  const currentImageUrl = imagesList[selectedImageIdx] || imagesList[0] || null
 
   const [apiRelated, setApiRelated] = useState(null)
 
   useEffect(() => {
     let cancelled = false
     if (book?.category) {
-      api.get(`/products?category=${encodeURIComponent(book.category)}`)
+      api
+        .get(`/products?category=${encodeURIComponent(book.category)}`)
         .then((res) => {
           if (!cancelled && Array.isArray(res.data)) {
             setApiRelated(res.data.filter((b) => b.id !== book.id).slice(0, 4))
@@ -106,15 +94,43 @@ export default function BookDetails() {
       .slice(0, 4)
   }, [apiRelated, book?.category, book?.id])
 
+  if (loading && !book) {
+    return (
+      <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-24 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+          <p className="text-sm font-medium">{t('loading') || 'جاري تحميل بيانات الكتاب…'}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!book) {
+    return (
+      <div className="max-w-[1440px] mx-auto px-4 py-24 text-center">
+        <div className="text-5xl mb-4 opacity-30">📚</div>
+        <h2 className="text-xl font-bold text-foreground mb-2">{t('bookNotFound') || 'الكتاب غير موجود'}</h2>
+        <button
+          onClick={() => navigate('/shop')}
+          className="mt-4 px-6 py-3 bg-brand-700 text-white rounded-xl font-medium"
+        >
+          {t('backToStore') || 'العودة للمكتبة'}
+        </button>
+      </div>
+    )
+  }
+
+  const currentImageUrl = imagesList[selectedImageIdx] || imagesList[0] || null
   const isFreeShipping = book.shippingMode === 'free' || book.shippingMode === 'FREE'
+  const ratingValue = Number(book.rating) || 5
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6 lg:py-10">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-[0.82rem] text-muted mb-8">
-        <Link to="/" className="hover:text-brand-700 transition-colors">الرئيسية</Link>
+        <Link to="/" className="hover:text-brand-700 transition-colors">{t('home') || 'الرئيسية'}</Link>
         <span>/</span>
-        <Link to="/shop" className="hover:text-brand-700 transition-colors">الكتب</Link>
+        <Link to="/shop" className="hover:text-brand-700 transition-colors">{t('books') || 'الكتب'}</Link>
         <span>/</span>
         <span className="text-foreground/70">{book.title}</span>
       </nav>
@@ -132,8 +148,12 @@ export default function BookDetails() {
                   className="h-full w-full object-cover transition-all"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
                   }}
                 />
+                <div className="hidden h-full w-full">
+                  <BookCover book={book} size="lg" className="w-56 lg:w-full mx-auto lg:mx-0" />
+                </div>
               </div>
             ) : (
               <BookCover book={book} size="lg" className="w-56 lg:w-full mx-auto lg:mx-0" />
@@ -168,27 +188,29 @@ export default function BookDetails() {
         {/* Info */}
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="px-2.5 py-1 bg-brand-100 text-brand-700 text-[0.75rem] font-semibold rounded-full">
-              {book.category}
-            </span>
+            {book.category && (
+              <span className="px-2.5 py-1 bg-brand-100 text-brand-700 text-[0.75rem] font-semibold rounded-full">
+                {book.category}
+              </span>
+            )}
             {book.isNew && (
               <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[0.75rem] font-semibold rounded-full">
-                جديد
+                {t('newBadge') || 'جديد'}
               </span>
             )}
             {isFreeShipping && (
               <span className="px-2.5 py-1 bg-ok-50 text-ok-600 border border-ok-200 text-[0.75rem] font-semibold rounded-full flex items-center gap-1">
                 <Truck className="w-3 h-3" />
-                توصيل مجاني
+                {t('freeShipping') || 'توصيل مجاني'}
               </span>
             )}
             {book.availability === 'out-of-stock' ? (
               <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[0.75rem] font-semibold rounded-full">
-                غير متوفر حالياً
+                {t('outOfStock') || 'غير متوفر حالياً'}
               </span>
             ) : (
               <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[0.75rem] font-semibold rounded-full">
-                متوفر
+                {t('inStock') || 'متوفر'}
               </span>
             )}
           </div>
@@ -197,9 +219,11 @@ export default function BookDetails() {
             {book.title}
           </h1>
 
-          <p className="text-muted mt-2 text-[0.95rem]">
-            تأليف: <span className="text-foreground font-medium">{book.author}</span>
-          </p>
+          {book.author && (
+            <p className="text-muted mt-2 text-[0.95rem]">
+              {t('author') || 'تأليف'}: <span className="text-foreground font-medium">{book.author}</span>
+            </p>
+          )}
 
           {/* Rating */}
           <div className="flex items-center gap-1.5 mt-4">
@@ -207,20 +231,20 @@ export default function BookDetails() {
               <Star
                 key={i}
                 className="w-4.5 h-4.5"
-                fill={i < book.rating ? '#F59E0B' : 'none'}
-                stroke={i < book.rating ? '#F59E0B' : '#D4D4D8'}
+                fill={i < ratingValue ? '#F59E0B' : 'none'}
+                stroke={i < ratingValue ? '#F59E0B' : '#D4D4D8'}
                 strokeWidth={1.5}
               />
             ))}
-            <span className="text-[0.82rem] text-muted mr-2">({book.rating}/5)</span>
+            <span className="text-[0.82rem] text-muted mr-2">({ratingValue}/5)</span>
           </div>
 
           {/* Price */}
           <div className="flex items-baseline gap-3 mt-6">
             <span className="text-brand-700 font-bold text-3xl">{formatPrice(book.price)}</span>
-            {book.oldPrice && (
+            {book.oldPrice ? (
               <span className="text-muted/50 text-xl line-through">{formatPrice(book.oldPrice)}</span>
-            )}
+            ) : null}
             {book.discount > 0 && (
               <span className="px-2.5 py-1 bg-brand-700 text-white text-[0.75rem] font-bold rounded-lg">
                 وفر {book.discount}%
@@ -231,9 +255,9 @@ export default function BookDetails() {
           {/* Meta */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             {[
-              { label: 'الناشر', value: book.publisher || 'دار نشر إسلامية' },
-              { label: 'الصفحات', value: book.pages || '—' },
-              { label: 'السنة', value: book.year || '—' },
+              { label: t('publisher') || 'الناشر', value: book.publisher || 'دار نشر إسلامية' },
+              { label: t('pages') || 'الصفحات', value: book.pages || '—' },
+              { label: t('year') || 'السنة', value: book.year || '—' },
             ].map((m) => (
               <div key={m.label} className="bg-[#F3F4F6] rounded-xl px-3 py-3 text-center">
                 <div className="text-[0.72rem] text-muted">{m.label}</div>
@@ -244,8 +268,10 @@ export default function BookDetails() {
 
           {/* Description */}
           <div className="mt-7">
-            <h3 className="font-bold text-foreground mb-2">وصف الكتاب</h3>
-            <p className="text-muted text-[0.9rem] leading-relaxed">{book.description}</p>
+            <h3 className="font-bold text-foreground mb-2">{t('description') || 'وصف الكتاب'}</h3>
+            <p className="text-muted text-[0.9rem] leading-relaxed">
+              {book.description || (t('noDescription') || 'لا يوجد وصف تفصيلي مسجل لهذا الكتاب حالياً.')}
+            </p>
           </div>
 
           {/* Quantity + Add to Cart */}
@@ -275,7 +301,7 @@ export default function BookDetails() {
                 disabled
                 className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#F3F4F6] text-muted text-[0.95rem] font-semibold rounded-xl cursor-not-allowed"
               >
-                غير متوفر حالياً
+                {t('outOfStock') || 'غير متوفر حالياً'}
               </button>
             ) : (
               <button
@@ -283,9 +309,25 @@ export default function BookDetails() {
                 className="flex-1 flex items-center justify-center gap-2 py-4 bg-brand-700 hover:bg-brand-800 text-white text-[0.95rem] font-semibold rounded-xl transition-all shadow-lg shadow-brand-700/20 hover:shadow-brand-800/25"
               >
                 <ShoppingCart className="w-5 h-5" />
-                أضف إلى السلة
+                {t('addToCart') || 'أضف إلى السلة'}
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => toggleFavorite(book.id)}
+              className={`p-4 rounded-xl border transition-all ${
+                isFavorite(book.id)
+                  ? 'bg-red-50 border-red-200 text-red-500 shadow-sm'
+                  : 'bg-white border-border text-muted hover:text-red-500 hover:border-red-200'
+              }`}
+              aria-label={t('favorites') || 'المفضلة'}
+            >
+              <Heart
+                className="w-5 h-5"
+                fill={isFavorite(book.id) ? 'currentColor' : 'none'}
+              />
+            </button>
           </div>
 
           {/* CTA: Virtual Library */}
@@ -295,16 +337,16 @@ export default function BookDetails() {
               className="flex items-center justify-center gap-2 py-4 bg-brand-800/10 border border-brand-200 hover:bg-brand-800/15 text-brand-700 text-[0.92rem] font-semibold rounded-xl transition-all"
             >
               <Box className="w-5 h-5" />
-              استكشف هذا الكتاب داخل المكتبة
+              {t('exploreInLibrary') || 'استكشف هذا الكتاب داخل المكتبة'}
             </Link>
           </div>
 
           {/* Trust badges */}
           <div className="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-border/60">
             {[
-              { icon: Truck, label: 'توصيل سريع', sub: '24-48 ساعة' },
-              { icon: Shield, label: 'دفع آمن', sub: 'عند الاستلام' },
-              { icon: RotateCcw, label: 'إرجاع', sub: 'خلال 14 يوم' },
+              { icon: Truck, label: t('fastDelivery') || 'توصيل سريع', sub: '24-48 ساعة' },
+              { icon: Shield, label: t('securePayment') || 'دفع آمن', sub: t('cashOnDelivery') || 'عند الاستلام' },
+              { icon: RotateCcw, label: t('easyReturns') || 'إرجاع سهل', sub: t('returnsDuration') || 'خلال 14 يوم' },
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <item.icon className="w-5 h-5 text-brand-700 mx-auto mb-1" />
@@ -319,7 +361,9 @@ export default function BookDetails() {
       {/* Related Books */}
       {relatedBooks.length > 0 && (
         <div className="mt-20">
-          <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-6">كتب ذات صلة</h2>
+          <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-6">
+            {t('relatedBooks') || 'كتب ذات صلة'}
+          </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-5">
             {relatedBooks.map((b) => (
               <ProductCardMini key={b.id} book={b} />
@@ -332,19 +376,45 @@ export default function BookDetails() {
 }
 
 function ProductCardMini({ book }) {
+  if (!book) return null
+
+  const primaryImg = (() => {
+    if (Array.isArray(book.images) && book.images.length > 0) {
+      const obj = book.images.find((i) => i.isPrimary) || book.images[0]
+      return typeof obj === 'string' ? obj : obj?.url
+    }
+    return book.image || null
+  })()
+
   return (
-    <Link to={`/book/${book.id}`} className="group block bg-white rounded-xl border border-border/60 hover:border-brand-200 hover:shadow-md transition-all overflow-hidden">
+    <Link
+      to={`/book/${book.id}`}
+      className="group block bg-white rounded-xl border border-border/60 hover:border-brand-200 hover:shadow-md transition-all overflow-hidden"
+    >
       <div className="bg-[#F3F4F6] p-3">
-        {book.image ? (
+        {primaryImg ? (
           <div className="aspect-[3/4] w-full overflow-hidden rounded-lg bg-surface-900">
-            <img src={book.image} alt={book.title} className="h-full w-full object-cover" />
+            <img
+              src={primaryImg}
+              alt={book.title}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+                e.currentTarget.nextElementSibling?.classList.remove('hidden')
+              }}
+            />
+            <div className="hidden">
+              <BookCover book={book} size="md" />
+            </div>
           </div>
         ) : (
           <BookCover book={book} size="md" />
         )}
       </div>
       <div className="p-3">
-        <div className="text-[0.72rem] text-brand-600 mb-1">{book.category}</div>
+        {book.category && (
+          <div className="text-[0.72rem] text-brand-600 mb-1">{book.category}</div>
+        )}
         <h4 className="text-[0.88rem] font-semibold text-foreground line-clamp-2">{book.title}</h4>
         <div className="mt-2 text-brand-700 font-bold text-[0.85rem]">{formatPrice(book.price)}</div>
       </div>

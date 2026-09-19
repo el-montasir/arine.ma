@@ -14,10 +14,10 @@ const PALETTES = [
   { bg: 'linear-gradient(160deg, #78350F 0%, #92400E 55%, #B45309 100%)', accent: '#FEF3C7', spine: '#451A03' },
 ]
 
-export default function BookCover({ book, className = '', size = 'md' }) {
+export default function BookCover({ book = {}, className = '', size = 'md' }) {
   const palette = useMemo(
-    () => PALETTES[book.id % PALETTES.length],
-    [book.id]
+    () => PALETTES[Math.abs(Number(book?.id) || 0) % PALETTES.length] || PALETTES[0],
+    [book?.id]
   )
 
   const sizes = {
@@ -41,7 +41,7 @@ export default function BookCover({ book, className = '', size = 'md' }) {
       className={`relative overflow-hidden rounded-r-[3px] rounded-l-[1px] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] group-hover:shadow-[0_16px_32px_-10px_rgba(0,0,0,0.45)] transition-shadow duration-300 max-w-full ${sizes[size]} ${className}`}
       style={{ background: palette.bg }}
       role="img"
-      aria-label={`غلاف كتاب ${book.title}`}
+      aria-label={`غلاف كتاب ${book?.title || ''}`}
     >
       {/* Spine */}
       <div
@@ -57,31 +57,33 @@ export default function BookCover({ book, className = '', size = 'md' }) {
       />
 
       {/* Category chip */}
-      <div className="absolute top-[10%] left-[8%] right-[14%] flex justify-center">
-        <span
-          className="px-1.5 py-0.5 rounded-full text-[0.5em] tracking-wide"
-          style={{
-            backgroundColor: `${palette.accent}1A`,
-            color: palette.accent,
-            border: `1px solid ${palette.accent}33`,
-          }}
-        >
-          {book.category}
-        </span>
-      </div>
+      {book?.category && (
+        <div className="absolute top-[10%] left-[8%] right-[14%] flex justify-center">
+          <span
+            className="px-1.5 py-0.5 rounded-full text-[0.5em] tracking-wide"
+            style={{
+              backgroundColor: `${palette.accent}1A`,
+              color: palette.accent,
+              border: `1px solid ${palette.accent}33`,
+            }}
+          >
+            {book.category}
+          </span>
+        </div>
+      )}
 
       {/* Title */}
       <div className="absolute inset-x-[10%] top-[30%] bottom-[22%] flex flex-col justify-center">
         <div
           className={`text-center font-semibold text-white drop-shadow-sm ${titleLine} ${titleSize}`}
         >
-          {book.title}
+          {book?.title || ''}
         </div>
         <div className="mt-[6%] mx-auto h-px w-[38%]" style={{ backgroundColor: `${palette.accent}55` }} />
       </div>
 
       {/* Author */}
-      {!authorHide && (
+      {!authorHide && book?.author && (
         <div className="absolute inset-x-0 bottom-[9%] text-center">
           <span
             className="text-[0.55em]"

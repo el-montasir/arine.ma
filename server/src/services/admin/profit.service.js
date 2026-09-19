@@ -10,7 +10,7 @@ async function financialOrders({ from, to } = {}) {
     if (from) where.createdAt.gte = from
     if (to) where.createdAt.lte = to
   }
-  return prisma.order.findMany({ where, include: { items: true } })
+  return prisma.order.findMany({ where, include: { items: true, packageItems: true } })
 }
 
 export async function getProfitOverview() {
@@ -24,7 +24,13 @@ export async function getProfitOverview() {
   orders.forEach((order) => {
     ordersCount += 1
     collectedShipping += order.shipping
-    order.items.forEach((item) => {
+    ;(order.items || []).forEach((item) => {
+      const f = itemFinance(item)
+      revenue += f.revenue
+      if (f.hasCost) cost += f.cost
+      else costUnknownItems += 1
+    })
+    ;(order.packageItems || []).forEach((item) => {
       const f = itemFinance(item)
       revenue += f.revenue
       if (f.hasCost) cost += f.cost
@@ -47,21 +53,36 @@ export async function getProfitOverview() {
 
 export async function getProfitByProduct() {
   const orders = await financialOrders()
-  const rows = new Map() // productId → { title, quantity, revenue, cost, costUnknownItems }
+  const rows = new Map() // itemId → { title, quantity, revenue, cost, costUnknownItems, type }
 
   orders.forEach((order) => {
-    order.items.forEach((item) => {
+    ;(order.items || []).forEach((item) => {
       const f = itemFinance(item)
-      let row = rows.get(item.productId)
+      const key = `book-${item.productId}`
+      let row = rows.get(key)
       if (!row) {
-        row = { productId: item.productId, productTitle: item.productTitle, quantity: 0, revenue: 0, cost: 0, profit: null, costUnknownItems: 0 }
-        rows.set(item.productId, row)
+        row = { id: key, productId: item.productId, productTitle: item.productTitle, quantity: 0, revenue: 0, cost: 0, profit: null, costUnknownItems: 0, type: 'book' }
+        rows.set(key, row)
       }
       row.quantity += item.quantity
       row.revenue += f.revenue
       if (f.hasCost) row.cost += f.cost
       else row.costUnknownItems += 1
-      // profit recomputed; null while any cost unknown
+      row.profit = row.costUnknownItems === 0 ? row.revenue - row.cost : null
+    })
+
+    ;(order.packageItems || []).forEach((item) => {
+      const f = itemFinance(item)
+      const key = `pkg-${item.packageId}`
+      let row = rows.get(key)
+      if (!row) {
+        row = { id: key, productId: item.packageId, productTitle: `[باقة] ${item.packageTitle}`, quantity: 0, revenue: 0, cost: 0, profit: null, costUnknownItems: 0, type: 'package' }
+        rows.set(key, row)
+      }
+      row.quantity += item.quantity
+      row.revenue += f.revenue
+      if (f.hasCost) row.cost += f.cost
+      else row.costUnknownItems += 1
       row.profit = row.costUnknownItems === 0 ? row.revenue - row.cost : null
     })
   })
@@ -90,7 +111,13 @@ export async function getProfitByPeriod({ from, to }) {
     }
     row.orders += 1
     let costUnknown = 0
-    order.items.forEach((item) => {
+    ;(order.items || []).forEach((item) => {
+      const f = itemFinance(item)
+      row.revenue += f.revenue
+      if (f.hasCost) row.cost += f.cost
+      else costUnknown += 1
+    })
+    ;(order.packageItems || []).forEach((item) => {
       const f = itemFinance(item)
       row.revenue += f.revenue
       if (f.hasCost) row.cost += f.cost

@@ -142,8 +142,31 @@ export async function createPackage(inputData) {
     selectedBookIds = selectedBookIds.filter((id) => existingIds.has(id))
   }
 
-  const imagesList = Array.isArray(rawImages) ? rawImages.filter((img) => img && typeof img.url === 'string' && img.url.trim()) : []
-  const primaryImageUrl = imagesList.find((img) => img.isPrimary)?.url || imagesList[0]?.url || data.image || null
+  // Normalize images to standard array of objects
+  let imagesList = []
+  if (Array.isArray(rawImages)) {
+    imagesList = rawImages
+      .map((img, idx) => {
+        if (typeof img === 'string') {
+          return { url: img.trim(), isPrimary: idx === 0, sortOrder: idx }
+        }
+        if (img && typeof img.url === 'string') {
+          return {
+            url: img.url.trim(),
+            isPrimary: Boolean(img.isPrimary ?? idx === 0),
+            sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+          }
+        }
+        return null
+      })
+      .filter((img) => Boolean(img && img.url))
+  }
+
+  const primaryImageUrl =
+    imagesList.find((img) => img.isPrimary)?.url ||
+    imagesList[0]?.url ||
+    (typeof data.image === 'string' ? data.image.trim() : null) ||
+    null
 
   const created = await prisma.package.create({
     data: {
@@ -167,8 +190,8 @@ export async function createPackage(inputData) {
       },
       images: {
         create: imagesList.map((img, idx) => ({
-          url: img.url.trim(),
-          sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+          url: img.url,
+          sortOrder: img.sortOrder,
           isPrimary: Boolean(img.isPrimary) || (idx === 0 && !imagesList.some((i) => i.isPrimary)),
         })),
       },
@@ -229,8 +252,26 @@ export async function updatePackage(id, inputData) {
   const hasImageChanges = Array.isArray(rawImages)
   let imagesList = []
   if (hasImageChanges) {
-    imagesList = rawImages.filter((img) => img && typeof img.url === 'string' && img.url.trim())
-    const primaryImg = imagesList.find((img) => img.isPrimary)?.url || imagesList[0]?.url || null
+    imagesList = rawImages
+      .map((img, idx) => {
+        if (typeof img === 'string') {
+          return { url: img.trim(), isPrimary: idx === 0, sortOrder: idx }
+        }
+        if (img && typeof img.url === 'string') {
+          return {
+            url: img.url.trim(),
+            isPrimary: Boolean(img.isPrimary ?? idx === 0),
+            sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+          }
+        }
+        return null
+      })
+      .filter((img) => Boolean(img && img.url))
+
+    const primaryImg =
+      imagesList.find((img) => img.isPrimary)?.url ||
+      imagesList[0]?.url ||
+      null
     if (primaryImg) updateData.image = primaryImg
   }
 
@@ -254,8 +295,8 @@ export async function updatePackage(id, inputData) {
         await tx.packageImage.createMany({
           data: imagesList.map((img, idx) => ({
             packageId: pkgId,
-            url: img.url.trim(),
-            sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+            url: img.url,
+            sortOrder: img.sortOrder,
             isPrimary: Boolean(img.isPrimary) || (idx === 0 && !imagesList.some((i) => i.isPrimary)),
           })),
         })

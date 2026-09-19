@@ -170,11 +170,21 @@ export default function PackageForm() {
       return
     }
 
-    const imageUrls = (form.images || [])
-      .map((img) => (typeof img === 'string' ? img.trim() : img.url?.trim()))
-      .filter(Boolean)
+    // Normalize images to proper structure with url, isPrimary, sortOrder
+    const imagesArray = (form.images || [])
+      .map((img, idx) => {
+        if (typeof img === 'string') {
+          return { url: img.trim(), isPrimary: idx === 0, sortOrder: idx }
+        }
+        return {
+          url: img.url?.trim() || '',
+          isPrimary: Boolean(img.isPrimary ?? idx === 0),
+          sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+        }
+      })
+      .filter((img) => Boolean(img.url))
 
-    const primaryImage = imageUrls[0] || form.image.trim() || null
+    const primaryImage = imagesArray.find(img => img.isPrimary)?.url || imagesArray[0]?.url || form.image.trim() || null
 
     const payload = {
       title: form.title.trim(),
@@ -185,7 +195,7 @@ export default function PackageForm() {
       discount: num(form.discount) ?? 0,
       availability: form.availability,
       image: primaryImage,
-      images: imageUrls,
+      images: imagesArray,
       isNew: form.isNew,
       isPopular: form.isPopular,
       shippingMode: form.shippingMode || null,

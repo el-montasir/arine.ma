@@ -100,7 +100,30 @@ export default function CartDrawer() {
                           </div>
                         )
                       ) : (
-                        <BookCover book={item} size="sm" className="w-16" />
+                        (() => {
+                          const primaryImg = (() => {
+                            if (Array.isArray(item.images) && item.images.length > 0) {
+                              const obj = item.images.find(i => i.isPrimary) || item.images[0]
+                              return typeof obj === 'string' ? obj : obj?.url
+                            }
+                            return item.image || null
+                          })()
+
+                          if (primaryImg) {
+                            return (
+                              <img
+                                src={primaryImg}
+                                alt={item.title}
+                                className="w-16 h-20 object-cover rounded-lg border border-border"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                }}
+                              />
+                            )
+                          }
+                          return <BookCover book={item} size="sm" className="w-16" />
+                        })()
                       )}
                     </div>
 

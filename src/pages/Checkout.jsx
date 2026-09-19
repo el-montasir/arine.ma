@@ -277,7 +277,7 @@ export default function Checkout() {
 
             <div className="space-y-3 mb-4">
               {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-[0.82rem]">
+                <div key={item.key || item.id} className="flex justify-between text-[0.82rem]">
                   <span className="text-foreground/70">{item.title} × {item.quantity}</span>
                   <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
                 </div>
