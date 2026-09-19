@@ -31,6 +31,7 @@ model Category {
   id        Int       @id @default(autoincrement())
   name      String
   slug      String    @unique
+  color     String    @default("#6366f1")
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -101,7 +102,7 @@ model PackageItem {
   productId Int
   sortOrder Int      @default(0)
   package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([packageId, productId])
@@ -122,16 +123,18 @@ model PackageImage {
 }
 
 model PackageOrderItem {
-  id             Int     @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   orderId        Int
-  packageId      Int
+  packageId      Int?
   packageTitle   String
+  packageImage   String?
+  itemsSnapshot  Json?
   quantity       Int
   unitPrice      Int
   totalPrice     Int
   unitCostPrice  Int?
-  order          Order   @relation(fields: [orderId], references: [id])
-  package        Package @relation(fields: [packageId], references: [id])
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  package        Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
 
   @@map("package_order_items")
 }
@@ -158,37 +161,75 @@ model Order {
 }
 
 model OrderItem {
-  id           Int     @id @default(autoincrement())
-  orderId      Int
-  productId    Int
+  id            Int      @id @default(autoincrement())
+  orderId       Int
+  productId     Int?
   // Product snapshots — keep old orders historically correct even if the
-  // product's title/price change later.
-  productTitle String
-  quantity     Int
+  // product's title/price/image change or if the product is deleted later.
+  productTitle  String
+  productImage  String?
+  quantity      Int
   // Selling-price snapshot. Admin profit math uses: unitPrice − unitCostPrice.
   unitPrice     Int
   totalPrice    Int
   // Purchase-cost snapshot taken at order time (Admin-only, never public).
   // NULL for orders created before cost tracking existed.
   unitCostPrice Int?
-  order        Order   @relation(fields: [orderId], references: [id])
-  product      Product @relation(fields: [productId], references: [id])
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@map("order_items")
 }
 
 model Admin {
-  id           Int       @id @default(autoincrement())
-  username     String    @unique
+  id           Int           @id @default(autoincrement())
+  username     String        @unique
+  email        String        @unique
+  phone        String?
   name         String?
   // bcrypt hash — never plaintext, never exposed by any API.
   passwordHash String
-  role         AdminRole @default(ADMIN)
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  role         AdminRole     @default(ADMIN)
+  status       String        @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  permissions  String[]      @default([])
+  lastLoginAt  DateTime?
+  // Security & Brute-Force Protection
+  failedLoginAttempts Int       @default(0)
+  lockoutUntil        DateTime?
+  lastLogin           DateTime?
+  notes        String?
+  createdBy    Int?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  creator      Admin?        @relation("AdminCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAdmins Admin[]      @relation("AdminCreator")
+  activityLogs ActivityLog[]
 
   @@map("admins")
+}
+
+model ActivityLog {
+  id           Int      @id @default(autoincrement())
+  actorId      Int?
+  actorName    String?
+  actorEmail   String?
+  action       String
+  resourceType String
+  resourceId   String?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  actor        Admin?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt])
+  @@map("activity_logs")
 }
 
 // Key/value store for non-secret Admin Panel settings.

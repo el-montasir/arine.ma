@@ -7,6 +7,7 @@ import {
   updatePackage,
   deletePackage,
 } from '../../services/admin/package.service.js'
+import { logActivity } from '../../services/admin/activity-log.service.js'
 
 function parseId(value) {
   const id = Number(value)
@@ -31,6 +32,16 @@ export const getAdminPackageById = asyncHandler(async (req, res) => {
 
 export const createAdminPackage = asyncHandler(async (req, res) => {
   const pkg = await createPackage(req.body)
+
+  await logActivity({
+    actor: req.admin,
+    action: 'PACKAGE_CREATED',
+    resourceType: 'PACKAGE',
+    resourceId: pkg.id,
+    details: { title: pkg.title, price: pkg.price },
+    req,
+  })
+
   res.status(201).json({ success: true, data: pkg })
 })
 
@@ -38,6 +49,16 @@ export const updateAdminPackage = asyncHandler(async (req, res) => {
   const id = parseId(req.params.id)
   if (!id) return errorResponse(res, 400, 'INVALID_ID', 'معرف الباقة غير صحيح')
   const pkg = await updatePackage(id, req.body)
+
+  await logActivity({
+    actor: req.admin,
+    action: 'PACKAGE_UPDATED',
+    resourceType: 'PACKAGE',
+    resourceId: id,
+    details: { title: pkg.title, price: pkg.price },
+    req,
+  })
+
   res.json({ success: true, data: pkg })
 })
 
@@ -45,5 +66,14 @@ export const deleteAdminPackage = asyncHandler(async (req, res) => {
   const id = parseId(req.params.id)
   if (!id) return errorResponse(res, 400, 'INVALID_ID', 'معرف الباقة غير صحيح')
   await deletePackage(id)
+
+  await logActivity({
+    actor: req.admin,
+    action: 'PACKAGE_DELETED',
+    resourceType: 'PACKAGE',
+    resourceId: id,
+    req,
+  })
+
   res.json({ success: true, message: 'تم حذف الباقة بنجاح' })
 })

@@ -1,7 +1,9 @@
 import { AlertTriangle } from 'lucide-react'
+import { useLanguage } from '../../context/LanguageContext.jsx'
 
 // Inline error banner used across admin forms and data pages.
 export default function ErrorBanner({ message, onDismiss }) {
+  const { t } = useLanguage()
   if (!message) return null
   return (
     <div
@@ -13,7 +15,7 @@ export default function ErrorBanner({ message, onDismiss }) {
         <span>{message}</span>
       </div>
       {onDismiss ? (
-        <button onClick={onDismiss} className="shrink-0 font-semibold hover:underline" aria-label="إخفاء">
+        <button onClick={onDismiss} className="shrink-0 font-semibold hover:underline" aria-label={t('close')}>
           ×
         </button>
       ) : null}

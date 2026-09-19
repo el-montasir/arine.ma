@@ -15,7 +15,7 @@ async function request(path, { method = 'GET', body: payload } = {}) {
       body: isFormData ? payload : (payload ? JSON.stringify(payload) : undefined),
     })
   } catch {
-    const err = new Error('تعذر الاتصال بالخادم')
+    const err = new Error('Failed to reach server')
     err.code = 'NETWORK_ERROR'
     err.status = 0
     throw err
@@ -29,7 +29,7 @@ async function request(path, { method = 'GET', body: payload } = {}) {
   }
 
   if (!res.ok) {
-    const err = new Error(json?.error?.message || 'فشل الطلب')
+    const err = new Error(json?.error?.message || 'Request failed')
     err.code = json?.error?.code || 'NETWORK_ERROR'
     err.status = res.status
     throw err

@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Truck, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, Save, ArrowRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Truck, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, Save } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
+import { formatMoney } from '../lib/format.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Button from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import { Badge, StatusBadge } from '../components/ui/Badge.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 export default function ShippingSettings() {
-  const navigate = useNavigate()
+  const { t, language } = useLanguage()
   const { data: shippingData, loading: shippingLoading, reload: reloadShipping } = useFetch('/shipping/status')
 
   // Shipping configuration form state
@@ -49,11 +50,11 @@ export default function ShippingSettings() {
         freeEnabled: Boolean(shippingForm.freeEnabled),
         freeThreshold: Number(shippingForm.freeThreshold),
       })
-      setShippingSuccess('تم حفظ وتحديث إعدادات وقواعد التوصيل بنجاح')
+      setShippingSuccess(t('saveShippingSuccess'))
       reloadShipping()
       setTimeout(() => setShippingSuccess(''), 4000)
     } catch (err) {
-      setShippingError(err.message || 'تعذر حفظ إعدادات التوصيل')
+      setShippingError(err.message || t('saveShippingError'))
     } finally {
       setShippingBusy(false)
     }
@@ -65,7 +66,7 @@ export default function ShippingSettings() {
       await api.post('/shipping/active-provider', { providerId })
       reloadShipping()
     } catch (err) {
-      alert(err.message || 'تعذر تغيير مزود التوصيل')
+      alert(err.message || t('saveShippingError'))
     } finally {
       setProviderChanging(false)
     }
@@ -77,8 +78,8 @@ export default function ShippingSettings() {
   return (
     <div className="space-y-6 max-w-5xl">
       <PageHeader
-        title="إعدادات التوصيل والشحن"
-        subtitle="التحكم الكامل في تسعير التوصيل، التوصيل المجاني للطلبات، وإدارة شركات ومزودي الشحن"
+        title={t('shippingSettingsTitle')}
+        subtitle={t('shippingSettingsSubtitle')}
         actions={
           <Button
             variant="secondary"
@@ -87,7 +88,7 @@ export default function ShippingSettings() {
             disabled={shippingLoading}
           >
             <RefreshCw className={`h-3.5 w-3.5 ${shippingLoading ? 'animate-spin' : ''}`} />
-            تحديث البيانات
+            {t('refreshData')}
           </Button>
         }
       />
@@ -99,9 +100,9 @@ export default function ShippingSettings() {
             <Truck className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="text-base font-semibold text-white">قواعد تسعير التوصيل للزبائن</h2>
+            <h2 className="text-base font-semibold text-white">{t('shippingRulesCardTitle')}</h2>
             <p className="text-xs text-[#8b80a8]">
-              هذه الأسعار والقواعد تُطبق في المتجر وسلة المشتريات وصفحة إتمام الطلب
+              {t('shippingRulesCardDesc')}
             </p>
           </div>
         </div>
@@ -123,9 +124,9 @@ export default function ShippingSettings() {
           {/* Global shipping toggle */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-line bg-ink-900/40">
             <div>
-              <span className="text-sm font-semibold text-white block">نظام التوصيل والشحن</span>
+              <span className="text-sm font-semibold text-white block">{t('shippingSystemTitle')}</span>
               <span className="text-xs text-[#8b80a8] block mt-0.5">
-                عند تعطيل النظام، يصبح التوصيل مجانياً (0 درهم) لجميع الطلبات في المتجر
+                {t('shippingSystemDisabledDesc')}
               </span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer shrink-0">
@@ -137,7 +138,7 @@ export default function ShippingSettings() {
               />
               <div className="w-11 h-6 bg-surface-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
               <span className="ms-3 text-xs font-semibold text-white">
-                {shippingForm.enabled ? 'مفعّل' : 'معطّل'}
+                {shippingForm.enabled ? t('active') : t('inactive')}
               </span>
             </label>
           </div>
@@ -146,13 +147,13 @@ export default function ShippingSettings() {
           <div className="p-4 rounded-xl border border-line bg-ink-900/40">
             <div className="max-w-md">
               <Input
-                label="سعر التوصيل الأساسي للطلب (درهم) *"
+                label={t('standardShippingFeeLabel', { currency: t('currency') })}
                 type="number"
                 min="0"
                 step="1"
                 value={shippingForm.flatFee}
                 onChange={(e) => setShippingForm((prev) => ({ ...prev, flatFee: e.target.value }))}
-                hint="يُطبق هذا السعر مرة واحدة على مستوى الطلب بالكامل (ليس لكل كتاب أو نسخة)"
+                hint={t('standardShippingFeeHint')}
                 required
               />
             </div>
@@ -162,9 +163,9 @@ export default function ShippingSettings() {
           <div className="p-4 rounded-xl border border-line bg-ink-900/40 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line/60 pb-3">
               <div>
-                <span className="text-sm font-semibold text-white block">التوصيل المجاني التلقائي حسب قيمة الطلب</span>
+                <span className="text-sm font-semibold text-white block">{t('freeShippingByValueTitle')}</span>
                 <span className="text-xs text-[#8b80a8] block mt-0.5">
-                  منح الزبون توصيلاً مجانياً إذا بلغ مجموع سلة مشترياته حداً أدنى معيناً
+                  {t('freeShippingByValueDesc')}
                 </span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer shrink-0">
@@ -176,7 +177,7 @@ export default function ShippingSettings() {
                 />
                 <div className="w-11 h-6 bg-surface-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ok-500"></div>
                 <span className={`ms-3 text-xs font-semibold ${shippingForm.freeEnabled ? 'text-ok-400' : 'text-[#8b80a8]'}`}>
-                  {shippingForm.freeEnabled ? 'مفعّل [ ON ]' : 'غير مفعّل [ OFF ]'}
+                  {shippingForm.freeEnabled ? `[ ${t('active')} ]` : `[ ${t('inactive')} ]`}
                 </span>
               </label>
             </div>
@@ -185,23 +186,26 @@ export default function ShippingSettings() {
               <div className="space-y-3 pt-1">
                 <div className="max-w-md">
                   <Input
-                    label="الحد الأدنى لقيمة السلة للاستفادة من التوصيل المجاني (درهم) *"
+                    label={t('freeShippingThresholdLabel', { currency: t('currency') })}
                     type="number"
                     min="1"
                     step="1"
                     value={shippingForm.freeThreshold}
                     onChange={(e) => setShippingForm((prev) => ({ ...prev, freeThreshold: e.target.value }))}
-                    hint="إذا كان مجموع أسعار الكتب في السلة ≥ هذا المبلغ، يصبح سعر التوصيل 0 درهم"
+                    hint={t('freeShippingThresholdHint')}
                     required
                   />
                 </div>
                 <div className="p-3 rounded-lg bg-ok-950/30 border border-ok-900/40 text-xs text-ok-400">
-                  ✓ الطلبات ابتداءً من <strong>{shippingForm.freeThreshold || 0} درهم</strong> ستحصل على توصيل مجاني تلقائياً. الطلبات الأقل ستدفع سعر التوصيل الأساسي ({shippingForm.flatFee} درهم).
+                  {t('freeShippingActiveInfo', {
+                    threshold: formatMoney(shippingForm.freeThreshold || 0, language),
+                    fee: formatMoney(shippingForm.flatFee, language),
+                  })}
                 </div>
               </div>
             ) : (
               <div className="p-3 rounded-lg bg-ink-950/50 border border-line text-xs text-[#8b80a8]">
-                ✕ خاصية التوصيل المجاني حسب قيمة السلة <strong>غير مفعّلة</strong>. يدفع الزبون سعر التوصيل الأساسي ({shippingForm.flatFee} درهم) بغض النظر عن قيمة السلة، إلا في حال احتوت السلة على كتاب مخصص بتوصيل مجاني خاص به.
+                {t('freeShippingInactiveInfo', { fee: formatMoney(shippingForm.flatFee, language) })}
               </div>
             )}
           </div>
@@ -209,37 +213,37 @@ export default function ShippingSettings() {
           {/* Live Summary Box */}
           <div className="rounded-xl border border-brand-500/30 bg-brand-950/20 p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-400 mb-2">
-              ملخص القواعد الحالية للتوصيل
+              {t('currentShippingRulesSummary')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="p-2.5 rounded-lg bg-ink-900/60 border border-line">
-                <span className="text-[#8b80a8] block mb-1">حالة التوصيل العامة</span>
+                <span className="text-[#8b80a8] block mb-1">{t('globalShippingStatus')}</span>
                 <span className={`font-bold ${shippingForm.enabled ? 'text-ok-400' : 'text-danger-400'}`}>
-                  {shippingForm.enabled ? 'مفعّل' : 'معطّل (0 درهم)'}
+                  {shippingForm.enabled ? t('active') : `${t('inactive')} (${formatMoney(0, language)})`}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-ink-900/60 border border-line">
-                <span className="text-[#8b80a8] block mb-1">سعر التوصيل الأساسي للطلب</span>
-                <span className="font-bold text-white">
-                  {shippingForm.flatFee} درهم
+                <span className="text-[#8b80a8] block mb-1">{t('standardOrderShippingFee')}</span>
+                <span className="font-bold text-white tabular-nums">
+                  {formatMoney(shippingForm.flatFee, language)}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-ink-900/60 border border-line">
-                <span className="text-[#8b80a8] block mb-1">التوصيل المجاني حسب قيمة السلة</span>
+                <span className="text-[#8b80a8] block mb-1">{t('freeShippingThreshold')}</span>
                 <span className={`font-bold ${shippingForm.freeEnabled ? 'text-ok-400' : 'text-[#8b80a8]'}`}>
-                  {shippingForm.freeEnabled ? `مفعّل (ابتداءً من ${shippingForm.freeThreshold} درهم)` : 'غير مفعّل'}
+                  {shippingForm.freeEnabled ? `${t('active')} (≥ ${formatMoney(shippingForm.freeThreshold, language)})` : t('inactive')}
                 </span>
               </div>
             </div>
             <p className="text-[11px] text-[#8b80a8] pt-1">
-              ملاحظة: الكتب المحددة بـ «توصيل مجاني» على مستوى الكتاب تمنح الطلب بالكامل توصيلاً مجانياً بشكل مستقل ومباشر.
+              {t('shippingPerBookRuleNote')}
             </p>
           </div>
 
           <div className="flex justify-end pt-2">
             <Button type="submit" variant="primary" disabled={shippingBusy}>
               <Save className="h-4 w-4" aria-hidden="true" />
-              {shippingBusy ? 'جارِ الحفظ…' : 'حفظ إعدادات وقواعد التوصيل'}
+              {shippingBusy ? t('saving') : t('saveShippingRulesBtn')}
             </Button>
           </div>
         </form>
@@ -253,9 +257,9 @@ export default function ShippingSettings() {
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">مزودو التوصيل وشركات الشحن</h2>
+              <h2 className="text-sm font-semibold text-white">{t('shippingProvidersTitle')}</h2>
               <p className="text-xs text-[#8b80a8]">
-                إدارة ربط ومزودي التوصيل واللوجستيك (مستقل تماماً عن تسعير الزبائن)
+                {t('shippingProvidersDesc')}
               </p>
             </div>
           </div>
@@ -264,7 +268,7 @@ export default function ShippingSettings() {
             {activeProvider ? (
               <StatusBadge
                 kind={activeProvider.isConfigured ? 'ok' : 'neutral'}
-                label={activeProvider.isConfigured ? 'المزود النشط جاهز' : 'المزود النشط غير مهيأ'}
+                label={activeProvider.isConfigured ? t('activeProviderReady') : t('activeProviderNotConfigured')}
               />
             ) : null}
           </div>
@@ -287,10 +291,10 @@ export default function ShippingSettings() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-white">{prov.name}</span>
-                        {isSelected && <Badge kind="brand">المزود النشط</Badge>}
+                        {isSelected && <Badge kind="brand">{t('activeCarrierBadge')}</Badge>}
                       </div>
                       <span dir="ltr" className="font-mono text-[11px] text-[#8b80a8] block mt-0.5">
-                        id: {prov.id} ({prov.mode === 'api' ? 'واجهة برمجية API' : 'محلي / داخلي'})
+                        id: {prov.id} ({prov.mode === 'api' ? t('providerModeApi') : t('providerModeLocal')})
                       </span>
                     </div>
 
@@ -298,12 +302,12 @@ export default function ShippingSettings() {
                       {prov.isConfigured ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ok-400 bg-ok-950/60 border border-ok-900/60 px-2 py-0.5 rounded-md">
                           <ShieldCheck className="h-3 w-3" />
-                          مهيأ
+                          {t('configured')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-400 bg-amber-950/60 border border-amber-900/60 px-2 py-0.5 rounded-md">
                           <AlertCircle className="h-3 w-3" />
-                          غير مهيأ
+                          {t('notConfigured')}
                         </span>
                       )}
                     </div>
@@ -322,7 +326,7 @@ export default function ShippingSettings() {
                         disabled={providerChanging}
                         className="text-brand-400 hover:text-brand-300 font-medium underline text-xs disabled:opacity-50"
                       >
-                        تعيين كمزود نشط
+                        {t('setAsActiveProviderBtn')}
                       </button>
                     )}
                   </div>

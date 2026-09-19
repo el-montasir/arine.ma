@@ -1,10 +1,6 @@
 export function formatPrice(price) {
   const val = Number(price) || 0
-  return new Intl.NumberFormat('ar-MA', {
-    style: 'currency',
-    currency: 'MAD',
-    maximumFractionDigits: 0,
-  }).format(val)
+  return `${val} درهم`
 }
 
 export function percentOff(price, oldPrice) {

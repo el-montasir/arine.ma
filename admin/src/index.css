@@ -1,28 +1,31 @@
 @import "tailwindcss";
 
-/* Arine Admin — Professional, High-Contrast E-Commerce Admin Dashboard (Shopify/SaaS Caliber). RTL & LTR. */
+/* Arine Admin — Clean, Minimalist, High-Legibility Light Theme Dashboard. RTL & LTR. */
 
 @theme {
   --font-arabic: "IBM Plex Sans Arabic", "Cairo", "Noto Sans Arabic", -apple-system, sans-serif;
   --font-latin: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-sans: var(--font-arabic);
 
-  --color-ink-950: var(--ink-950, #0a0d14);
-  --color-ink-900: var(--ink-900, #0f131d);
-  --color-ink-850: var(--ink-850, #141a27);
-  --color-ink-800: var(--ink-800, #1a2233);
+  --color-ink-950: var(--ink-950, #f8fafc);
+  --color-ink-900: var(--ink-900, #ffffff);
+  --color-ink-850: var(--ink-850, #f1f5f9);
+  --color-ink-800: var(--ink-800, #e2e8f0);
 
-  --color-surface-900: var(--surface-900, #141a29);
-  --color-surface-800: var(--surface-800, #1b2337);
-  --color-surface-700: var(--surface-700, #242f49);
+  --color-surface-900: var(--surface-900, #ffffff);
+  --color-surface-800: var(--surface-800, #f8fafc);
+  --color-surface-700: var(--surface-700, #f1f5f9);
 
-  --color-line: var(--line, #232d44);
-  --color-line-soft: var(--line-soft, rgba(255, 255, 255, 0.08));
+  --color-line: var(--line, #e2e8f0);
+  --color-line-soft: var(--line-soft, #f1f5f9);
 
-  --color-text-main: var(--text-main, #f1f5f9);
-  --color-text-muted: var(--text-muted, #94a3b8);
-  --color-text-subtle: var(--text-subtle, #64748b);
+  --color-text-main: var(--text-main, #0f172a);
+  --color-text-muted: var(--text-muted, #64748b);
+  --color-text-subtle: var(--text-subtle, #94a3b8);
 
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
   --color-brand-300: #93c5fd;
   --color-brand-400: #60a5fa;
   --color-brand-500: #3b82f6;
@@ -42,6 +45,23 @@
 }
 
 :root,
+[data-theme="light"],
+.light-theme {
+  --ink-950: #f8fafc;
+  --ink-900: #ffffff;
+  --ink-850: #f1f5f9;
+  --ink-800: #e2e8f0;
+  --surface-900: #ffffff;
+  --surface-800: #f8fafc;
+  --surface-700: #f1f5f9;
+  --line: #e2e8f0;
+  --line-soft: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  color-scheme: light;
+}
+
 [data-theme="dark"],
 .dark-theme {
   --ink-950: #0a0d14;
@@ -57,23 +77,6 @@
   --text-muted: #94a3b8;
   --text-subtle: #64748b;
   color-scheme: dark;
-}
-
-[data-theme="light"],
-.light-theme {
-  --ink-950: #f8fafc;
-  --ink-900: #ffffff;
-  --ink-850: #f1f5f9;
-  --ink-800: #e2e8f0;
-  --surface-900: #ffffff;
-  --surface-800: #f8fafc;
-  --surface-700: #eef2f6;
-  --line: #e2e8f0;
-  --line-soft: rgba(0, 0, 0, 0.06);
-  --text-main: #0f172a;
-  --text-muted: #475569;
-  --text-subtle: #64748b;
-  color-scheme: light;
 }
 
 html[lang="ar"],
@@ -101,28 +104,26 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Background mesh / ambient gradient */
+/* Background mesh / ambient background */
 .app-bg {
+  background-color: var(--ink-950);
+}
+
+.dark-theme .app-bg,
+[data-theme="dark"] .app-bg {
   background-image:
     radial-gradient(50rem 35rem at 85% -10%, rgba(37, 99, 235, 0.12), transparent 60%),
     radial-gradient(40rem 30rem at 5% 105%, rgba(16, 185, 129, 0.08), transparent 60%);
 }
 
-.light-theme .app-bg {
-  background-image:
-    radial-gradient(50rem 35rem at 85% -10%, rgba(37, 99, 235, 0.05), transparent 60%),
-    radial-gradient(40rem 30rem at 5% 105%, rgba(16, 185, 129, 0.04), transparent 60%);
-}
-
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-700);
-  border-radius: 999px;
-  border: 2px solid var(--ink-950);
+  background: var(--line);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -135,100 +136,111 @@ input, select, textarea {
 
 .light-theme input,
 .light-theme select,
-.light-theme textarea {
+.light-theme textarea,
+:root input,
+:root select,
+:root textarea {
   background-color: #ffffff;
   color: #0f172a;
 }
 
-/* Status pills */
+/* Status pills — Pastel, Minimalist, High-Legibility */
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
+  gap: 0.375rem;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.25;
   border: 1px solid transparent;
   white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .status-pill .dot {
   width: 0.375rem;
   height: 0.375rem;
-  border-radius: 999px;
-  background: currentColor;
+  border-radius: 9999px;
+  background-color: currentColor;
+  flex-shrink: 0;
 }
 
+/* Delivered / Success / Ok (Emerald / Green) */
 .status-ok {
-  color: #059669;
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.28);
+  color: #047857;
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
 }
 .dark-theme .status-ok,
 [data-theme="dark"] .status-ok {
   color: #34d399;
-  background: rgba(52, 211, 153, 0.12);
+  background-color: rgba(52, 211, 153, 0.12);
   border-color: rgba(52, 211, 153, 0.28);
 }
 
+/* Pending / Warning (Amber / Orange) */
 .status-warn {
-  color: #d97706;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.28);
+  color: #b45309;
+  background-color: #fffbeb;
+  border-color: #fde68a;
 }
 .dark-theme .status-warn,
 [data-theme="dark"] .status-warn {
   color: #fbbf24;
-  background: rgba(251, 191, 36, 0.12);
+  background-color: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.28);
 }
 
+/* Cancelled / Danger (Red / Rose) */
 .status-danger {
-  color: #dc2626;
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.28);
+  color: #b91c1c;
+  background-color: #fef2f2;
+  border-color: #fecaca;
 }
 .dark-theme .status-danger,
 [data-theme="dark"] .status-danger {
   color: #f87171;
-  background: rgba(248, 113, 113, 0.12);
+  background-color: rgba(248, 113, 113, 0.12);
   border-color: rgba(248, 113, 113, 0.28);
 }
 
+/* Shipping / Info (Sky / Blue) */
 .status-info {
-  color: #0284c7;
-  background: rgba(14, 165, 233, 0.12);
-  border-color: rgba(14, 165, 233, 0.28);
+  color: #0369a1;
+  background-color: #f0f9ff;
+  border-color: #bae6fd;
 }
 .dark-theme .status-info,
 [data-theme="dark"] .status-info {
   color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
+  background-color: rgba(56, 189, 248, 0.12);
   border-color: rgba(56, 189, 248, 0.28);
 }
 
+/* Confirmed / Brand (Indigo / Blue) */
 .status-brand {
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.28);
+  color: #4338ca;
+  background-color: #eef2ff;
+  border-color: #c7d2fe;
 }
 .dark-theme .status-brand,
 [data-theme="dark"] .status-brand {
   color: #60a5fa;
-  background: rgba(96, 165, 250, 0.14);
+  background-color: rgba(96, 165, 250, 0.14);
   border-color: rgba(96, 165, 250, 0.32);
 }
 
+/* Neutral */
 .status-neutral {
   color: #475569;
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.1);
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
 }
 .dark-theme .status-neutral,
 [data-theme="dark"] .status-neutral {
   color: #94a3b8;
-  background: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.1);
 }

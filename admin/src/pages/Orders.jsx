@@ -1,31 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../lib/api.js'
-import { formatMoney, formatDate, PAYMENT_LABEL, orderStatus } from '../lib/format.js'
+import { formatMoney, formatDate, getPaymentLabel, getOrderStatus } from '../lib/format.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import Table from '../components/ui/Table.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Button from '../components/ui/Button.jsx'
-
-const STATUS_FILTERS = [
-  { value: '', label: 'الكل' },
-  { value: 'PENDING', label: 'قيد الانتظار' },
-  { value: 'CONFIRMED', label: 'مؤكد' },
-  { value: 'SHIPPING', label: 'قيد الشحن' },
-  { value: 'DELIVERED', label: 'تم التسليم' },
-  { value: 'CANCELLED', label: 'ملغي' },
-]
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 export default function Orders() {
   const navigate = useNavigate()
+  const { t, language, isRTL } = useLanguage()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('')
+
+  const ArrowIcon = isRTL ? ChevronLeft : ChevronRight
+
+  const STATUS_FILTERS = [
+    { value: '', label: t('filterAll') },
+    { value: 'PENDING', label: t('statusPending') },
+    { value: 'CONFIRMED', label: t('statusConfirmed') },
+    { value: 'SHIPPING', label: t('statusShipping') },
+    { value: 'DELIVERED', label: t('statusDelivered') },
+    { value: 'CANCELLED', label: t('statusCancelled') },
+  ]
 
   async function load() {
     setLoading(true)
@@ -50,30 +54,45 @@ export default function Orders() {
   }, [query, status])
 
   const columns = [
-    { key: 'orderNumber', label: 'رقم الطلب', render: (r) => <span dir="ltr" className="font-mono text-xs text-brand-400">{r.orderNumber}</span> },
-    { key: 'customer', label: 'العميل', render: (r) => (
-      <div>
-        <p className="font-medium">{r.fullName}</p>
-        <p className="text-xs text-[#8b80a8]">{r.phone}</p>
-      </div>
-    ) },
-    { key: 'city', label: 'المدينة', render: (r) => <span className="text-sm">{r.city}</span> },
-    { key: 'total', label: 'الإجمالي', render: (r) => <span className="tabular-nums">{formatMoney(r.total)}</span> },
-    { key: 'payment', label: 'الدفع', render: (r) => <span className="text-xs text-[#a79cc4]">{PAYMENT_LABEL[r.paymentMethod] || r.paymentMethod}</span> },
-    { key: 'status', label: 'الحالة', render: (r) => <Badge kind={orderStatus(r.status).color}>{orderStatus(r.status).label}</Badge> },
-    { key: 'created', label: 'التاريخ', render: (r) => <span className="text-xs text-[#8b80a8]">{formatDate(r.createdAt)}</span> },
-    { key: 'go', label: '', render: () => <ChevronLeft className="h-4 w-4 text-[#6f6488]" aria-hidden="true" /> },
+    {
+      key: 'orderNumber',
+      label: t('orderNumber'),
+      render: (r) => <span dir="ltr" className="font-mono text-xs text-brand-400">{r.orderNumber}</span>,
+    },
+    {
+      key: 'customer',
+      label: t('customerName'),
+      render: (r) => (
+        <div>
+          <p className="font-medium">{r.fullName}</p>
+          <p className="text-xs text-[#8b80a8]">{r.phone}</p>
+        </div>
+      ),
+    },
+    { key: 'city', label: t('customerCity'), render: (r) => <span className="text-sm">{r.city}</span> },
+    { key: 'total', label: t('orderTotal'), render: (r) => <span className="tabular-nums font-semibold">{formatMoney(r.total, language)}</span> },
+    { key: 'payment', label: t('paymentMethodLabel'), render: (r) => <span className="text-xs text-[#a79cc4]">{getPaymentLabel(r.paymentMethod, t)}</span> },
+    {
+      key: 'status',
+      label: t('orderStatus'),
+      render: (r) => {
+        const meta = getOrderStatus(r.status, t)
+        return <Badge kind={meta.color}>{meta.label}</Badge>
+      },
+    },
+    { key: 'created', label: t('orderDate'), render: (r) => <span className="text-xs text-[#8b80a8]">{formatDate(r.createdAt, language)}</span> },
+    { key: 'go', label: '', render: () => <ArrowIcon className="h-4 w-4 text-[#6f6488]" aria-hidden="true" /> },
   ]
 
   return (
     <div>
       <PageHeader
-        title="الطلبات"
-        subtitle={`${rows.length} طلب`}
+        title={t('ordersTitle')}
+        subtitle={t('ordersCountSubtitle', { count: rows.length })}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-[#6f6488]" aria-hidden="true" />
+              <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-gray-400 dark:text-[#6f6488]" aria-hidden="true" />
               <input
                 type="search"
                 value={search}
@@ -81,12 +100,14 @@ export default function Orders() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') setQuery(search.trim())
                 }}
-                placeholder="بحث برقم الطلب، الاسم، الهاتف…"
-                aria-label="بحث في الطلبات"
-                className="w-64 rounded-lg border border-line bg-ink-900 py-2 pe-3 ps-9 text-sm text-[#f2eefb] placeholder:text-[#6f6488] focus:border-brand-500 focus:outline-none"
+                placeholder={t('searchOrdersPlaceholder')}
+                aria-label={t('search')}
+                className="w-64 rounded-lg border border-line bg-white dark:bg-ink-900 py-2 pe-3 ps-9 text-sm text-gray-900 dark:text-[#f2eefb] placeholder:text-gray-400 dark:placeholder:text-[#6f6488] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
               />
             </div>
-            <Button variant="secondary" size="md" onClick={() => setQuery(search.trim())}>بحث</Button>
+            <Button variant="secondary" size="md" onClick={() => setQuery(search.trim())}>
+              {t('search')}
+            </Button>
           </div>
         }
       />
@@ -114,7 +135,7 @@ export default function Orders() {
           rows={rows}
           rowKey={(r) => r.id}
           loading={loading}
-          empty="لا توجد طلبات مطابقة"
+          empty={t('noOrdersMatch')}
           onRowClick={(r) => navigate(`/orders/${r.id}`)}
         />
       </Card>

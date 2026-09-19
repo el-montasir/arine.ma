@@ -1,4 +1,4 @@
-// Flat, consistent buttons. No 3D shadows — 2D SaaS style.
+// Flat, consistent buttons. Minimalist SaaS style.
 export default function Button({
   children,
   variant = 'primary',
@@ -11,12 +11,12 @@ export default function Button({
 }) {
   const variants = {
     primary:
-      'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700 disabled:bg-surface-700 disabled:text-[#6f6488]',
+      'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 disabled:bg-surface-700 disabled:text-text-subtle shadow-sm',
     secondary:
-      'bg-surface-800 text-[#ece6f6] hover:bg-surface-700 border border-line disabled:text-[#6f6488] disabled:hover:bg-surface-800',
-    ghost: 'text-[#c0b6d6] hover:bg-surface-800 hover:text-white',
-    danger: 'bg-danger-400/10 text-danger-400 border border-danger-400/30 hover:bg-danger-400/20',
-    link: 'text-brand-400 hover:text-brand-300 disabled:text-[#6f6488]',
+      'bg-surface-900 text-text-main hover:bg-surface-800 border border-line disabled:text-text-subtle disabled:hover:bg-surface-900',
+    ghost: 'text-text-muted hover:bg-surface-800 hover:text-text-main',
+    danger: 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 dark:bg-danger-400/10 dark:text-danger-400 dark:border-danger-400/30',
+    link: 'text-brand-600 hover:text-brand-700 dark:text-brand-400 disabled:text-text-subtle',
   }
   const sizes = {
     sm: 'px-2.5 py-1.5 text-xs',
@@ -28,7 +28,7 @@ export default function Button({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
       {...rest}
     >
       {children}

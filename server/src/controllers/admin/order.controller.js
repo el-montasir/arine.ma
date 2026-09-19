@@ -1,6 +1,7 @@
 import { asyncHandler } from '../../utils/async-handler.js'
 import { errorResponse } from '../../utils/api-response.js'
 import { listOrders, getOrder, updateOrderStatus } from '../../services/admin/order.service.js'
+import { logActivity } from '../../services/admin/activity-log.service.js'
 
 export const getOrders = asyncHandler(async (req, res) => {
   const orders = await listOrders({
@@ -25,5 +26,15 @@ export const patchOrderStatus = asyncHandler(async (req, res) => {
     return errorResponse(res, 400, 'INVALID_ID', 'معرف الطلب غير صحيح')
   }
   const order = await updateOrderStatus(id, req.validated.status)
+
+  await logActivity({
+    actor: req.admin,
+    action: 'ORDER_STATUS_UPDATED',
+    resourceType: 'ORDER',
+    resourceId: id,
+    details: { status: req.validated.status, orderNumber: order.orderNumber },
+    req,
+  })
+
   res.json({ success: true, data: order })
 })

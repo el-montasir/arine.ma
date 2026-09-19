@@ -1,4 +1,6 @@
 import { Router } from 'express'
+import { requirePermission } from '../../middleware/auth.middleware.js'
+import { PERMISSIONS } from '../../constants/permissions.js'
 import {
   getStoreConfigHandler,
   updateStoreConfigHandler,
@@ -6,7 +8,7 @@ import {
 
 const router = Router()
 
-router.get('/', getStoreConfigHandler)
-router.put('/', updateStoreConfigHandler)
+router.get('/', requirePermission(PERMISSIONS.STORE_SETTINGS_VIEW), getStoreConfigHandler)
+router.put('/', requirePermission(PERMISSIONS.STORE_SETTINGS_UPDATE), updateStoreConfigHandler)
 
 export default router

@@ -1,0 +1,8948 @@
+I want you to implement a complete, professional, production-ready Admin Management and Store Settings system inside my existing Arine e-commerce project.
+
+
+
+THIS IS A LARGE ARCHITECTURAL FEATURE.
+
+
+
+Do not rush.
+
+
+
+Do not start coding immediately.
+
+
+
+First inspect the entire existing project and understand how authentication, Admin Panel, users, orders, products, packages, finance, settings, API routes, Prisma models, sessions, permissions, and frontend routing currently work.
+
+
+
+The goal is to add a professional Admin Management system WITHOUT breaking the existing storefront or existing Admin Panel.
+
+
+
+============================================================
+
+0. ABSOLUTE RULES
+
+============================================================
+
+
+
+These rules are mandatory.
+
+
+
+DO NOT:
+
+
+
+redesign the entire website
+
+redesign the existing Admin Panel
+
+replace the existing authentication system without a strong reason
+
+replace the existing database architecture without a strong reason
+
+break existing login
+
+break storefront
+
+break checkout
+
+break orders
+
+break packages
+
+break products
+
+break finance
+
+break settings
+
+break existing Admin Panel routes
+
+change unrelated business logic
+
+remove existing functionality
+
+create duplicate authentication systems
+
+create duplicate user systems
+
+weaken security
+
+expose passwords
+
+store plaintext passwords
+
+expose secrets through APIs
+
+give sub-sellers unrestricted access by default
+
+trust frontend permissions alone
+
+rely only on hidden UI buttons for authorization
+
+allow a sub-seller to bypass permissions by manually calling APIs
+
+modify unrelated files unnecessarily
+
+
+
+The existing system is already functional.
+
+
+
+This feature must integrate with the existing architecture.
+
+
+
+Prefer extending existing authentication and authorization infrastructure over creating a parallel system.
+
+
+
+============================================================
+
+1. FIRST PHASE — FULL PROJECT AUDIT
+
+============================================================
+
+
+
+Before modifying anything, inspect:
+
+
+
+/admin
+/src
+/server
+/prisma
+server/prisma
+server/src
+
+
+
+Inspect:
+
+
+
+package.json
+
+admin/package.json
+
+server/package.json
+
+Prisma schema
+
+authentication routes
+
+authentication controllers
+
+authentication services
+
+session handling
+
+password hashing
+
+Admin login
+
+Admin frontend auth state
+
+protected routes
+
+Admin API middleware
+
+CORS
+
+cookies
+
+session cookies
+
+JWT if used
+
+current Admin user model
+
+order model
+
+product model
+
+package model
+
+finance services
+
+settings services
+
+store settings
+
+upload system
+
+error handling
+
+validation
+
+existing i18n
+
+Arabic/English system
+
+existing Admin sidebar
+
+existing Settings page
+
+existing navigation
+
+existing API conventions
+
+
+
+Search the repository before designing new database models.
+
+
+
+Determine whether the project already has:
+
+
+
+User
+
+Admin
+
+Role
+
+Permission
+
+Session
+
+Account
+
+StoreSettings
+
+AdminSettings
+
+
+
+or equivalent models.
+
+
+
+If something already exists, extend it instead of duplicating it.
+
+
+
+============================================================
+
+2. ARCHITECTURAL GOAL
+
+============================================================
+
+
+
+Add a professional Admin Management area.
+
+
+
+Suggested navigation:
+
+
+
+Settings
+├── Store Settings
+├── Admin Team
+├── Roles & Permissions
+├── Security
+└── Activity Log
+
+
+
+You may adapt the exact naming to the existing project.
+
+
+
+The section should be accessible from the Admin Panel.
+
+
+
+The system must support:
+
+
+
+OWNER / SUPER ADMIN
+
+
+
+and
+
+
+
+SUB-SELLER / STAFF
+
+
+
+with granular permissions.
+
+
+
+============================================================
+
+3. OWNER / SUPER ADMIN
+
+============================================================
+
+
+
+The primary owner/admin should have full control.
+
+
+
+The owner can:
+
+
+
+view all store settings
+
+edit store settings
+
+manage Admin accounts
+
+create sub-sellers
+
+edit sub-sellers
+
+disable sub-sellers
+
+enable sub-sellers
+
+reset sub-seller passwords
+
+revoke sessions
+
+assign roles
+
+assign permissions
+
+remove permissions
+
+view activity logs
+
+manage security settings
+
+view all orders
+
+manage orders
+
+manage products
+
+manage packages
+
+manage categories
+
+manage banners
+
+manage shipping
+
+view finance
+
+manage finance-related settings where applicable
+
+
+
+However:
+
+
+
+DO NOT hardcode authorization only in frontend.
+
+
+
+Every sensitive action must be authorized on the backend.
+
+
+
+============================================================
+
+4. SUB-SELLER SYSTEM
+
+============================================================
+
+
+
+Create a professional sub-seller management system.
+
+
+
+A sub-seller should have:
+
+
+
+id
+
+full name
+
+email
+
+phone if appropriate
+
+username if the current architecture requires it
+
+password hash
+
+role
+
+status
+
+permissions
+
+createdAt
+
+updatedAt
+
+lastLoginAt
+
+createdBy
+
+optional lastActiveAt
+
+optional notes
+
+
+
+Do NOT store plaintext passwords.
+
+
+
+Do NOT return password hashes to frontend.
+
+
+
+Do NOT expose password hashes through APIs.
+
+
+
+============================================================
+
+5. SUB-SELLER STATUS
+
+============================================================
+
+
+
+Support statuses such as:
+
+
+
+ACTIVE
+INACTIVE
+SUSPENDED
+
+
+
+Use the project's existing conventions if available.
+
+
+
+Inactive/suspended users must not be able to authenticate.
+
+
+
+Do not delete accounts unnecessarily.
+
+
+
+Prefer disabling/deactivating accounts so activity history remains intact.
+
+
+
+============================================================
+
+6. SUB-SELLER CREATION
+
+============================================================
+
+
+
+The owner should be able to create a sub-seller.
+
+
+
+Form:
+
+
+
+Full name
+
+Email
+
+Phone if needed
+
+Password
+
+Confirm password
+
+Role
+
+Permissions
+
+Active/Inactive
+
+Optional notes
+
+
+
+Validation:
+
+
+
+valid email
+
+unique email
+
+secure password
+
+password confirmation
+
+required name
+
+valid permissions
+
+valid role
+
+
+
+Passwords must be hashed with the existing secure hashing mechanism.
+
+
+
+Never store:
+
+
+
+password: "plaintext"
+
+
+
+============================================================
+
+7. PASSWORD SECURITY
+
+============================================================
+
+
+
+Use the existing bcrypt/bcryptjs mechanism if already present.
+
+
+
+Do not create a second password hashing library unless necessary.
+
+
+
+Password requirements should be reasonable and configurable only if the existing architecture supports it.
+
+
+
+At minimum:
+
+
+
+minimum length
+
+reject obviously invalid values
+
+hash before storage
+
+never log passwords
+
+never return passwords from API
+
+never expose password hashes
+
+
+
+When creating a sub-seller, do not return the password in API responses.
+
+
+
+============================================================
+
+8. PASSWORD RESET
+
+============================================================
+
+
+
+Owner should be able to reset a sub-seller password.
+
+
+
+Security requirements:
+
+
+
+old password is never displayed
+
+new password is entered securely
+
+password is hashed
+
+previous sessions can optionally be revoked
+
+password reset action is logged
+
+
+
+Do not create an insecure "show current password" feature.
+
+
+
+There is no reason for the owner to see a user's current password.
+
+
+
+============================================================
+
+9. SESSION MANAGEMENT
+
+============================================================
+
+
+
+Inspect the current session system.
+
+
+
+Do not create duplicate authentication.
+
+
+
+If sessions are database-backed, integrate with them.
+
+
+
+The owner should be able to:
+
+
+
+view active sessions where appropriate
+
+revoke a sub-seller's sessions
+
+disable account access
+
+optionally revoke all sessions after password reset
+
+
+
+A disabled user must not remain authenticated indefinitely.
+
+
+
+Backend authorization must check account status where appropriate.
+
+
+
+============================================================
+
+10. ROLES
+
+============================================================
+
+
+
+Implement role-based access control.
+
+
+
+Possible roles:
+
+
+
+OWNER
+ADMIN
+MANAGER
+SELLER
+
+
+
+But do NOT blindly create all four if the project only needs a simpler model.
+
+
+
+At minimum support:
+
+
+
+OWNER
+
+
+
+and
+
+
+
+SUB_SELLER
+
+
+
+with granular permissions.
+
+
+
+The architecture should be extensible for future roles.
+
+
+
+============================================================
+
+11. PERMISSION SYSTEM
+
+============================================================
+
+
+
+Create granular permissions.
+
+
+
+Suggested permission categories:
+
+
+
+DASHBOARD_VIEW
+
+
+
+PRODUCTS_VIEW
+PRODUCTS_CREATE
+PRODUCTS_UPDATE
+PRODUCTS_DELETE
+
+
+
+CATEGORIES_VIEW
+CATEGORIES_CREATE
+CATEGORIES_UPDATE
+CATEGORIES_DELETE
+
+
+
+PACKAGES_VIEW
+PACKAGES_CREATE
+PACKAGES_UPDATE
+PACKAGES_DELETE
+
+
+
+ORDERS_VIEW
+ORDERS_CREATE
+ORDERS_UPDATE
+ORDERS_DELETE
+ORDERS_STATUS_UPDATE
+
+
+
+CUSTOMERS_VIEW
+
+
+
+FINANCE_VIEW
+FINANCE_EXPORT
+
+
+
+BANNERS_VIEW
+BANNERS_CREATE
+BANNERS_UPDATE
+BANNERS_DELETE
+
+
+
+SHIPPING_VIEW
+SHIPPING_UPDATE
+
+
+
+STORE_SETTINGS_VIEW
+STORE_SETTINGS_UPDATE
+
+
+
+ADMIN_USERS_VIEW
+ADMIN_USERS_CREATE
+ADMIN_USERS_UPDATE
+ADMIN_USERS_DISABLE
+ADMIN_USERS_DELETE
+
+
+
+ROLES_VIEW
+ROLES_CREATE
+ROLES_UPDATE
+ROLES_DELETE
+
+
+
+SECURITY_VIEW
+SECURITY_UPDATE
+
+
+
+ACTIVITY_LOG_VIEW
+
+
+
+You may adapt names to the existing project.
+
+
+
+============================================================
+
+12. READ VS WRITE PERMISSIONS
+
+============================================================
+
+
+
+Do not make permissions only "yes/no" at page level.
+
+
+
+Distinguish:
+
+
+
+VIEW
+
+
+
+CREATE
+
+
+
+UPDATE
+
+
+
+DELETE
+
+
+
+where relevant.
+
+
+
+Example:
+
+
+
+A seller may have:
+
+
+
+ORDERS_VIEW = true
+
+
+
+ORDERS_STATUS_UPDATE = true
+
+
+
+ORDERS_DELETE = false
+
+
+
+FINANCE_VIEW = false
+
+
+
+ADMIN_USERS_VIEW = false
+
+
+
+This is exactly the kind of granular control I need.
+
+
+
+============================================================
+
+13. PERMISSION MATRIX
+
+============================================================
+
+
+
+Create a professional UI where the owner can configure permissions.
+
+
+
+Example:
+
+             View    Create    Edit    Delete
+
+
+Products ✓ ✓ ✓ ✗
+Packages ✓ ✓ ✗ ✗
+Orders ✓ ✗ ✓ ✗
+Finance ✗ ✗ ✗ ✗
+Settings ✗ ✗ ✗ ✗
+
+
+
+The exact UI design should match the existing Admin Panel.
+
+
+
+Do not introduce an unrelated visual design system.
+
+
+
+============================================================
+
+14. BACKEND AUTHORIZATION
+
+============================================================
+
+
+
+THIS IS CRITICAL.
+
+
+
+Frontend permissions are NOT security.
+
+
+
+For every protected endpoint:
+
+
+
+authenticate user
+
+identify account
+
+check account status
+
+check role
+
+check permission
+
+allow or reject
+
+
+
+Example:
+
+
+
+requirePermission('ORDERS_VIEW')
+
+
+
+or equivalent architecture.
+
+
+
+Do not trust:
+
+
+
+req.body.role
+
+
+
+req.body.isAdmin
+
+
+
+req.body.permissions
+
+
+
+or frontend localStorage.
+
+
+
+Never allow the client to assign itself permissions.
+
+
+
+============================================================
+
+15. IDOR / BOLA PROTECTION
+
+============================================================
+
+
+
+Audit every new Admin Management endpoint for:
+
+
+
+IDOR
+
+BOLA
+
+unauthorized user modification
+
+privilege escalation
+
+
+
+Example:
+
+
+
+A sub-seller must NOT be able to call:
+
+
+
+PUT /api/admin/users/OWNER_ID
+
+
+
+and modify the owner.
+
+
+
+A sub-seller must NOT be able to modify another privileged account unless explicitly permitted.
+
+
+
+Backend authorization must happen server-side.
+
+
+
+============================================================
+
+16. PRIVILEGE ESCALATION PROTECTION
+
+============================================================
+
+
+
+A sub-seller must not be able to:
+
+
+
+promote itself to OWNER
+
+grant itself permissions
+
+create another OWNER
+
+modify owner permissions
+
+remove owner's permissions
+
+change its own role
+
+enable itself after suspension
+
+change its own security restrictions
+
+
+
+unless the architecture explicitly allows a safe operation.
+
+
+
+Owner-level operations must be protected.
+
+
+
+============================================================
+
+17. OWNER PROTECTION
+
+============================================================
+
+
+
+The system must protect the primary owner account.
+
+
+
+Do not allow normal sub-sellers to:
+
+
+
+delete owner
+
+disable owner
+
+change owner role
+
+remove owner permissions
+
+change owner email
+
+reset owner password
+
+modify owner security settings
+
+
+
+If owner management is needed in the future, design it separately.
+
+
+
+============================================================
+
+18. ADMIN TEAM PAGE
+
+============================================================
+
+
+
+Create a professional page:
+
+
+
+Admin Team
+
+
+
+Display:
+
+
+
+Name
+
+Email
+
+Role
+
+Status
+
+Last login
+
+Created date
+
+Actions
+
+
+
+Actions:
+
+
+
+View
+
+Edit
+
+Permissions
+
+Disable
+
+Enable
+
+Reset password
+
+Revoke sessions
+
+
+
+Delete should not be the default.
+
+
+
+Prefer disable/deactivate for staff accounts.
+
+
+
+============================================================
+
+19. CREATE SUB-SELLER MODAL / PAGE
+
+============================================================
+
+
+
+Create a clean form.
+
+
+
+Sections:
+
+
+
+ACCOUNT
+
+
+
+Name
+
+Email
+
+Phone
+
+
+
+SECURITY
+
+
+
+Password
+
+Confirm password
+
+
+
+ROLE
+
+
+
+Role selection
+
+
+
+PERMISSIONS
+
+
+
+permission matrix
+
+
+
+STATUS
+
+
+
+Active
+
+
+
+NOTES
+
+
+
+optional
+
+
+
+Make the form responsive.
+
+
+
+Use existing Admin components/styles.
+
+
+
+============================================================
+
+20. EDIT SUB-SELLER
+
+============================================================
+
+
+
+Allow owner to edit:
+
+
+
+name
+
+email
+
+phone
+
+role
+
+permissions
+
+status
+
+notes
+
+
+
+Do not display the password.
+
+
+
+Password changes must have a dedicated secure action.
+
+
+
+============================================================
+
+21. STORE SETTINGS
+
+============================================================
+
+
+
+Add a Store Settings section.
+
+
+
+It should manage relevant store-level settings.
+
+
+
+Potential fields:
+
+
+
+Store name
+
+
+
+Store email
+
+
+
+Store phone
+
+
+
+Store WhatsApp
+
+
+
+Store address
+
+
+
+Store city
+
+
+
+Store country
+
+
+
+Store logo
+
+
+
+Store favicon if supported
+
+
+
+Store description
+
+
+
+Currency
+
+
+
+Default language
+
+
+
+Timezone
+
+
+
+Order settings
+
+
+
+Shipping settings where appropriate
+
+
+
+Social links where appropriate
+
+
+
+Contact information
+
+
+
+Business hours if supported
+
+
+
+Do not add fields that are not needed by the existing application.
+
+
+
+Inspect the current settings architecture first.
+
+
+
+============================================================
+
+22. STORE CREDENTIALS
+
+============================================================
+
+
+
+When the user says "store email/password", interpret this carefully.
+
+
+
+The store itself should NOT have a shared plaintext password.
+
+
+
+The correct architecture is:
+
+
+
+Store settings:
+
+
+
+store email
+
+contact information
+
+
+
+Admin accounts:
+
+
+
+individual login email
+
+individual password
+
+
+
+Do NOT create a single shared store password that every sub-seller uses.
+
+
+
+Every person must have their own account.
+
+
+
+This provides:
+
+
+
+accountability
+
+audit logs
+
+permission management
+
+session revocation
+
+individual access control
+
+
+
+============================================================
+
+23. STORE SETTINGS VS ADMIN ACCOUNTS
+
+============================================================
+
+
+
+Separate these concepts.
+
+
+
+STORE SETTINGS:
+
+
+
+store name
+
+store email
+
+phone
+
+address
+
+branding
+
+currency
+
+language
+
+shipping configuration
+
+
+
+ADMIN ACCOUNTS:
+
+
+
+person
+
+email
+
+password
+
+role
+
+permissions
+
+status
+
+activity
+
+
+
+Do not mix them into one database model.
+
+
+
+============================================================
+
+24. ACTIVITY LOG
+
+============================================================
+
+
+
+Add an Activity Log system.
+
+
+
+This is important for professional multi-user administration.
+
+
+
+Track sensitive actions such as:
+
+
+
+login
+
+logout
+
+failed login
+
+create sub-seller
+
+update sub-seller
+
+disable sub-seller
+
+enable sub-seller
+
+reset password
+
+change permissions
+
+change role
+
+change store settings
+
+create product
+
+update product
+
+delete product
+
+create package
+
+update package
+
+delete package
+
+update order status
+
+financial actions if applicable
+
+
+
+Each log should contain:
+
+
+
+actor ID
+
+actor name/email snapshot if appropriate
+
+action
+
+resource type
+
+resource ID
+
+timestamp
+
+optional metadata
+
+IP address if appropriate and legally appropriate
+
+user agent if appropriate
+
+
+
+Be careful not to store passwords or sensitive secrets in metadata.
+
+
+
+============================================================
+
+25. ACTIVITY LOG SECURITY
+
+============================================================
+
+
+
+Never log:
+
+
+
+passwords
+
+password hashes
+
+session secrets
+
+API keys
+
+tokens
+
+cookies
+
+database credentials
+
+
+
+If request metadata is logged, sanitize it.
+
+
+
+============================================================
+
+26. ACTIVITY LOG UI
+
+============================================================
+
+
+
+Create:
+
+
+
+Activity Log
+
+
+
+Columns:
+
+
+
+Date
+
+User
+
+Action
+
+Resource
+
+Details
+
+
+
+Filters:
+
+
+
+user
+
+action
+
+resource
+
+date range
+
+
+
+Pagination.
+
+
+
+Do not load thousands of logs at once.
+
+
+
+Use server-side pagination.
+
+
+
+============================================================
+
+27. AUDIT LOG IMMUTABILITY
+
+============================================================
+
+
+
+Normal sub-sellers must not be able to delete or modify activity logs.
+
+
+
+Prefer append-only behavior.
+
+
+
+If the owner needs cleanup/retention in the future, implement a separate controlled mechanism.
+
+
+
+Do not expose arbitrary delete endpoints for audit logs.
+
+
+
+============================================================
+
+28. SECURITY PAGE
+
+============================================================
+
+
+
+Create a Security section.
+
+
+
+Potential features:
+
+
+
+change own password
+
+active sessions
+
+revoke sessions
+
+login security information
+
+account status
+
+last login
+
+
+
+Owner can manage staff security.
+
+
+
+Do not expose passwords.
+
+
+
+============================================================
+
+29. CHANGE OWN PASSWORD
+
+============================================================
+
+
+
+Any authenticated Admin should be able to change their own password if permitted.
+
+
+
+Require:
+
+
+
+current password
+
+new password
+
+confirm new password
+
+
+
+Verify current password server-side.
+
+
+
+Hash new password.
+
+
+
+Optionally revoke other sessions.
+
+
+
+Never return password data.
+
+
+
+============================================================
+
+30. LOGIN SECURITY
+
+============================================================
+
+
+
+Audit current login.
+
+
+
+Ensure:
+
+
+
+password is hashed
+
+failed login does not reveal whether email exists unnecessarily
+
+rate limiting exists
+
+session cookie is secure
+
+httpOnly is used where appropriate
+
+sameSite is configured appropriately
+
+production secure cookie settings are used
+
+CORS does not allow unsafe credential sharing
+
+authentication errors are localized on frontend
+
+no password is logged
+
+
+
+Do not weaken existing security.
+
+
+
+============================================================
+
+31. RATE LIMITING
+
+============================================================
+
+
+
+Inspect current rate limiting.
+
+
+
+If already present, reuse it.
+
+
+
+If missing on sensitive authentication endpoints, add a minimal appropriate rate limit.
+
+
+
+Do not introduce excessive restrictions that make legitimate store management difficult.
+
+
+
+============================================================
+
+32. ACCOUNT LOCK / SUSPENSION
+
+============================================================
+
+
+
+If repeated failed logins are already supported, preserve them.
+
+
+
+If not, do not implement an unnecessarily complex lockout system unless the project needs it.
+
+
+
+At minimum:
+
+
+
+disabled/suspended accounts cannot authenticate.
+
+
+
+============================================================
+
+33. FRONTEND ROUTE PROTECTION
+
+============================================================
+
+
+
+Protect Admin pages based on authentication AND permissions.
+
+
+
+For example:
+
+
+
+Finance page:
+
+
+
+requires authentication
+
+
+
+AND:
+
+
+
+FINANCE_VIEW
+
+
+
+Products page:
+
+
+
+requires:
+
+
+
+PRODUCTS_VIEW
+
+
+
+Create Product:
+
+
+
+requires:
+
+
+
+PRODUCTS_CREATE
+
+
+
+Edit Product:
+
+
+
+requires:
+
+
+
+PRODUCTS_UPDATE
+
+
+
+Delete Product:
+
+
+
+requires:
+
+
+
+PRODUCTS_DELETE
+
+
+
+However:
+
+
+
+Frontend route protection is only UX.
+
+
+
+Backend authorization remains mandatory.
+
+
+
+============================================================
+
+34. HIDE UI ACTIONS
+
+============================================================
+
+
+
+If a user does not have permission:
+
+
+
+Do not show irrelevant action buttons.
+
+
+
+Example:
+
+
+
+No PRODUCTS_DELETE:
+
+
+
+hide Delete button.
+
+
+
+No PACKAGES_CREATE:
+
+
+
+hide Add Package.
+
+
+
+No FINANCE_VIEW:
+
+
+
+do not show Finance navigation item.
+
+
+
+But also protect API endpoints.
+
+
+
+Never rely only on hiding UI.
+
+
+
+============================================================
+
+35. DIRECT URL ACCESS
+
+============================================================
+
+
+
+Test:
+
+
+
+A user without Finance permission manually enters:
+
+
+
+/finance
+
+
+
+The page must not expose finance data.
+
+
+
+The backend must also reject Finance API requests.
+
+
+
+Same for:
+
+
+
+settings
+
+admin team
+
+roles
+
+activity logs
+
+products
+
+packages
+
+orders
+
+
+
+============================================================
+
+36. API RESPONSE SECURITY
+
+============================================================
+
+
+
+Admin user endpoints should return only safe fields.
+
+
+
+Never return:
+
+
+
+password hash
+
+session secret
+
+reset token
+
+authentication token
+
+private secrets
+
+
+
+Example safe response:
+
+
+
+{
+id,
+name,
+email,
+role,
+status,
+permissions,
+lastLoginAt,
+createdAt
+}
+
+
+
+============================================================
+
+37. MASS ASSIGNMENT PROTECTION
+
+============================================================
+
+
+
+Do not allow arbitrary fields from req.body to be passed directly into Prisma update/create.
+
+
+
+Bad:
+
+
+
+prisma.user.update({
+data: req.body
+})
+
+
+
+Use explicit allowed fields.
+
+
+
+Especially protect:
+
+
+
+role
+
+permissions
+
+status
+
+password
+
+owner flags
+
+
+
+============================================================
+
+38. INPUT VALIDATION
+
+============================================================
+
+
+
+Use the existing Zod validation architecture.
+
+
+
+Validate:
+
+
+
+email
+
+names
+
+phone
+
+role
+
+permissions
+
+status
+
+passwords
+
+store settings
+
+
+
+Reject unknown or dangerous values where appropriate.
+
+
+
+============================================================
+
+39. EMAIL UNIQUENESS
+
+============================================================
+
+
+
+Admin emails must be unique.
+
+
+
+Handle race conditions at database level if appropriate.
+
+
+
+Do not rely only on frontend validation.
+
+
+
+Return a safe user-friendly error.
+
+
+
+============================================================
+
+40. CASE NORMALIZATION
+
+============================================================
+
+
+
+Email handling should be consistent.
+
+
+
+Normalize emails appropriately before storing/authenticating.
+
+
+
+Do not accidentally create:
+
+
+
+admin@example.com
+
+
+
+and
+
+
+
+ADMIN@example.com
+
+
+
+as separate accounts if the architecture treats email as case-insensitive.
+
+
+
+Follow existing project conventions.
+
+
+
+============================================================
+
+41. ROLE STORAGE
+
+============================================================
+
+
+
+Do not store arbitrary role strings from frontend without validation.
+
+
+
+Use:
+
+
+
+Prisma enum if appropriate
+
+controlled values
+
+validated role identifiers
+
+
+
+Do not let clients submit:
+
+
+
+role: "OWNER"
+
+
+
+and automatically gain owner privileges.
+
+
+
+============================================================
+
+42. PERMISSION STORAGE
+
+============================================================
+
+
+
+Choose the architecture that best matches the existing Prisma setup.
+
+
+
+Possible:
+
+
+
+Role + Permission models
+
+
+
+or
+
+
+
+role permissions
+
+
+
+or
+
+
+
+controlled permission enum arrays
+
+
+
+But inspect existing architecture first.
+
+
+
+Do not introduce unnecessary complexity.
+
+
+
+The system must remain maintainable.
+
+
+
+============================================================
+
+43. DATABASE MIGRATION
+
+============================================================
+
+
+
+If database changes are required:
+
+
+
+create a proper Prisma migration
+
+do not edit production database manually
+
+preserve existing data
+
+provide sensible defaults
+
+avoid destructive migrations
+
+do not reset database
+
+do not use prisma migrate reset
+
+
+
+IMPORTANT:
+
+
+
+Never run:
+
+
+
+prisma migrate reset
+
+
+
+on a database containing real data.
+
+
+
+============================================================
+
+44. EXISTING ADMIN ACCOUNT MIGRATION
+
+============================================================
+
+
+
+If an existing Admin account already exists:
+
+
+
+DO NOT break it.
+
+
+
+Determine how existing authentication identifies Admins.
+
+
+
+Migrate the existing account safely into the new architecture.
+
+
+
+The existing owner/admin must retain access.
+
+
+
+Do not force deletion/recreation unless absolutely necessary.
+
+
+
+============================================================
+
+45. DEFAULT OWNER
+
+============================================================
+
+
+
+If a role system is introduced, map the existing primary Admin account to OWNER or equivalent.
+
+
+
+Do this safely.
+
+
+
+Do not create multiple owners accidentally.
+
+
+
+============================================================
+
+46. SEED DATA
+
+============================================================
+
+
+
+If seed changes are necessary:
+
+
+
+Do not overwrite real production users.
+
+
+
+Use development-safe seed behavior.
+
+
+
+Never hardcode production passwords into source code.
+
+
+
+If a demo account exists, preserve the existing project's documented demo behavior without exposing real secrets.
+
+
+
+============================================================
+
+47. STORE SETTINGS DATABASE DESIGN
+
+============================================================
+
+
+
+If StoreSettings does not already exist, design a clean model.
+
+
+
+Possible structure:
+
+
+
+StoreSettings:
+
+
+
+id
+storeName
+storeEmail
+storePhone
+storeAddress
+storeCity
+storeCountry
+currency
+defaultLanguage
+timezone
+logo
+favicon
+description
+createdAt
+updatedAt
+
+
+
+But adapt to existing project requirements.
+
+
+
+Do not add dozens of meaningless fields.
+
+
+
+============================================================
+
+48. SINGLE STORE VS MULTI-STORE
+
+============================================================
+
+
+
+This project currently behaves as a single store unless the existing architecture says otherwise.
+
+
+
+Do NOT introduce multi-store complexity.
+
+
+
+A single StoreSettings record is acceptable.
+
+
+
+Use a singleton strategy if appropriate.
+
+
+
+============================================================
+
+49. STORE SETTINGS API
+
+============================================================
+
+
+
+Create protected endpoints if needed.
+
+
+
+Examples:
+
+
+
+GET /api/admin/settings/store
+
+
+
+PUT /api/admin/settings/store
+
+
+
+But follow the existing route architecture.
+
+
+
+GET may require:
+
+
+
+STORE_SETTINGS_VIEW
+
+
+
+PUT may require:
+
+
+
+STORE_SETTINGS_UPDATE
+
+
+
+============================================================
+
+50. ADMIN TEAM API
+
+============================================================
+
+
+
+Possible endpoints:
+
+
+
+GET /api/admin/users
+
+
+
+POST /api/admin/users
+
+
+
+GET /api/admin/users/:id
+
+
+
+PATCH /api/admin/users/:id
+
+
+
+PATCH /api/admin/users/:id/status
+
+
+
+PATCH /api/admin/users/:id/password
+
+
+
+PATCH /api/admin/users/:id/permissions
+
+
+
+PATCH /api/admin/users/:id/role
+
+
+
+Again:
+
+
+
+Do not blindly use these exact URLs.
+
+
+
+Follow existing project conventions.
+
+
+
+============================================================
+
+51. PERMISSIONS API
+
+============================================================
+
+
+
+Provide a safe endpoint for available permissions if needed.
+
+
+
+Example:
+
+
+
+GET /api/admin/permissions
+
+
+
+Only return safe permission definitions.
+
+
+
+Do not allow arbitrary permission creation unless the architecture genuinely needs custom permissions.
+
+
+
+============================================================
+
+52. ACTIVITY LOG API
+
+============================================================
+
+
+
+Possible:
+
+
+
+GET /api/admin/activity-log
+
+
+
+Must be protected.
+
+
+
+Use pagination.
+
+
+
+Filters should be validated.
+
+
+
+Never expose audit logs publicly.
+
+
+
+============================================================
+
+53. SUB-SELLER ORDER ACCESS
+
+============================================================
+
+
+
+A seller with:
+
+
+
+ORDERS_VIEW
+
+
+
+can view orders.
+
+
+
+A seller with:
+
+
+
+ORDERS_STATUS_UPDATE
+
+
+
+can update status.
+
+
+
+A seller without:
+
+
+
+ORDERS_DELETE
+
+
+
+cannot delete orders.
+
+
+
+Do not infer permissions from role names in frontend.
+
+
+
+============================================================
+
+54. PRODUCT ACCESS
+
+============================================================
+
+
+
+Example:
+
+
+
+Seller A:
+
+
+
+PRODUCTS_VIEW
+PRODUCTS_UPDATE
+
+
+
+can view and edit.
+
+
+
+Cannot:
+
+
+
+PRODUCTS_CREATE
+PRODUCTS_DELETE
+
+
+
+unless granted.
+
+
+
+Backend must enforce this.
+
+
+
+============================================================
+
+55. PACKAGE ACCESS
+
+============================================================
+
+
+
+Package management must support granular permissions.
+
+
+
+Example:
+
+
+
+PACKAGES_VIEW
+PACKAGES_CREATE
+PACKAGES_UPDATE
+PACKAGES_DELETE
+
+
+
+Do not accidentally grant package access to every seller.
+
+
+
+============================================================
+
+56. FINANCE ACCESS
+
+============================================================
+
+
+
+Finance is sensitive.
+
+
+
+By default:
+
+
+
+SUB_SELLER should NOT automatically have FINANCE_VIEW.
+
+
+
+Owner explicitly grants it.
+
+
+
+If user lacks permission:
+
+
+
+hide Finance navigation
+
+block Finance route
+
+block Finance API
+
+
+
+Do not leak financial information through Dashboard APIs either.
+
+
+
+============================================================
+
+57. DASHBOARD DATA SECURITY
+
+============================================================
+
+
+
+Audit Dashboard APIs.
+
+
+
+This is important.
+
+
+
+If Dashboard contains:
+
+
+
+revenue
+
+profit
+
+order counts
+
+customer information
+
+
+
+then permission requirements must be respected.
+
+
+
+Do not assume that hiding Finance page is enough.
+
+
+
+A seller without financial permissions must not receive sensitive financial data through another endpoint.
+
+
+
+============================================================
+
+58. SETTINGS SECURITY
+
+============================================================
+
+
+
+Store Settings may contain sensitive business information.
+
+
+
+Separate:
+
+
+
+STORE_SETTINGS_VIEW
+
+
+
+from:
+
+
+
+STORE_SETTINGS_UPDATE
+
+
+
+Not every seller should be able to edit store settings.
+
+
+
+============================================================
+
+59. ADMIN TEAM SECURITY
+
+============================================================
+
+
+
+Only privileged users should access Admin Team.
+
+
+
+At minimum:
+
+
+
+ADMIN_USERS_VIEW
+
+
+
+and separate management permissions.
+
+
+
+Do not allow ordinary sellers to create new admins.
+
+
+
+============================================================
+
+60. ROLE MANAGEMENT
+
+============================================================
+
+
+
+If custom roles are implemented, protect:
+
+
+
+ROLE_CREATE
+ROLE_UPDATE
+ROLE_DELETE
+
+
+
+However, do not over-engineer.
+
+
+
+A controlled role + permission system may be preferable if it fits the project.
+
+
+
+============================================================
+
+61. OWNER UX
+
+============================================================
+
+
+
+The owner should have a clear overview.
+
+
+
+Example:
+
+
+
+Admin Team
+
+
+
+Total admins: 4
+
+
+
+Active: 3
+
+
+
+Inactive: 1
+
+
+
+Then table.
+
+
+
+============================================================
+
+62. STAFF UX
+
+============================================================
+
+
+
+If a sub-seller logs in:
+
+
+
+They should see only what they are allowed to access.
+
+
+
+For example:
+
+
+
+Dashboard
+Products
+Orders
+
+
+
+but not:
+
+
+
+Finance
+Admin Team
+Security
+Store Settings
+
+
+
+if those permissions are absent.
+
+
+
+============================================================
+
+63. PERMISSION DISPLAY
+
+============================================================
+
+
+
+Use human-readable translations.
+
+
+
+English:
+
+
+
+View Products
+Create Products
+Edit Products
+Delete Products
+
+
+
+Arabic:
+
+
+
+مشاهدة المنتجات
+إضافة المنتجات
+تعديل المنتجات
+حذف المنتجات
+
+
+
+Use the existing multilingual system.
+
+
+
+Do not hardcode one language.
+
+
+
+============================================================
+
+64. FULL MULTILINGUAL SUPPORT
+
+============================================================
+
+
+
+This new feature MUST integrate with the Admin Panel's existing Arabic/English system.
+
+
+
+When English is selected:
+
+
+
+Admin Team
+
+Store Settings
+
+Roles & Permissions
+
+Security
+
+Activity Log
+
+Create Seller
+
+Edit Seller
+
+Permissions
+
+Status
+
+Actions
+
+errors
+
+validation
+
+toasts
+
+confirmations
+
+
+
+must all be English.
+
+
+
+When Arabic is selected:
+
+
+
+everything must be Arabic.
+
+
+
+No mixed UI.
+
+
+
+============================================================
+
+65. RTL / LTR
+
+============================================================
+
+
+
+Admin Team tables, permission matrices, forms, dialogs, and settings pages must support:
+
+
+
+Arabic RTL
+
+
+
+English LTR
+
+
+
+Do not break existing RTL.
+
+
+
+============================================================
+
+66. AUDIT LOG LANGUAGE
+
+============================================================
+
+
+
+Store action identifiers in stable internal English codes.
+
+
+
+Example:
+
+
+
+USER_CREATED
+
+
+
+USER_DISABLED
+
+
+
+PERMISSION_UPDATED
+
+
+
+Do NOT store translated display text as the canonical action.
+
+
+
+Frontend translates action codes.
+
+
+
+This allows the same logs to display correctly in Arabic and English.
+
+
+
+============================================================
+
+67. DATE FORMATTING
+
+============================================================
+
+
+
+Use the existing date formatting system.
+
+
+
+Respect selected language where appropriate.
+
+
+
+Do not change database timestamps.
+
+
+
+============================================================
+
+68. EMAIL / NOTIFICATIONS
+
+============================================================
+
+
+
+If the system sends emails or notifications for account creation/password reset in the future, design it so it can support localization.
+
+
+
+Do not implement email sending unnecessarily if the project currently has no email service.
+
+
+
+Do not invent SMTP credentials.
+
+
+
+============================================================
+
+69. SUB-SELLER INVITATION
+
+============================================================
+
+
+
+If there is currently no email infrastructure:
+
+
+
+DO NOT add a fake invitation system.
+
+
+
+Instead, support owner-created accounts securely.
+
+
+
+If email invitation is implemented later, it should use:
+
+
+
+expiring token
+
+one-time token
+
+hashed token storage if appropriate
+
+HTTPS
+
+expiration
+
+no password in URL
+
+
+
+============================================================
+
+70. SECURITY HEADERS
+
+============================================================
+
+
+
+Preserve existing Helmet/security configuration.
+
+
+
+Do not weaken it.
+
+
+
+Review new endpoints against:
+
+
+
+CORS
+
+CSRF depending on session architecture
+
+rate limits
+
+input validation
+
+authorization
+
+session security
+
+
+
+============================================================
+
+71. CSRF
+
+============================================================
+
+
+
+Inspect whether the existing authentication uses cookies.
+
+
+
+If cookie-based authentication is used, determine whether the current architecture already has appropriate CSRF protection.
+
+
+
+Do not blindly add a second incompatible CSRF architecture.
+
+
+
+Do not disable SameSite protections.
+
+
+
+============================================================
+
+72. CORS
+
+============================================================
+
+
+
+Do not solve authentication problems by:
+
+
+
+Access-Control-Allow-Origin: *
+
+
+
+when credentials are used.
+
+
+
+Preserve secure origin configuration.
+
+
+
+============================================================
+
+73. SESSION COOKIE
+
+============================================================
+
+
+
+Review:
+
+
+
+httpOnly
+secure
+sameSite
+domain
+path
+expiration
+
+
+
+Use production-safe settings without breaking local development.
+
+
+
+============================================================
+
+74. ADMIN LOGOUT
+
+============================================================
+
+
+
+Logout should invalidate the current session according to the existing architecture.
+
+
+
+Do not merely delete frontend localStorage if server-side sessions exist.
+
+
+
+============================================================
+
+75. DISABLED ACCOUNT BEHAVIOR
+
+============================================================
+
+
+
+If an owner disables a sub-seller:
+
+
+
+login must fail
+
+existing session access should be revoked or rejected
+
+protected API requests should fail
+
+frontend should redirect to login when appropriate
+
+
+
+Do not allow disabled accounts to continue using Admin APIs.
+
+
+
+============================================================
+
+76. ROLE CHANGE BEHAVIOR
+
+============================================================
+
+
+
+If a user's permissions are reduced:
+
+
+
+their next protected API request should enforce the new permissions.
+
+
+
+Do not rely on stale frontend permissions.
+
+
+
+If session permission caching exists, invalidate/refresh it appropriately.
+
+
+
+============================================================
+
+77. CACHE INVALIDATION
+
+============================================================
+
+
+
+Audit:
+
+
+
+auth state
+
+permission state
+
+user profile
+
+language state
+
+
+
+After permissions change, ensure stale authorization data does not allow unauthorized actions.
+
+
+
+============================================================
+
+78. SECURITY AGAINST FRONTEND TAMPERING
+
+============================================================
+
+
+
+Test:
+
+
+
+Changing localStorage.
+
+
+
+Changing React state.
+
+
+
+Changing network request body.
+
+
+
+Changing role in browser devtools.
+
+
+
+Calling API manually.
+
+
+
+All must still be rejected by backend authorization.
+
+
+
+============================================================
+
+79. SECURITY AGAINST DIRECT API ACCESS
+
+============================================================
+
+
+
+Test protected endpoints using curl or equivalent.
+
+
+
+For example:
+
+
+
+no session
+
+seller without permission
+
+seller with permission
+
+owner
+
+
+
+Confirm correct HTTP status codes.
+
+
+
+Typically:
+
+
+
+401 = unauthenticated
+
+
+
+403 = authenticated but unauthorized
+
+
+
+Do not leak sensitive details.
+
+
+
+============================================================
+
+80. ERROR HANDLING
+
+============================================================
+
+
+
+Use consistent errors.
+
+
+
+Examples:
+
+
+
+401:
+
+
+
+غير مصادق عليه / Unauthorized
+
+
+
+403:
+
+
+
+ليس لديك صلاحية / Forbidden
+
+
+
+409:
+
+
+
+email already exists
+
+
+
+400:
+
+
+
+validation error
+
+
+
+500:
+
+
+
+safe generic server error
+
+
+
+Do not expose stack traces in production.
+
+
+
+============================================================
+
+81. FRONTEND ERROR TRANSLATION
+
+============================================================
+
+
+
+Map API error codes to translation keys.
+
+
+
+Do not depend on exact Arabic backend message strings.
+
+
+
+Prefer:
+
+
+
+USER_FORBIDDEN
+
+
+
+USER_ALREADY_EXISTS
+
+
+
+INVALID_PASSWORD
+
+
+
+ACCOUNT_DISABLED
+
+
+
+PERMISSION_DENIED
+
+
+
+STORE_SETTINGS_UPDATE_FAILED
+
+
+
+etc.
+
+
+
+Then translate those codes.
+
+
+
+============================================================
+
+82. DATABASE CONSTRAINTS
+
+============================================================
+
+
+
+Use database constraints for:
+
+
+
+unique admin email
+
+valid relations
+
+foreign keys
+
+
+
+Do not rely only on frontend validation.
+
+
+
+============================================================
+
+83. DELETE VS DISABLE
+
+============================================================
+
+
+
+For admin accounts:
+
+
+
+Prefer disabling instead of deleting.
+
+
+
+Why:
+
+
+
+audit history
+
+accountability
+
+historical orders
+
+activity logs
+
+
+
+If deletion is implemented, restrict it strongly.
+
+
+
+Never delete an owner account through ordinary sub-seller actions.
+
+
+
+============================================================
+
+84. ORDER HISTORY
+
+============================================================
+
+
+
+If a seller is disabled, historical order actions should remain understandable.
+
+
+
+Activity logs should preserve actor information appropriately.
+
+
+
+Do not make historical records disappear simply because an account is disabled.
+
+
+
+============================================================
+
+85. ACTOR SNAPSHOT
+
+============================================================
+
+
+
+For audit logs, consider storing a safe actor snapshot:
+
+
+
+actorId
+actorEmail
+actorName
+
+
+
+This helps preserve historical context if the account changes later.
+
+
+
+Do not store password information.
+
+
+
+============================================================
+
+86. ADMIN USER PROFILE
+
+============================================================
+
+
+
+Optionally allow each admin to view:
+
+
+
+name
+
+email
+
+role
+
+permissions
+
+last login
+
+status
+
+
+
+Do not expose internal secrets.
+
+
+
+============================================================
+
+87. OWNER DASHBOARD
+
+============================================================
+
+
+
+If useful, add Admin Team summary cards:
+
+
+
+Total Staff
+Active Staff
+Inactive Staff
+Recent Activity
+
+
+
+Do not add unnecessary statistics.
+
+
+
+============================================================
+
+88. SEARCH
+
+============================================================
+
+
+
+Admin Team should support search by:
+
+
+
+name
+
+email
+
+
+
+Use server-side search if dataset can become large.
+
+
+
+============================================================
+
+89. FILTERS
+
+============================================================
+
+
+
+Filters:
+
+
+
+role
+
+status
+
+permission group if useful
+
+
+
+Do not overcomplicate.
+
+
+
+============================================================
+
+90. PAGINATION
+
+============================================================
+
+
+
+Admin Team and Activity Log must support pagination.
+
+
+
+Do not load all users/logs indefinitely.
+
+
+
+============================================================
+
+91. SORTING
+
+============================================================
+
+
+
+Allow sensible sorting:
+
+
+
+newest
+
+oldest
+
+name
+
+last login
+
+
+
+Only if it fits existing UI.
+
+
+
+============================================================
+
+92. EMPTY STATES
+
+============================================================
+
+
+
+Provide localized empty states.
+
+
+
+English:
+
+
+
+No staff members found.
+
+
+
+Arabic:
+
+
+
+لم يتم العثور على أي مستخدمين.
+
+
+
+Same for:
+
+
+
+activity logs
+
+sessions
+
+settings errors
+
+
+
+============================================================
+
+93. LOADING STATES
+
+============================================================
+
+
+
+Every new page should have proper loading states.
+
+
+
+Use existing loader components.
+
+
+
+Do not display blank white screens.
+
+
+
+============================================================
+
+94. ERROR STATES
+
+============================================================
+
+
+
+Every API-dependent page needs graceful error handling.
+
+
+
+Do not allow:
+
+
+
+undefined.map
+
+
+
+undefined.length
+
+
+
+undefined destructuring
+
+
+
+to crash the Admin Panel.
+
+
+
+============================================================
+
+95. CONFIRMATION DIALOGS
+
+============================================================
+
+
+
+Dangerous actions require confirmation:
+
+
+
+disable user
+
+reset password
+
+change permissions
+
+revoke sessions
+
+
+
+Make confirmations localized.
+
+
+
+============================================================
+
+96. DANGEROUS ACTION UX
+
+============================================================
+
+
+
+Do not make destructive actions easy to trigger accidentally.
+
+
+
+Use:
+
+
+
+confirmation
+
+
+
+clear explanation
+
+
+
+loading state
+
+
+
+success/error feedback
+
+
+
+============================================================
+
+97. OWNER SAFETY
+
+============================================================
+
+
+
+Before changing a privileged user's role or permissions:
+
+
+
+show a clear confirmation.
+
+
+
+Do not allow accidentally removing the only owner.
+
+
+
+============================================================
+
+98. LAST OWNER PROTECTION
+
+============================================================
+
+
+
+If OWNER role exists:
+
+
+
+Never allow the system to leave zero owners.
+
+
+
+Before demoting/deactivating an owner:
+
+
+
+verify another owner exists.
+
+
+
+If not:
+
+
+
+reject action safely.
+
+
+
+============================================================
+
+99. SELF-PROTECTION
+
+============================================================
+
+
+
+A user should not be able to accidentally remove the permissions required to manage their own account unless another authorized owner exists.
+
+
+
+Especially protect:
+
+
+
+owner
+
+admin team
+
+security
+
+role management
+
+
+
+============================================================
+
+100. AUDIT EVERYTHING
+
+============================================================
+
+
+
+After implementation audit:
+
+
+
+Frontend
+
+
+
+Backend
+
+
+
+Database
+
+
+
+Authorization
+
+
+
+Sessions
+
+
+
+Routes
+
+
+
+Controllers
+
+
+
+Services
+
+
+
+Validators
+
+
+
+Prisma
+
+
+
+Translations
+
+
+
+RTL/LTR
+
+
+
+Error handling
+
+
+
+============================================================
+
+101. DO NOT OVERENGINEER
+
+============================================================
+
+
+
+The feature should be professional but maintainable.
+
+
+
+Do NOT create:
+
+
+
+unnecessary microservices
+
+unnecessary packages
+
+unnecessary dependencies
+
+unnecessary abstraction layers
+
+duplicate auth systems
+
+duplicate permission systems
+
+
+
+Use the existing architecture.
+
+
+
+============================================================
+
+102. EXISTING CODE PRESERVATION
+
+============================================================
+
+
+
+Before changing a file:
+
+
+
+understand why it exists.
+
+
+
+If the current Admin authentication works:
+
+
+
+extend it.
+
+
+
+If the current language system works:
+
+
+
+extend it.
+
+
+
+If the current Settings page works:
+
+
+
+add sections to it.
+
+
+
+If current API middleware works:
+
+
+
+extend it.
+
+
+
+Do not replace working systems just because you prefer another architecture.
+
+
+
+============================================================
+
+103. FILE ORGANIZATION
+
+============================================================
+
+
+
+Follow existing conventions.
+
+
+
+Potential structure:
+
+
+
+server/src/
+middleware/
+controllers/
+routes/
+services/
+validators/
+
+
+
+admin/src/
+pages/
+components/
+hooks/
+context/
+i18n/
+
+
+
+But follow the actual project structure.
+
+
+
+============================================================
+
+104. API SERVICE LAYER
+
+============================================================
+
+
+
+If the Admin frontend already uses a central API client:
+
+
+
+reuse it.
+
+
+
+Do not create multiple fetch wrappers.
+
+
+
+============================================================
+
+105. AUTH CONTEXT
+
+============================================================
+
+
+
+If there is already an AuthContext:
+
+
+
+extend it.
+
+
+
+Potential state:
+
+
+
+user
+role
+permissions
+loading
+isAuthenticated
+
+
+
+Do not duplicate auth state in unrelated components.
+
+
+
+============================================================
+
+106. PERMISSION HOOK
+
+============================================================
+
+
+
+A reusable frontend helper is recommended.
+
+
+
+Example:
+
+
+
+hasPermission('PRODUCTS_UPDATE')
+
+
+
+or:
+
+
+
+can('PRODUCTS_UPDATE')
+
+
+
+But follow existing conventions.
+
+
+
+============================================================
+
+107. PERMISSION COMPONENT
+
+============================================================
+
+
+
+A reusable component could be:
+
+
+
+But do not add it if the project already has an equivalent.
+
+
+
+============================================================
+
+108. BACKEND MIDDLEWARE
+
+============================================================
+
+
+
+Prefer reusable middleware:
+
+
+
+requireAuth
+
+
+
+requireRole
+
+
+
+requirePermission
+
+
+
+But integrate with existing middleware.
+
+
+
+============================================================
+
+109. OWNER BYPASS
+
+============================================================
+
+
+
+If OWNER has full access, implement this server-side.
+
+
+
+Do not grant access based on a frontend boolean.
+
+
+
+============================================================
+
+110. PERMISSION ENUMS
+
+============================================================
+
+
+
+Use stable identifiers.
+
+
+
+Never translate permission identifiers in the database.
+
+
+
+Store:
+
+
+
+PRODUCTS_VIEW
+
+
+
+not:
+
+
+
+مشاهدة المنتجات
+
+
+
+Frontend translates them.
+
+
+
+============================================================
+
+111. ROLE ENUMS
+
+============================================================
+
+
+
+Same principle.
+
+
+
+Store:
+
+
+
+OWNER
+
+
+
+SUB_SELLER
+
+
+
+not:
+
+
+
+مالك
+
+
+
+or:
+
+
+
+بائع فرعي
+
+
+
+Translations are UI only.
+
+
+
+============================================================
+
+112. SECURITY TEST MATRIX
+
+============================================================
+
+
+
+Test:
+
+
+
+OWNER:
+
+
+
+all permissions
+
+
+
+SUB_SELLER with no permissions:
+
+
+
+no protected access
+
+
+
+SUB_SELLER with PRODUCTS_VIEW:
+
+
+
+can view products
+
+cannot create
+
+cannot edit
+
+cannot delete
+
+
+
+SUB_SELLER with PRODUCTS_UPDATE:
+
+
+
+can edit
+
+cannot delete
+
+
+
+SUB_SELLER with ORDERS_VIEW:
+
+
+
+can view orders
+
+
+
+SUB_SELLER without FINANCE_VIEW:
+
+
+
+cannot view finance
+
+
+
+SUB_SELLER without ADMIN_USERS_VIEW:
+
+
+
+cannot view team
+
+
+
+============================================================
+
+113. AUTH TEST MATRIX
+
+============================================================
+
+
+
+Test:
+
+
+
+valid owner login
+
+
+
+valid seller login
+
+
+
+wrong password
+
+
+
+unknown email
+
+
+
+disabled seller
+
+
+
+suspended seller
+
+
+
+expired session if applicable
+
+
+
+logout
+
+
+
+revoked session
+
+
+
+============================================================
+
+114. API TEST MATRIX
+
+============================================================
+
+
+
+For every sensitive endpoint:
+
+
+
+No auth -> 401
+
+
+
+Wrong permission -> 403
+
+
+
+Correct permission -> success
+
+
+
+Owner -> success
+
+
+
+Invalid input -> 400
+
+
+
+Nonexistent resource -> 404 where appropriate
+
+
+
+Conflict -> 409 where appropriate
+
+
+
+============================================================
+
+115. PASSWORD TEST MATRIX
+
+============================================================
+
+
+
+Test:
+
+
+
+create user with valid password
+
+
+
+create user with invalid password
+
+
+
+wrong current password
+
+
+
+correct current password
+
+
+
+password update
+
+
+
+old password invalid after change
+
+
+
+new password works
+
+
+
+session behavior after password change
+
+
+
+============================================================
+
+116. PERMISSION CHANGE TEST
+
+============================================================
+
+
+
+Create seller with:
+
+
+
+PRODUCTS_VIEW
+
+
+
+Login seller.
+
+
+
+Verify products access.
+
+
+
+Then owner removes PRODUCTS_VIEW.
+
+
+
+Seller tries API again.
+
+
+
+It must fail.
+
+
+
+This proves backend authorization is real.
+
+
+
+============================================================
+
+117. DISABLE TEST
+
+============================================================
+
+
+
+Login seller.
+
+
+
+Owner disables seller.
+
+
+
+Seller attempts:
+
+
+
+refresh
+
+API call
+
+navigation
+
+
+
+Access must be blocked appropriately.
+
+
+
+============================================================
+
+118. ACTIVITY LOG TEST
+
+============================================================
+
+
+
+Perform:
+
+
+
+login
+
+
+
+create seller
+
+
+
+update seller
+
+
+
+change permissions
+
+
+
+disable seller
+
+
+
+update store settings
+
+
+
+Verify logs.
+
+
+
+Confirm no passwords/secrets are logged.
+
+
+
+============================================================
+
+119. STORE SETTINGS TEST
+
+============================================================
+
+
+
+Change:
+
+
+
+store name
+
+
+
+email
+
+
+
+phone
+
+
+
+address
+
+
+
+language
+
+
+
+branding if applicable
+
+
+
+Confirm:
+
+
+
+Admin UI reflects changes.
+
+
+
+Storefront reflects only settings that are intentionally public.
+
+
+
+Do NOT accidentally expose private settings to storefront.
+
+
+
+============================================================
+
+120. STORE SETTINGS PUBLIC/PRIVATE SEPARATION
+
+============================================================
+
+
+
+Some store settings are public:
+
+
+
+store name
+
+logo
+
+phone
+
+public email
+
+social links
+
+
+
+Some are private:
+
+
+
+admin configuration
+
+security settings
+
+internal metadata
+
+
+
+Do not expose private settings through public endpoints.
+
+
+
+============================================================
+
+121. STOREFRONT PROTECTION
+
+============================================================
+
+
+
+This feature must NOT break storefront.
+
+
+
+After implementation verify:
+
+
+
+Home
+
+
+
+Products
+
+
+
+Product details
+
+
+
+Packages
+
+
+
+Cart
+
+
+
+Checkout
+
+
+
+Order creation
+
+
+
+Track order
+
+
+
+Favorites
+
+
+
+All still work.
+
+
+
+============================================================
+
+122. ADMIN PROTECTION
+
+============================================================
+
+
+
+Verify:
+
+
+
+Admin login
+
+
+
+Dashboard
+
+
+
+Products
+
+
+
+Categories
+
+
+
+Packages
+
+
+
+Orders
+
+
+
+Finance
+
+
+
+Banners
+
+
+
+Settings
+
+
+
+Shipping
+
+
+
+all still work for OWNER.
+
+
+
+============================================================
+
+123. EXISTING LANGUAGE SYSTEM
+
+============================================================
+
+
+
+Integrate with existing Arabic/English translations.
+
+
+
+Do not introduce another translation library unless absolutely necessary.
+
+
+
+Reuse:
+
+
+
+useLanguage()
+
+
+
+existing translations
+
+
+
+existing language storage
+
+
+
+existing direction handling
+
+
+
+============================================================
+
+124. NO HARDCODED UI
+
+============================================================
+
+
+
+New UI should never contain:
+
+
+
+"Save"
+
+
+
+"Cancel"
+
+
+
+"Delete"
+
+
+
+"Create Seller"
+
+
+
+etc. directly in JSX.
+
+
+
+Use translation keys.
+
+
+
+============================================================
+
+125. TRANSLATION COMPLETENESS
+
+============================================================
+
+
+
+For every new translation key:
+
+
+
+Arabic translation
+
+
+
+English translation
+
+
+
+must both exist.
+
+
+
+No missing fallback unless intentional.
+
+
+
+============================================================
+
+126. TRANSLATION KEY NAMING
+
+============================================================
+
+
+
+Follow current conventions.
+
+
+
+If no clear convention exists:
+
+
+
+admin.team.title
+
+
+
+admin.team.create
+
+
+
+admin.team.edit
+
+
+
+admin.team.permissions
+
+
+
+admin.team.status
+
+
+
+admin.team.lastLogin
+
+
+
+admin.settings.store
+
+
+
+admin.security.title
+
+
+
+admin.activity.title
+
+
+
+etc.
+
+
+
+But do not duplicate existing keys.
+
+
+
+============================================================
+
+127. LANGUAGE SWITCH TEST
+
+============================================================
+
+
+
+Test the entire new feature in:
+
+
+
+Arabic
+
+
+
+English
+
+
+
+Switch without refresh.
+
+
+
+Refresh.
+
+
+
+Navigate.
+
+
+
+Logout.
+
+
+
+Login.
+
+
+
+Verify language remains consistent.
+
+
+
+============================================================
+
+128. RESPONSIVE DESIGN
+
+============================================================
+
+
+
+Admin Team and Settings must work on:
+
+
+
+desktop
+
+
+
+tablet
+
+
+
+smaller screens where current Admin Panel supports them.
+
+
+
+Do not redesign existing responsive behavior.
+
+
+
+============================================================
+
+129. ACCESSIBILITY
+
+============================================================
+
+
+
+Use:
+
+
+
+labels
+
+
+
+buttons with meaningful text
+
+
+
+keyboard accessibility
+
+
+
+proper form labels
+
+
+
+aria attributes where needed
+
+
+
+visible focus states
+
+
+
+Do not make permission management inaccessible.
+
+
+
+============================================================
+
+130. TABLE ACCESSIBILITY
+
+============================================================
+
+
+
+Tables should have:
+
+
+
+clear headings
+
+
+
+readable action controls
+
+
+
+appropriate labels
+
+
+
+responsive behavior
+
+
+
+============================================================
+
+131. PASSWORD INPUT UX
+
+============================================================
+
+
+
+Password fields:
+
+
+
+type=password
+
+
+
+optional show/hide control
+
+
+
+never autocomplete insecurely
+
+
+
+Use sensible autocomplete values.
+
+
+
+============================================================
+
+132. NO PASSWORD EXPOSURE
+
+============================================================
+
+
+
+Never:
+
+
+
+console.log(password)
+
+
+
+console.log(req.body)
+
+
+
+if req.body may contain password.
+
+
+
+Do not include password in error objects.
+
+
+
+Do not include password in audit metadata.
+
+
+
+============================================================
+
+133. REQUEST LOGGING
+
+============================================================
+
+
+
+If server request logging exists:
+
+
+
+verify sensitive fields are redacted.
+
+
+
+============================================================
+
+134. ENVIRONMENT VARIABLES
+
+============================================================
+
+
+
+Do not add real secrets.
+
+
+
+If new environment variables are genuinely required:
+
+
+
+add them to:
+
+
+
+.env.example
+
+
+
+and document them.
+
+
+
+Never commit:
+
+
+
+.env
+
+
+
+real passwords
+
+
+
+database credentials
+
+
+
+API keys
+
+
+
+SMTP credentials
+
+
+
+============================================================
+
+135. DEMO ACCOUNT
+
+============================================================
+
+
+
+If existing demo credentials are displayed in Admin login:
+
+
+
+preserve current development behavior.
+
+
+
+Do not turn demo credentials into production secrets.
+
+
+
+Do not hardcode new production passwords.
+
+
+
+============================================================
+
+136. DATABASE SEED SECURITY
+
+============================================================
+
+
+
+If seed creates an owner account:
+
+
+
+Use development-only documented credentials.
+
+
+
+Do not automatically overwrite production accounts.
+
+
+
+============================================================
+
+137. MIGRATION SAFETY
+
+============================================================
+
+
+
+Before migration:
+
+
+
+inspect existing database.
+
+
+
+Do not reset.
+
+
+
+Do not drop existing tables.
+
+
+
+Do not delete existing users.
+
+
+
+============================================================
+
+138. PRODUCTION SAFETY
+
+============================================================
+
+
+
+Any migration must be backwards compatible where practical.
+
+
+
+Existing application should continue working during deployment transition.
+
+
+
+============================================================
+
+139. ERROR BOUNDARIES
+
+============================================================
+
+
+
+New Admin pages should not crash the entire app.
+
+
+
+Use existing error boundary patterns.
+
+
+
+============================================================
+
+140. API TIMEOUT / LOADING
+
+============================================================
+
+
+
+Do not allow infinite loading.
+
+
+
+Use existing API behavior.
+
+
+
+============================================================
+
+141. DUPLICATE SUB-SELLERS
+
+============================================================
+
+
+
+Prevent duplicate email.
+
+
+
+Return localized error.
+
+
+
+============================================================
+
+142. DISABLED SELLER LOGIN MESSAGE
+
+============================================================
+
+
+
+If account disabled:
+
+
+
+show safe localized message.
+
+
+
+Do not reveal internal account details.
+
+
+
+============================================================
+
+143. SESSION REVOCATION
+
+============================================================
+
+
+
+If owner revokes seller sessions:
+
+
+
+existing sessions must become invalid according to architecture.
+
+
+
+Do not merely hide them in UI.
+
+
+
+============================================================
+
+144. SECURITY REVIEW
+
+============================================================
+
+
+
+Before finalizing, specifically inspect for:
+
+
+
+IDOR
+
+
+
+BOLA
+
+
+
+privilege escalation
+
+
+
+mass assignment
+
+
+
+broken access control
+
+
+
+password exposure
+
+
+
+session fixation
+
+
+
+session hijacking risks
+
+
+
+CSRF
+
+
+
+CORS misconfiguration
+
+
+
+rate limiting
+
+
+
+insecure cookies
+
+
+
+sensitive data exposure
+
+
+
+audit log leaks
+
+
+
+authorization bypass
+
+
+
+frontend-only security
+
+
+
+============================================================
+
+145. NO SECURITY THEATER
+
+============================================================
+
+
+
+Do not add fake security features.
+
+
+
+A permission checkbox is not security unless backend enforces it.
+
+
+
+A hidden button is not authorization.
+
+
+
+A frontend route guard is not authorization.
+
+
+
+The server must enforce access.
+
+
+
+============================================================
+
+146. API AUTHORIZATION CENTRALIZATION
+
+============================================================
+
+
+
+Avoid copying permission checks manually into hundreds of controllers.
+
+
+
+Use reusable middleware/services.
+
+
+
+But keep implementation simple.
+
+
+
+============================================================
+
+147. RESOURCE OWNERSHIP
+
+============================================================
+
+
+
+If future features require sellers to access only their own records, design the permission system so resource-level authorization can be extended.
+
+
+
+Do not implement complicated ownership if not needed now.
+
+
+
+============================================================
+
+148. SELLER ASSIGNMENT
+
+============================================================
+
+
+
+Do NOT automatically assign orders/products to sellers unless the business logic already requires this.
+
+
+
+Permissions and account management are the current goal.
+
+
+
+============================================================
+
+149. STORE SETTINGS SAVE
+
+============================================================
+
+
+
+Use:
+
+
+
+loading state
+
+
+
+success message
+
+
+
+error message
+
+
+
+localized feedback
+
+
+
+prevent duplicate submission
+
+
+
+============================================================
+
+150. CONCURRENT UPDATES
+
+============================================================
+
+
+
+Avoid overwriting settings unexpectedly if multiple Admin users edit settings.
+
+
+
+If current architecture supports versioning, use it.
+
+
+
+Otherwise keep implementation simple and safe.
+
+
+
+============================================================
+
+151. AUDIT LOG PAGINATION
+
+============================================================
+
+
+
+Do not return:
+
+
+
+SELECT * FROM audit_logs
+
+
+
+without pagination.
+
+
+
+Use:
+
+
+
+page
+
+
+
+limit
+
+
+
+or cursor-based pagination if existing architecture supports it.
+
+
+
+============================================================
+
+152. AUDIT LOG FILTER VALIDATION
+
+============================================================
+
+
+
+Validate:
+
+
+
+date range
+
+
+
+user ID
+
+
+
+action
+
+
+
+resource
+
+
+
+pagination
+
+
+
+Do not allow arbitrary SQL fragments.
+
+
+
+============================================================
+
+153. DATABASE QUERY SAFETY
+
+============================================================
+
+
+
+Use Prisma parameterized queries.
+
+
+
+Do not construct raw SQL from user input.
+
+
+
+============================================================
+
+154. ADMIN USER SEARCH SAFETY
+
+============================================================
+
+
+
+Search must use safe Prisma filtering.
+
+
+
+No raw SQL string interpolation.
+
+
+
+============================================================
+
+155. FILE UPLOADS
+
+============================================================
+
+
+
+If Store Settings includes logo upload:
+
+
+
+reuse existing secure upload architecture.
+
+
+
+Validate:
+
+
+
+file type
+
+
+
+file size
+
+
+
+filename
+
+
+
+path
+
+
+
+storage location
+
+
+
+Do not allow arbitrary executable files.
+
+
+
+Do not allow path traversal.
+
+
+
+Do not trust MIME type alone.
+
+
+
+============================================================
+
+156. BRANDING SETTINGS
+
+============================================================
+
+
+
+If existing branding settings already exist:
+
+
+
+integrate them.
+
+
+
+Do not duplicate logo storage.
+
+
+
+============================================================
+
+157. PUBLIC STORE API
+
+============================================================
+
+
+
+If storefront needs public store settings:
+
+
+
+create/extend a safe public endpoint.
+
+
+
+Only expose public fields.
+
+
+
+Never expose:
+
+
+
+admin users
+
+
+
+permissions
+
+
+
+security settings
+
+
+
+internal metadata
+
+
+
+audit logs
+
+
+
+============================================================
+
+158. ADMIN SETTINGS API
+
+============================================================
+
+
+
+Admin endpoint may expose private settings only to authorized Admin users.
+
+
+
+Separate public and private DTOs.
+
+
+
+============================================================
+
+159. DATA TRANSFER OBJECTS
+
+============================================================
+
+
+
+Do not return raw Prisma User objects if they contain sensitive fields.
+
+
+
+Explicitly select safe fields.
+
+
+
+============================================================
+
+160. PRISMA SELECT
+
+============================================================
+
+
+
+Prefer:
+
+
+
+select: {
+id: true,
+name: true,
+email: true,
+role: true,
+status: true,
+...
+}
+
+
+
+rather than returning full database records.
+
+
+
+============================================================
+
+161. AUTH USER RESPONSE
+
+============================================================
+
+
+
+Current logged-in user response should include only what frontend needs:
+
+
+
+id
+
+
+
+name
+
+
+
+email
+
+
+
+role
+
+
+
+permissions
+
+
+
+status
+
+
+
+etc.
+
+
+
+Never password hash.
+
+
+
+============================================================
+
+162. PERMISSION CACHING
+
+============================================================
+
+
+
+If permissions are loaded during login:
+
+
+
+make sure they cannot become stale after permission changes.
+
+
+
+Choose appropriate refresh/invalidation behavior.
+
+
+
+============================================================
+
+163. SECURITY OF LOCAL STORAGE
+
+============================================================
+
+
+
+Do not store passwords in localStorage.
+
+
+
+Do not store sensitive secrets unnecessarily.
+
+
+
+If current authentication uses secure cookies, preserve it.
+
+
+
+============================================================
+
+164. TOKEN SECURITY
+
+============================================================
+
+
+
+If JWT is used:
+
+
+
+do not store long-lived secrets in unsafe frontend storage without understanding current architecture.
+
+
+
+Do not change token strategy unnecessarily.
+
+
+
+============================================================
+
+165. SESSION SECURITY
+
+============================================================
+
+
+
+If express-session is used:
+
+
+
+inspect:
+
+
+
+secret
+
+
+
+cookie
+
+
+
+store
+
+
+
+expiration
+
+
+
+rolling
+
+
+
+secure
+
+
+
+sameSite
+
+
+
+Do not expose session IDs.
+
+
+
+============================================================
+
+166. SESSION STORE
+
+============================================================
+
+
+
+If PostgreSQL session store already exists:
+
+
+
+reuse it.
+
+
+
+Do not introduce another session store unnecessarily.
+
+
+
+============================================================
+
+167. AUTH ROUTES
+
+============================================================
+
+
+
+Audit:
+
+
+
+login
+
+
+
+logout
+
+
+
+me/current-user
+
+
+
+password change
+
+
+
+session
+
+
+
+Ensure new roles/permissions integrate correctly.
+
+
+
+============================================================
+
+168. LOGIN RESPONSE
+
+============================================================
+
+
+
+After login, return appropriate safe user information.
+
+
+
+Frontend should know:
+
+
+
+role
+
+
+
+permissions
+
+
+
+status
+
+
+
+without receiving sensitive fields.
+
+
+
+============================================================
+
+169. AUTHORIZATION FAILURE UX
+
+============================================================
+
+
+
+If user accesses unauthorized page:
+
+
+
+show localized "Access denied" page/message.
+
+
+
+Do not show a blank screen.
+
+
+
+============================================================
+
+170. NAVIGATION SECURITY
+
+============================================================
+
+
+
+Sidebar visibility should derive from permissions.
+
+
+
+Do not hardcode role-specific navigation if granular permissions exist.
+
+
+
+============================================================
+
+171. PERMISSION GROUPS
+
+============================================================
+
+
+
+For UI clarity, group permissions:
+
+
+
+Dashboard
+
+
+
+Products
+
+
+
+Categories
+
+
+
+Packages
+
+
+
+Orders
+
+
+
+Finance
+
+
+
+Banners
+
+
+
+Shipping
+
+
+
+Store Settings
+
+
+
+Admin Management
+
+
+
+Security
+
+
+
+Activity
+
+
+
+============================================================
+
+172. SELECT ALL
+
+============================================================
+
+
+
+Permission UI may support:
+
+
+
+Select all in category
+
+
+
+Clear all
+
+
+
+But ensure it cannot grant owner-level permissions improperly.
+
+
+
+============================================================
+
+173. PERMISSION CONFIRMATION
+
+============================================================
+
+
+
+When changing high-risk permissions:
+
+
+
+show confirmation.
+
+
+
+Examples:
+
+
+
+FINANCE_VIEW
+
+
+
+ADMIN_USERS_CREATE
+
+
+
+ROLE management
+
+
+
+STORE_SETTINGS_UPDATE
+
+
+
+============================================================
+
+174. ADMIN TEAM SORTING
+
+============================================================
+
+
+
+Use stable database sorting.
+
+
+
+Do not sort only after fetching all records if dataset can grow.
+
+
+
+============================================================
+
+175. DATABASE INDEXES
+
+============================================================
+
+
+
+If appropriate, add indexes for:
+
+
+
+email
+
+
+
+status
+
+
+
+role
+
+
+
+createdAt
+
+
+
+activity actorId
+
+
+
+activity createdAt
+
+
+
+But only where useful.
+
+
+
+============================================================
+
+176. MIGRATION INDEX SAFETY
+
+============================================================
+
+
+
+Do not add excessive indexes.
+
+
+
+Inspect existing schema first.
+
+
+
+============================================================
+
+177. AUDIT LOG RETENTION
+
+============================================================
+
+
+
+Do not automatically delete logs.
+
+
+
+If retention is needed, document it separately.
+
+
+
+============================================================
+
+178. USER CREATION AUDIT
+
+============================================================
+
+
+
+Creating a seller should generate:
+
+
+
+USER_CREATED
+
+
+
+including actor.
+
+
+
+============================================================
+
+179. PERMISSION AUDIT
+
+============================================================
+
+
+
+Changing permissions should generate:
+
+
+
+PERMISSIONS_UPDATED
+
+
+
+============================================================
+
+180. ROLE AUDIT
+
+============================================================
+
+
+
+Changing role:
+
+
+
+ROLE_UPDATED
+
+
+
+============================================================
+
+181. STATUS AUDIT
+
+============================================================
+
+
+
+Disable:
+
+
+
+USER_DISABLED
+
+
+
+Enable:
+
+
+
+USER_ENABLED
+
+
+
+============================================================
+
+182. PASSWORD AUDIT
+
+============================================================
+
+
+
+Password reset:
+
+
+
+PASSWORD_RESET
+
+
+
+Do NOT log password itself.
+
+
+
+============================================================
+
+183. STORE SETTINGS AUDIT
+
+============================================================
+
+
+
+Store settings update:
+
+
+
+STORE_SETTINGS_UPDATED
+
+
+
+Metadata should list changed safe fields, not sensitive values.
+
+
+
+============================================================
+
+184. LOGIN AUDIT
+
+============================================================
+
+
+
+Login:
+
+
+
+LOGIN_SUCCESS
+
+
+
+Failed login:
+
+
+
+LOGIN_FAILED
+
+
+
+Do not log passwords.
+
+
+
+============================================================
+
+185. LOGOUT AUDIT
+
+============================================================
+
+
+
+Logout:
+
+
+
+LOGOUT
+
+
+
+============================================================
+
+186. IP PRIVACY
+
+============================================================
+
+
+
+If IP logging is implemented:
+
+
+
+follow existing project/legal requirements.
+
+
+
+Do not expose IPs to users without reason.
+
+
+
+============================================================
+
+187. ACTIVITY LOG PRIVILEGE
+
+============================================================
+
+
+
+Activity Log should be restricted.
+
+
+
+Not every seller should see all logs.
+
+
+
+============================================================
+
+188. SECURITY LOGS
+
+============================================================
+
+
+
+Security-related events should be distinguishable.
+
+
+
+============================================================
+
+189. OWNER VISIBILITY
+
+============================================================
+
+
+
+Owner should be able to see:
+
+
+
+who changed settings
+
+
+
+who changed permissions
+
+
+
+who changed order status
+
+
+
+who logged in
+
+
+
+when
+
+
+
+============================================================
+
+190. SELLER VISIBILITY
+
+============================================================
+
+
+
+If sellers can see activity logs, only show what their permission allows.
+
+
+
+Do not expose unnecessary information.
+
+
+
+============================================================
+
+191. FRONTEND COMPONENT REUSE
+
+============================================================
+
+
+
+Reuse:
+
+
+
+Button
+
+
+
+Modal
+
+
+
+Input
+
+
+
+Select
+
+
+
+Table
+
+
+
+Toast
+
+
+
+Loader
+
+
+
+Card
+
+
+
+PageHeader
+
+
+
+existing Admin components.
+
+
+
+Do not duplicate them.
+
+
+
+============================================================
+
+192. UI CONSISTENCY
+
+============================================================
+
+
+
+New Admin Management pages must look like they belong to the existing Admin Panel.
+
+
+
+Same:
+
+
+
+spacing
+
+
+
+typography
+
+
+
+buttons
+
+
+
+cards
+
+
+
+tables
+
+
+
+colors
+
+
+
+radius
+
+
+
+shadows
+
+
+
+icons
+
+
+
+responsive behavior
+
+
+
+============================================================
+
+193. NO UNNECESSARY REDESIGN
+
+============================================================
+
+
+
+Do not redesign existing pages to accommodate this feature.
+
+
+
+Add navigation/sections cleanly.
+
+
+
+============================================================
+
+194. SETTINGS NAVIGATION
+
+============================================================
+
+
+
+If Settings currently exists:
+
+
+
+integrate sub-sections rather than creating a completely separate unrelated page.
+
+
+
+Potential:
+
+
+
+Settings
+
+
+
+Store
+
+Team
+
+Security
+
+Activity
+
+
+
+Adapt to current UX.
+
+
+
+============================================================
+
+195. MOBILE ADMIN
+
+============================================================
+
+
+
+Permission tables can become horizontally scrollable on smaller screens if needed.
+
+
+
+Do not break existing mobile layout.
+
+
+
+============================================================
+
+196. FORM VALIDATION UX
+
+============================================================
+
+
+
+Errors should appear near fields where appropriate.
+
+
+
+Use localized messages.
+
+
+
+============================================================
+
+197. EMAIL VALIDATION
+
+============================================================
+
+
+
+Use Zod/email validation.
+
+
+
+Do not accept obviously invalid email.
+
+
+
+============================================================
+
+198. PASSWORD CONFIRMATION
+
+============================================================
+
+
+
+Ensure newPassword === confirmPassword.
+
+
+
+Server should validate critical conditions too.
+
+
+
+============================================================
+
+199. ROLE/PERMISSION CONSISTENCY
+
+============================================================
+
+
+
+If OWNER role means full access:
+
+
+
+do not require manually checking 30 permissions.
+
+
+
+But frontend can still display all permissions as inherited.
+
+
+
+============================================================
+
+200. INHERITED PERMISSIONS
+
+============================================================
+
+
+
+If role provides inherited permissions:
+
+
+
+UI should clearly distinguish:
+
+
+
+Inherited
+
+
+
+Explicit
+
+
+
+or simply show effective permissions.
+
+
+
+Avoid confusing behavior.
+
+
+
+============================================================
+
+201. CUSTOM PERMISSIONS
+
+============================================================
+
+
+
+Do not allow arbitrary strings.
+
+
+
+Only known permissions.
+
+
+
+============================================================
+
+202. UNKNOWN PERMISSIONS
+
+============================================================
+
+
+
+Backend should reject unknown permission IDs.
+
+
+
+============================================================
+
+203. SECURITY DEFAULTS
+
+============================================================
+
+
+
+New SUB_SELLER accounts should start with minimal/no sensitive permissions unless owner explicitly grants them.
+
+
+
+Never default to:
+
+
+
+ALL_PERMISSIONS
+
+
+
+============================================================
+
+204. DEFAULT ROLE
+
+============================================================
+
+
+
+New users should default to SUB_SELLER if appropriate.
+
+
+
+Never default to OWNER.
+
+
+
+============================================================
+
+205. OWNER CREATION
+
+============================================================
+
+
+
+Do not allow normal Admin UI to create OWNER accounts unless explicitly authorized by the current owner and designed securely.
+
+
+
+If unnecessary:
+
+
+
+do not expose OWNER creation at all.
+
+
+
+============================================================
+
+206. ADMIN ACCOUNT ENUMERATION
+
+============================================================
+
+
+
+Login errors should not reveal whether a specific account exists unnecessarily.
+
+
+
+============================================================
+
+207. USER ENUMERATION
+
+============================================================
+
+
+
+Admin Team is authenticated, so displaying staff emails to authorized admins is acceptable where appropriate.
+
+
+
+Do not expose it publicly.
+
+
+
+============================================================
+
+208. RATE LIMIT ADMIN USER CREATION
+
+============================================================
+
+
+
+Not necessarily needed if owner-only, but avoid abuse through compromised owner sessions.
+
+
+
+============================================================
+
+209. COMPROMISED OWNER SESSION
+
+============================================================
+
+
+
+The system should make it possible to revoke sessions and change passwords quickly.
+
+
+
+============================================================
+
+210. SECURITY DOCUMENTATION
+
+============================================================
+
+
+
+Add concise developer documentation if useful.
+
+
+
+Document:
+
+
+
+roles
+
+
+
+permissions
+
+
+
+authorization middleware
+
+
+
+database models
+
+
+
+migration
+
+
+
+security assumptions
+
+
+
+Do not create unnecessary documentation files.
+
+
+
+============================================================
+
+211. API DOCUMENTATION
+
+============================================================
+
+
+
+If project already has API documentation conventions, update them.
+
+
+
+Otherwise do not create a massive separate documentation system.
+
+
+
+============================================================
+
+212. TESTS
+
+============================================================
+
+
+
+If project has test infrastructure:
+
+
+
+add tests for:
+
+
+
+authentication
+
+
+
+permissions
+
+
+
+authorization
+
+
+
+seller creation
+
+
+
+seller disable
+
+
+
+password change
+
+
+
+role protection
+
+
+
+activity logs
+
+
+
+store settings
+
+
+
+If no test framework exists:
+
+
+
+perform meaningful manual/API verification without introducing an entire test framework unnecessarily.
+
+
+
+============================================================
+
+213. REGRESSION TESTING
+
+============================================================
+
+
+
+After implementation verify existing flows.
+
+
+
+Storefront:
+
+
+
+homepage
+
+product list
+
+product detail
+
+packages
+
+cart
+
+checkout
+
+order creation
+
+order tracking
+
+favorites
+
+
+
+Admin:
+
+
+
+login
+
+dashboard
+
+products
+
+categories
+
+packages
+
+orders
+
+finance
+
+banners
+
+settings
+
+shipping
+
+
+
+============================================================
+
+214. BUILD TEST
+
+============================================================
+
+
+
+Run:
+
+
+
+cd admin
+npm run build
+
+
+
+and:
+
+
+
+cd server
+npm start
+
+
+
+or the appropriate server verification command.
+
+
+
+Do not leave broken builds.
+
+
+
+============================================================
+
+215. DATABASE VALIDATION
+
+============================================================
+
+
+
+Run Prisma validation/generation as appropriate.
+
+
+
+Do not reset database.
+
+
+
+============================================================
+
+216. MIGRATION VALIDATION
+
+============================================================
+
+
+
+Ensure migration applies cleanly to existing database.
+
+
+
+============================================================
+
+217. GIT DIFF REVIEW
+
+============================================================
+
+
+
+At the end:
+
+
+
+git status
+
+
+
+git diff
+
+
+
+Review every modified file.
+
+
+
+No unrelated files.
+
+
+
+============================================================
+
+218. MINIMAL CHANGE PRINCIPLE
+
+============================================================
+
+
+
+If a file does not need to change, leave it unchanged.
+
+
+
+If a function works, do not rewrite it.
+
+
+
+If an existing service can be extended, extend it.
+
+
+
+============================================================
+
+219. NO "JUST IN CASE" REFACTORING
+
+============================================================
+
+
+
+Do not refactor unrelated code.
+
+
+
+No:
+
+
+
+renaming everything
+
+
+
+moving files unnecessarily
+
+
+
+changing import structure unnecessarily
+
+
+
+rewriting API clients
+
+
+
+rewriting UI components
+
+
+
+============================================================
+
+220. ROOT CAUSE FIRST
+
+============================================================
+
+
+
+For every issue discovered:
+
+
+
+identify
+
+
+
+prove
+
+
+
+fix
+
+
+
+test
+
+
+
+Do not make speculative changes.
+
+
+
+============================================================
+
+221. SECURITY SEVERITY
+
+============================================================
+
+
+
+Classify discovered security issues:
+
+
+
+CRITICAL
+
+
+
+HIGH
+
+
+
+MEDIUM
+
+
+
+LOW
+
+
+
+INFORMATIONAL
+
+
+
+Fix genuine security problems.
+
+
+
+Do not invent vulnerabilities.
+
+
+
+============================================================
+
+222. PRODUCTION READINESS
+
+============================================================
+
+
+
+The final feature should be suitable for a real small e-commerce business with multiple staff members.
+
+
+
+The owner should be able to safely delegate work without giving full control.
+
+
+
+============================================================
+
+223. EXAMPLE BUSINESS SCENARIO
+
+============================================================
+
+
+
+Owner creates:
+
+
+
+Seller A
+
+
+
+Permissions:
+
+
+
+ORDERS_VIEW
+ORDERS_STATUS_UPDATE
+
+
+
+Seller A logs in.
+
+
+
+Seller A sees:
+
+
+
+Dashboard
+Orders
+
+
+
+Seller A does NOT see:
+
+
+
+Finance
+Admin Team
+Store Settings
+
+
+
+Seller A cannot call Finance API.
+
+
+
+Seller A cannot create another seller.
+
+
+
+Seller A cannot modify permissions.
+
+
+
+Seller A can update allowed order statuses.
+
+
+
+This must work end-to-end.
+
+
+
+============================================================
+
+224. SECOND EXAMPLE
+
+============================================================
+
+
+
+Owner creates:
+
+
+
+Seller B
+
+
+
+Permissions:
+
+
+
+PRODUCTS_VIEW
+PRODUCTS_CREATE
+PRODUCTS_UPDATE
+
+
+
+Seller B can:
+
+
+
+view products
+
+
+
+create products
+
+
+
+edit products
+
+
+
+Seller B cannot:
+
+
+
+delete products
+
+
+
+view finance
+
+
+
+manage users
+
+
+
+change store settings
+
+
+
+============================================================
+
+225. THIRD EXAMPLE
+
+============================================================
+
+
+
+Owner creates:
+
+
+
+Manager
+
+
+
+Permissions:
+
+
+
+ORDERS_VIEW
+ORDERS_STATUS_UPDATE
+PRODUCTS_VIEW
+PACKAGES_VIEW
+FINANCE_VIEW
+
+
+
+Manager can access those areas.
+
+
+
+Manager cannot manage Admin users unless explicitly granted.
+
+
+
+============================================================
+
+226. FOURTH EXAMPLE
+
+============================================================
+
+
+
+Owner disables Seller A.
+
+
+
+Seller A tries to:
+
+
+
+login
+
+
+
+refresh
+
+
+
+call API
+
+
+
+All must be denied appropriately.
+
+
+
+============================================================
+
+227. FIFTH EXAMPLE
+
+============================================================
+
+
+
+Owner changes Seller B permissions.
+
+
+
+Seller B's backend access must reflect the new permissions.
+
+
+
+No stale privilege.
+
+
+
+============================================================
+
+228. SIXTH EXAMPLE
+
+============================================================
+
+
+
+Owner changes Admin Panel language to English.
+
+
+
+New pages display:
+
+
+
+Admin Team
+
+
+
+Store Settings
+
+
+
+Security
+
+
+
+Activity Log
+
+
+
+Permissions
+
+
+
+Create Seller
+
+
+
+etc.
+
+
+
+all in English.
+
+
+
+Switch Arabic:
+
+
+
+all translated to Arabic.
+
+
+
+============================================================
+
+229. STORE FRONTEND IMPACT
+
+============================================================
+
+
+
+Storefront should only consume settings intentionally marked public.
+
+
+
+Admin account information must NEVER reach storefront.
+
+
+
+============================================================
+
+230. PUBLIC API AUDIT
+
+============================================================
+
+
+
+Search public APIs for accidental exposure of:
+
+
+
+Admin users
+
+
+
+roles
+
+
+
+permissions
+
+
+
+sessions
+
+
+
+audit logs
+
+
+
+private settings
+
+
+
+============================================================
+
+231. DATABASE RELATION DESIGN
+
+============================================================
+
+
+
+If using relations:
+
+
+
+User -> createdUsers
+
+
+
+User -> activityLogs
+
+
+
+User -> sessions
+
+
+
+Role -> permissions
+
+
+
+Adapt to existing schema.
+
+
+
+Avoid circular or unnecessary relations.
+
+
+
+============================================================
+
+232. SOFT DELETE
+
+============================================================
+
+
+
+If existing project uses soft delete:
+
+
+
+reuse it.
+
+
+
+If not, use status for staff accounts unless deletion is genuinely needed.
+
+
+
+============================================================
+
+233. CREATED BY
+
+============================================================
+
+
+
+Store createdBy where useful for staff accounts.
+
+
+
+Do not rely exclusively on it for authorization.
+
+
+
+============================================================
+
+234. UPDATED BY
+
+============================================================
+
+
+
+For important settings/user changes, consider recording updatedBy through audit logs rather than adding fields everywhere.
+
+
+
+============================================================
+
+235. TIMEZONE
+
+============================================================
+
+
+
+Use server/database timestamps consistently.
+
+
+
+Display according to existing application conventions.
+
+
+
+============================================================
+
+236. PASSWORD RESET SESSION POLICY
+
+============================================================
+
+
+
+Decide and document whether password reset revokes:
+
+
+
+current session
+
+
+
+all sessions
+
+
+
+Prefer revoking all sessions for security-sensitive password reset.
+
+
+
+But preserve current session architecture.
+
+
+
+============================================================
+
+237. LOGIN SESSION POLICY
+
+============================================================
+
+
+
+Do not create unlimited permanent sessions.
+
+
+
+Respect existing expiration.
+
+
+
+============================================================
+
+238. SECURITY HEADERS
+
+============================================================
+
+
+
+Do not weaken Helmet or other security middleware.
+
+
+
+============================================================
+
+239. INPUT SANITIZATION
+
+============================================================
+
+
+
+Use proper validation.
+
+
+
+Do not blindly render user-provided notes as HTML.
+
+
+
+============================================================
+
+240. XSS
+
+============================================================
+
+
+
+Audit new Admin Team/Activity Log/Settings fields for XSS.
+
+
+
+React normally escapes text.
+
+
+
+Do not use dangerouslySetInnerHTML unnecessarily.
+
+
+
+============================================================
+
+241. SQL INJECTION
+
+============================================================
+
+
+
+Use Prisma safely.
+
+
+
+No unsafe raw queries.
+
+
+
+============================================================
+
+242. PATH TRAVERSAL
+
+============================================================
+
+
+
+For branding uploads:
+
+
+
+validate and safely construct paths.
+
+
+
+============================================================
+
+243. FILE UPLOAD SECURITY
+
+============================================================
+
+
+
+If logo upload is supported:
+
+
+
+limit size
+
+
+
+validate extension
+
+
+
+validate actual content where appropriate
+
+
+
+generate safe filenames
+
+
+
+store outside executable directories where appropriate
+
+
+
+============================================================
+
+244. SECRETS
+
+============================================================
+
+
+
+Never put:
+
+
+
+DATABASE_URL
+
+
+
+SESSION_SECRET
+
+
+
+passwords
+
+
+
+API keys
+
+
+
+SMTP credentials
+
+
+
+into frontend code.
+
+
+
+============================================================
+
+245. ENVIRONMENT SEPARATION
+
+============================================================
+
+
+
+Admin frontend should only receive variables intended for frontend use.
+
+
+
+============================================================
+
+246. STORE EMAIL
+
+============================================================
+
+
+
+Store email may be public.
+
+
+
+But distinguish:
+
+
+
+public store contact email
+
+
+
+from:
+
+
+
+admin authentication email.
+
+
+
+They are not necessarily the same.
+
+
+
+============================================================
+
+247. ADMIN LOGIN EMAIL
+
+============================================================
+
+
+
+Each admin should have an individual login email.
+
+
+
+============================================================
+
+248. NO SHARED ADMIN PASSWORD
+
+============================================================
+
+
+
+Do not create:
+
+
+
+admin password shared by all sellers.
+
+
+
+Every account gets its own password.
+
+
+
+============================================================
+
+249. ACCOUNTABILITY
+
+============================================================
+
+
+
+The reason for individual accounts is:
+
+
+
+identify who did what
+
+revoke access individually
+
+audit activity
+
+customize permissions
+
+improve security
+
+
+
+Preserve this principle.
+
+
+
+============================================================
+
+250. FINAL QUALITY STANDARD
+
+============================================================
+
+
+
+The result should feel like a professional small-business e-commerce administration system.
+
+
+
+It should be:
+
+
+
+secure
+
+
+
+clear
+
+
+
+maintainable
+
+
+
+localized
+
+
+
+permission-aware
+
+
+
+auditable
+
+
+
+integrated
+
+
+
+not over-engineered
+
+
+
+============================================================
+
+251. IMPLEMENTATION ORDER
+
+============================================================
+
+
+
+Implement in this order:
+
+
+
+PHASE 1
+
+
+
+Audit existing architecture.
+
+
+
+PHASE 2
+
+
+
+Design database changes.
+
+
+
+PHASE 3
+
+
+
+Implement backend authentication/authorization extensions.
+
+
+
+PHASE 4
+
+
+
+Implement Admin Team APIs.
+
+
+
+PHASE 5
+
+
+
+Implement permissions.
+
+
+
+PHASE 6
+
+
+
+Implement Store Settings integration.
+
+
+
+PHASE 7
+
+
+
+Implement Activity Log.
+
+
+
+PHASE 8
+
+
+
+Implement Admin UI.
+
+
+
+PHASE 9
+
+
+
+Integrate multilingual translations.
+
+
+
+PHASE 10
+
+
+
+Integrate RTL/LTR.
+
+
+
+PHASE 11
+
+
+
+Security testing.
+
+
+
+PHASE 12
+
+
+
+Regression testing.
+
+
+
+PHASE 13
+
+
+
+Build.
+
+
+
+PHASE 14
+
+
+
+Final diff review.
+
+
+
+============================================================
+
+252. BEFORE CODING
+
+============================================================
+
+
+
+Give me a short architecture report first.
+
+
+
+It must include:
+
+
+
+Current authentication architecture.
+
+Current Admin user model.
+
+Current session mechanism.
+
+Current Settings architecture.
+
+Current Prisma schema relevant to users/auth.
+
+Existing permission system if any.
+
+Existing i18n architecture.
+
+Proposed minimal database changes.
+
+Proposed backend changes.
+
+Proposed frontend changes.
+
+Security risks identified.
+
+Files likely to change.
+
+
+
+Then implement.
+
+
+
+============================================================
+
+253. IMPORTANT — DO NOT STOP AT UI
+
+============================================================
+
+
+
+A beautiful Admin Team page without backend authorization is NOT acceptable.
+
+
+
+A permission checkbox without server enforcement is NOT acceptable.
+
+
+
+The backend must enforce every sensitive permission.
+
+
+
+============================================================
+
+254. IMPORTANT — DO NOT BREAK CURRENT ADMIN
+
+============================================================
+
+
+
+After implementation, the existing primary Admin account must still be able to log in.
+
+
+
+All current Admin functionality must continue working.
+
+
+
+============================================================
+
+255. IMPORTANT — DO NOT BREAK STOREFRONT
+
+============================================================
+
+
+
+Run regression checks against storefront.
+
+
+
+If a change risks storefront behavior, stop and analyze before proceeding.
+
+
+
+============================================================
+
+256. FINAL REPORT FORMAT
+
+============================================================
+
+
+
+At the end provide:
+
+Architecture Found
+
+Explain current auth/user/session/settings architecture.
+
+Root Cause / Existing Limitations
+
+Explain what existed before.
+
+Database Changes
+
+List migrations/models/enums/indexes.
+
+Backend Changes
+
+List routes/controllers/services/middleware/validators.
+
+Frontend Changes
+
+List pages/components/hooks/context.
+
+Permissions
+
+List all permissions.
+
+Roles
+
+List roles and behavior.
+
+Security
+
+Explain:
+
+
+
+authentication
+
+authorization
+
+password hashing
+
+sessions
+
+rate limiting
+
+IDOR/BOLA protection
+
+privilege escalation protection
+
+mass assignment protection
+
+audit logs
+
+sensitive data protection
+
+Store Settings
+
+List implemented settings.
+
+Admin Team
+
+List implemented functionality.
+
+Activity Log
+
+List logged actions.
+
+Multilingual
+
+Confirm Arabic/English support.
+
+RTL/LTR
+
+Confirm both directions.
+
+Tests
+
+List all tests performed.
+
+Build
+
+Report Admin build result.
+
+Regression
+
+Report storefront/Admin regression result.
+
+Files Changed
+
+List every modified/new file.
+
+Database Migration
+
+Explain migration safely.
+
+Remaining Issues
+
+List only real remaining issues.
+
+Unrelated Changes
+
+Confirm no unrelated functionality was changed.
+
+
+
+============================================================
+
+257. FINAL NON-NEGOTIABLE REQUIREMENT
+
+============================================================
+
+
+
+Do not claim this feature is complete simply because the UI exists.
+
+
+
+It is complete only if:
+
+
+
+owner can manage sellers
+
+sellers have individual accounts
+
+passwords are securely hashed
+
+permissions are enforced server-side
+
+unauthorized API calls fail
+
+disabled accounts cannot access
+
+sessions can be revoked
+
+owner cannot accidentally be removed
+
+activity is auditable
+
+store settings are separated from user credentials
+
+public/private settings are separated
+
+Arabic and English work
+
+RTL/LTR work
+
+existing Admin functionality works
+
+storefront still works
+
+database migration is safe
+
+production build succeeds
+
+
+
+If you discover an existing security vulnerability while implementing this system, report it and fix it if it is directly related to this feature.
+
+
+
+Do not silently introduce security compromises just to make implementation easier.
+
+
+
+Most importantly:
+
+
+
+BUILD THIS AS AN INTEGRATED EXTENSION OF THE EXISTING ARINE SYSTEM.
+
+
+
+DO NOT BUILD A SECOND ADMIN SYSTEM BESIDE THE EXISTING ONE.
+
+
+
+DO NOT REWRITE WORKING CODE WITHOUT A REAL REASON.
+
+
+
+DO NOT CHANGE UNRELATED BUSINESS LOGIC.
+
+
+
+PRESERVE EVERYTHING THAT CURRENTLY WORKS.

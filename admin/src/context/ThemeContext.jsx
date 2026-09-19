@@ -7,9 +7,9 @@ const THEME_KEY = 'arine-admin-theme'
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     try {
-      return localStorage.getItem(THEME_KEY) || 'dark'
+      return localStorage.getItem(THEME_KEY) || 'light'
     } catch {
-      return 'dark'
+      return 'light'
     }
   })
 

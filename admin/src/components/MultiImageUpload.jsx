@@ -46,10 +46,10 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
   // Validate a single file client-side
   const validateFile = (file) => {
     if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
-      return t('errFileType') || 'نوع الملف غير مدعوم. يرجى اختيار صورة بصيغة JPG أو PNG أو WEBP.'
+      return t('errFileType')
     }
     if (file.size > MAX_FILE_SIZE) {
-      return t('errFileSize') || 'حجم الملف يتجاوز الحد الأقصى المسموح به (5 ميغابايت).'
+      return t('errFileSize')
     }
     return null
   }
@@ -87,7 +87,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
       const newUrls = uploadedFiles.map((f) => f.url).filter(Boolean)
 
       if (newUrls.length === 0) {
-        throw new Error(t('errUploadGeneric') || 'لم يتم استلام أي رابط للملفات المرفوعة')
+        throw new Error(t('errUploadGeneric'))
       }
 
       // Append new images
@@ -100,10 +100,10 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
 
       const updated = [...normalizedImages, ...newItems]
       onChange(updated)
-      setSuccessMessage(t('uploadSuccess') || 'تم رفع الصور بنجاح')
+      setSuccessMessage(t('uploadSuccess'))
       setTimeout(() => setSuccessMessage(''), 4000)
     } catch (err) {
-      setErrorMessage(err.message || t('errUploadGeneric') || 'فشل رفع الصور، يرجى المحاولة مرة أخرى')
+      setErrorMessage(err.message || t('errUploadGeneric'))
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -139,7 +139,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
       const newUrl = uploadedFiles[0]?.url
 
       if (!newUrl) {
-        throw new Error(t('errUploadGeneric') || 'فشل الحصول على رابط الصورة المرفوعة')
+        throw new Error(t('errUploadGeneric'))
       }
 
       const updated = [...normalizedImages]
@@ -149,10 +149,10 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
       }
 
       onChange(updated)
-      setSuccessMessage(t('uploadSuccess') || 'تم استبدال الصورة بنجاح')
+      setSuccessMessage(t('uploadSuccess'))
       setTimeout(() => setSuccessMessage(''), 4000)
     } catch (err) {
-      setErrorMessage(err.message || t('errUploadGeneric') || 'فشل استبدال الصورة')
+      setErrorMessage(err.message || t('errUploadGeneric'))
     } finally {
       setUploading(false)
       setReplaceIndex(null)
@@ -180,7 +180,6 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
   const handleDragLeave = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    // Only set false if leaving the container
     if (e.currentTarget.contains(e.relatedTarget)) return
     setIsDragging(false)
   }
@@ -266,6 +265,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
             type="button"
             onClick={() => setErrorMessage('')}
             className="text-danger-400 hover:text-white text-xs font-bold px-2 py-0.5"
+            aria-label={t('close')}
           >
             ✕
           </button>
@@ -311,22 +311,20 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
         </div>
 
         <h3 className="text-sm font-bold text-white mb-1 group-hover:text-brand-300 transition-colors">
-          {uploading
-            ? (t('uploadingImages') || 'جارِ رفع الصور إلى الخادم…')
-            : (t('dragAndDrop') || 'اسحب الصور وأفلتها هنا')}
+          {uploading ? t('uploadingImages') : t('dragAndDrop')}
         </h3>
 
         <p className="text-xs text-[#8b80a8] mb-3 text-center">
-          {t('orBrowse') || 'أو اضغط لاختيار الصور من جهازك مباشرة'}
+          {t('orBrowse')}
         </p>
 
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600/90 group-hover:bg-brand-500 text-white text-xs font-bold shadow-md transition-colors">
           <Plus className="h-4 w-4" />
-          <span>{t('chooseImages') || 'اختيار صور من الجهاز'}</span>
+          <span>{t('chooseImages')}</span>
         </div>
 
         <p className="text-[11px] text-[#6f6488] mt-3 font-medium">
-          {t('uploadFormatHint') || 'الصيغ المدعومة: JPG، PNG، WEBP — الحد الأقصى: 5 ميغابايت لكل صورة'}
+          {t('uploadFormatHint')}
         </p>
       </div>
 
@@ -335,10 +333,10 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between text-xs text-[#8b80a8] border-b border-line pb-2">
             <span>
-              {normalizedImages.length} {t('colImages') || 'صور مضافة'}
+              {normalizedImages.length} {t('colImages')}
             </span>
             <span className="text-[11px]">
-              {t('primaryImageHint') || 'الصورة الأولى أو المعلمة بنجمة هي صورة الغلاف الرئيسية'}
+              {t('primaryImageHint')}
             </span>
           </div>
 
@@ -358,7 +356,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                   <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-surface-900 border border-line/40 shadow-inner">
                     <img
                       src={img.url}
-                      alt={`صورة ${index + 1}`}
+                      alt={`Image ${index + 1}`}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         e.currentTarget.src =
@@ -370,7 +368,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                     {isFirst && (
                       <span className="absolute top-2.5 start-2.5 inline-flex items-center gap-1 rounded-lg bg-brand-600/95 backdrop-blur-sm px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
                         <Star className="h-3.5 w-3.5 fill-current" />
-                        {t('primaryImage') || 'الرئيسية'}
+                        {t('primaryImage')}
                       </span>
                     )}
 
@@ -398,7 +396,8 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                         disabled={index === 0}
                         onClick={() => handleMove(index, index - 1)}
                         className="rounded-lg border border-line bg-surface-800/90 p-1.5 text-[#a79cc4] transition-colors hover:bg-surface-700 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed"
-                        title={t('moveForward') || 'تحريك للأمام'}
+                        title={t('moveForward')}
+                        aria-label={t('moveForward')}
                       >
                         <PrevIcon className="h-3.5 w-3.5" />
                       </button>
@@ -407,7 +406,8 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                         disabled={index === normalizedImages.length - 1}
                         onClick={() => handleMove(index, index + 1)}
                         className="rounded-lg border border-line bg-surface-800/90 p-1.5 text-[#a79cc4] transition-colors hover:bg-surface-700 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed"
-                        title={t('moveBackward') || 'تحريك للخلف'}
+                        title={t('moveBackward')}
+                        aria-label={t('moveBackward')}
                       >
                         <NextIcon className="h-3.5 w-3.5" />
                       </button>
@@ -420,7 +420,8 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                         type="button"
                         onClick={() => triggerReplace(index)}
                         className="rounded-lg border border-line bg-surface-800/90 p-1.5 text-[#a79cc4] transition-colors hover:bg-surface-700 hover:text-white"
-                        title={t('replaceImage') || 'استبدال الصورة'}
+                        title={t('replaceImage')}
+                        aria-label={t('replaceImage')}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </button>
@@ -431,9 +432,9 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                           type="button"
                           onClick={() => handleSetPrimary(index)}
                           className="rounded-lg border border-brand-500/40 bg-brand-950/40 px-2 py-1 text-[11px] font-bold text-brand-300 transition-colors hover:bg-brand-600 hover:text-white"
-                          title={t('setAsPrimary') || 'تعيين كصورة رئيسية'}
+                          title={t('setAsPrimary')}
                         >
-                          {t('setAsPrimary') || 'رئيسية'}
+                          {t('setAsPrimary')}
                         </button>
                       )}
 
@@ -442,7 +443,8 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                         type="button"
                         onClick={() => handleRemove(index)}
                         className="rounded-lg border border-danger-900/40 bg-danger-950/30 p-1.5 text-danger-400 transition-colors hover:bg-danger-900/60 hover:text-danger-200"
-                        title={t('deleteImage') || 'حذف الصورة'}
+                        title={t('deleteImage')}
+                        aria-label={t('deleteImage')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

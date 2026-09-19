@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js'
+import { logActivity } from '../../services/admin/activity-log.service.js'
 
 const DEFAULT_CONFIG = {
   'store.name': 'مكتبة أرين للكتب الشرعية',
@@ -218,6 +219,14 @@ export async function updateStoreConfigHandler(req, res, next) {
     if (updates.length > 0) {
       await prisma.$transaction(updates)
     }
+
+    await logActivity({
+      actor: req.admin,
+      action: 'STORE_SETTINGS_UPDATED',
+      resourceType: 'STORE_CONFIG',
+      details: { updatedKeys: updates.length },
+      req,
+    })
 
     const entries = await prisma.storeConfig.findMany()
     return res.json({

@@ -1,0 +1,213 @@
+/**
+ * Granular Admin Permissions & Modules
+ */
+
+export const PERMISSIONS = {
+  // Dashboard
+  DASHBOARD_VIEW: 'DASHBOARD_VIEW',
+
+  // Products
+  PRODUCTS_VIEW: 'PRODUCTS_VIEW',
+  PRODUCTS_CREATE: 'PRODUCTS_CREATE',
+  PRODUCTS_UPDATE: 'PRODUCTS_UPDATE',
+  PRODUCTS_DELETE: 'PRODUCTS_DELETE',
+
+  // Categories
+  CATEGORIES_VIEW: 'CATEGORIES_VIEW',
+  CATEGORIES_CREATE: 'CATEGORIES_CREATE',
+  CATEGORIES_UPDATE: 'CATEGORIES_UPDATE',
+  CATEGORIES_DELETE: 'CATEGORIES_DELETE',
+
+  // Packages / Bundles
+  PACKAGES_VIEW: 'PACKAGES_VIEW',
+  PACKAGES_CREATE: 'PACKAGES_CREATE',
+  PACKAGES_UPDATE: 'PACKAGES_UPDATE',
+  PACKAGES_DELETE: 'PACKAGES_DELETE',
+
+  // Orders
+  ORDERS_VIEW: 'ORDERS_VIEW',
+  ORDERS_CREATE: 'ORDERS_CREATE',
+  ORDERS_UPDATE: 'ORDERS_UPDATE',
+  ORDERS_DELETE: 'ORDERS_DELETE',
+  ORDERS_STATUS_UPDATE: 'ORDERS_STATUS_UPDATE',
+
+  // Customers
+  CUSTOMERS_VIEW: 'CUSTOMERS_VIEW',
+
+  // Finance & Profit
+  FINANCE_VIEW: 'FINANCE_VIEW',
+  FINANCE_EXPORT: 'FINANCE_EXPORT',
+
+  // Marketing & Banners
+  BANNERS_VIEW: 'BANNERS_VIEW',
+  BANNERS_CREATE: 'BANNERS_CREATE',
+  BANNERS_UPDATE: 'BANNERS_UPDATE',
+  BANNERS_DELETE: 'BANNERS_DELETE',
+
+  // Shipping
+  SHIPPING_VIEW: 'SHIPPING_VIEW',
+  SHIPPING_UPDATE: 'SHIPPING_UPDATE',
+
+  // Store Settings (Branding, Contact info, etc.)
+  STORE_SETTINGS_VIEW: 'STORE_SETTINGS_VIEW',
+  STORE_SETTINGS_UPDATE: 'STORE_SETTINGS_UPDATE',
+
+  // Staff / Admin Management
+  ADMIN_USERS_VIEW: 'ADMIN_USERS_VIEW',
+  ADMIN_USERS_CREATE: 'ADMIN_USERS_CREATE',
+  ADMIN_USERS_UPDATE: 'ADMIN_USERS_UPDATE',
+  ADMIN_USERS_DISABLE: 'ADMIN_USERS_DISABLE',
+  ADMIN_USERS_DELETE: 'ADMIN_USERS_DELETE',
+
+  // Security Management
+  SECURITY_VIEW: 'SECURITY_VIEW',
+  SECURITY_UPDATE: 'SECURITY_UPDATE',
+
+  // Activity Log
+  ACTIVITY_LOG_VIEW: 'ACTIVITY_LOG_VIEW',
+}
+
+export const ALL_PERMISSIONS = Object.values(PERMISSIONS)
+
+export const PERMISSION_GROUPS = [
+  {
+    key: 'dashboard',
+    permissions: [PERMISSIONS.DASHBOARD_VIEW],
+  },
+  {
+    key: 'products',
+    permissions: [
+      PERMISSIONS.PRODUCTS_VIEW,
+      PERMISSIONS.PRODUCTS_CREATE,
+      PERMISSIONS.PRODUCTS_UPDATE,
+      PERMISSIONS.PRODUCTS_DELETE,
+    ],
+  },
+  {
+    key: 'categories',
+    permissions: [
+      PERMISSIONS.CATEGORIES_VIEW,
+      PERMISSIONS.CATEGORIES_CREATE,
+      PERMISSIONS.CATEGORIES_UPDATE,
+      PERMISSIONS.CATEGORIES_DELETE,
+    ],
+  },
+  {
+    key: 'packages',
+    permissions: [
+      PERMISSIONS.PACKAGES_VIEW,
+      PERMISSIONS.PACKAGES_CREATE,
+      PERMISSIONS.PACKAGES_UPDATE,
+      PERMISSIONS.PACKAGES_DELETE,
+    ],
+  },
+  {
+    key: 'orders',
+    permissions: [
+      PERMISSIONS.ORDERS_VIEW,
+      PERMISSIONS.ORDERS_STATUS_UPDATE,
+      PERMISSIONS.ORDERS_CREATE,
+      PERMISSIONS.ORDERS_UPDATE,
+      PERMISSIONS.ORDERS_DELETE,
+    ],
+  },
+  {
+    key: 'customers',
+    permissions: [PERMISSIONS.CUSTOMERS_VIEW],
+  },
+  {
+    key: 'finance',
+    permissions: [PERMISSIONS.FINANCE_VIEW, PERMISSIONS.FINANCE_EXPORT],
+  },
+  {
+    key: 'banners',
+    permissions: [
+      PERMISSIONS.BANNERS_VIEW,
+      PERMISSIONS.BANNERS_CREATE,
+      PERMISSIONS.BANNERS_UPDATE,
+      PERMISSIONS.BANNERS_DELETE,
+    ],
+  },
+  {
+    key: 'shipping',
+    permissions: [PERMISSIONS.SHIPPING_VIEW, PERMISSIONS.SHIPPING_UPDATE],
+  },
+  {
+    key: 'store_settings',
+    permissions: [PERMISSIONS.STORE_SETTINGS_VIEW, PERMISSIONS.STORE_SETTINGS_UPDATE],
+  },
+  {
+    key: 'admin_users',
+    permissions: [
+      PERMISSIONS.ADMIN_USERS_VIEW,
+      PERMISSIONS.ADMIN_USERS_CREATE,
+      PERMISSIONS.ADMIN_USERS_UPDATE,
+      PERMISSIONS.ADMIN_USERS_DISABLE,
+      PERMISSIONS.ADMIN_USERS_DELETE,
+    ],
+  },
+  {
+    key: 'security',
+    permissions: [PERMISSIONS.SECURITY_VIEW, PERMISSIONS.SECURITY_UPDATE],
+  },
+  {
+    key: 'activity_log',
+    permissions: [PERMISSIONS.ACTIVITY_LOG_VIEW],
+  },
+]
+
+/**
+ * Pre-configured Role Templates / Presets
+ */
+export const ROLE_PRESETS = {
+  ORDER_MANAGER: {
+    name: 'Order Manager',
+    permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
+      PERMISSIONS.ORDERS_VIEW,
+      PERMISSIONS.ORDERS_STATUS_UPDATE,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.PRODUCTS_VIEW,
+      PERMISSIONS.PACKAGES_VIEW,
+    ],
+  },
+  CATALOG_MANAGER: {
+    name: 'Catalog Manager',
+    permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
+      PERMISSIONS.PRODUCTS_VIEW,
+      PERMISSIONS.PRODUCTS_CREATE,
+      PERMISSIONS.PRODUCTS_UPDATE,
+      PERMISSIONS.CATEGORIES_VIEW,
+      PERMISSIONS.CATEGORIES_CREATE,
+      PERMISSIONS.CATEGORIES_UPDATE,
+      PERMISSIONS.PACKAGES_VIEW,
+      PERMISSIONS.PACKAGES_CREATE,
+      PERMISSIONS.PACKAGES_UPDATE,
+      PERMISSIONS.BANNERS_VIEW,
+      PERMISSIONS.BANNERS_CREATE,
+      PERMISSIONS.BANNERS_UPDATE,
+    ],
+  },
+  SUPPORT_STAFF: {
+    name: 'Support Staff',
+    permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
+      PERMISSIONS.ORDERS_VIEW,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.PRODUCTS_VIEW,
+      PERMISSIONS.PACKAGES_VIEW,
+    ],
+  },
+}
+
+/**
+ * Checks whether an admin object has a given permission.
+ * SUPER_ADMIN has full access to everything.
+ */
+export function hasPermission(admin, permission) {
+  if (!admin) return false
+  if (admin.role === 'SUPER_ADMIN') return true
+  const perms = Array.isArray(admin.permissions) ? admin.permissions : []
+  return perms.includes(permission)
+}

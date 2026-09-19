@@ -7,6 +7,7 @@ export function serializeCategory(category) {
     id: category.id,
     name: category.name,
     slug: category.slug,
+    color: category.color || '#6366f1',
     count: category._count?.products ?? null,
   }
 }
@@ -31,16 +32,26 @@ async function uniqueSlug(name, slug, excludeId) {
   }
 }
 
-export async function createCategory({ name, slug }) {
+export async function createCategory({ name, slug, color }) {
   const finalSlug = await uniqueSlug(name, slug, null)
-  return prisma.category.create({ data: { name, slug: finalSlug } })
+  return prisma.category.create({
+    data: {
+      name,
+      slug: finalSlug,
+      color: color || '#6366f1',
+    },
+  })
 }
 
-export async function updateCategory(id, { name, slug }) {
+export async function updateCategory(id, { name, slug, color }) {
   const existing = await prisma.category.findUnique({ where: { id } })
   if (!existing) throw new ApiError(404, 'NOT_FOUND', 'التصنيف غير موجود')
 
-  const data = { name, ...(slug ? { slug } : {}) }
+  const data = {
+    ...(name !== undefined ? { name } : {}),
+    ...(slug ? { slug } : {}),
+    ...(color !== undefined ? { color: color || '#6366f1' } : {}),
+  }
   if (data.slug && data.slug !== existing.slug) {
     data.slug = await uniqueSlug(name ?? existing.name, data.slug, id)
   }

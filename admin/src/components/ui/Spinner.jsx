@@ -1,8 +1,8 @@
 export default function Spinner({ label }) {
   return (
-    <div className="flex items-center gap-2.5 text-sm text-[#a79cc4]">
+    <div className="flex items-center gap-2.5 text-sm text-text-muted">
       <svg
-        className="h-5 w-5 animate-spin text-brand-400"
+        className="h-5 w-5 animate-spin text-brand-600 dark:text-brand-400"
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"

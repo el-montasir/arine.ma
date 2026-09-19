@@ -58,7 +58,7 @@ export async function getProfitByProduct() {
   orders.forEach((order) => {
     ;(order.items || []).forEach((item) => {
       const f = itemFinance(item)
-      const key = `book-${item.productId}`
+      const key = item.productId ? `book-${item.productId}` : `book-title-${item.productTitle}`
       let row = rows.get(key)
       if (!row) {
         row = { id: key, productId: item.productId, productTitle: item.productTitle, quantity: 0, revenue: 0, cost: 0, profit: null, costUnknownItems: 0, type: 'book' }
@@ -73,7 +73,7 @@ export async function getProfitByProduct() {
 
     ;(order.packageItems || []).forEach((item) => {
       const f = itemFinance(item)
-      const key = `pkg-${item.packageId}`
+      const key = item.packageId ? `pkg-${item.packageId}` : `pkg-title-${item.packageTitle}`
       let row = rows.get(key)
       if (!row) {
         row = { id: key, productId: item.packageId, productTitle: `[باقة] ${item.packageTitle}`, quantity: 0, revenue: 0, cost: 0, profit: null, costUnknownItems: 0, type: 'package' }

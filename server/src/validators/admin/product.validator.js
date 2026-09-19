@@ -5,7 +5,13 @@ export const SHIPPING_MODES = ['DEFAULT', 'FREE', 'CUSTOM', 'default', 'free', '
 
 const productFields = {
   title: z.string().trim().min(1, 'العنوان مطلوب').max(200, 'العنوان طويل جداً'),
-  author: z.string().trim().min(1, 'المؤلف مطلوب').max(200, 'اسم المؤلف طويل جداً'),
+  author: z
+    .string()
+    .trim()
+    .max(200, 'اسم المؤلف طويل جداً')
+    .nullable()
+    .optional()
+    .transform((val) => val || ''),
   categoryId: z.number().int().positive('التصنيف غير صحيح'),
   price: z.number().int().min(0, 'السعر غير صحيح').max(1_000_000, 'السعر كبير جداً'),
   costPrice: z
@@ -31,13 +37,24 @@ const productFields = {
     )
     .optional(),
   availability: z.enum(AVAILABILITY).default('in-stock'),
-  description: z.string().max(5000, 'الوصف طويل جداً').nullable().optional(),
+  description: z
+    .string()
+    .max(5000, 'الوصف طويل جداً')
+    .nullable()
+    .optional()
+    .transform((val) => (val && val.trim() ? val.trim() : null)),
   rating: z.number().int().min(1).max(5).optional(),
   isNew: z.boolean().optional(),
   isPopular: z.boolean().optional(),
   pages: z.number().int().positive().nullable().optional(),
-  publisher: z.string().trim().max(200).nullable().optional(),
-  year: z.string().trim().max(10).nullable().optional(),
+  publisher: z
+    .string()
+    .trim()
+    .max(200)
+    .nullable()
+    .optional()
+    .transform((val) => (val && val.trim() ? val.trim() : null)),
+  year: z.string().trim().max(50).nullable().optional(),
   shippingMode: z
     .string()
     .nullable()

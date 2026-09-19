@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Store,
   Sparkles,
-  Phone,
   BookOpen,
   Save,
   CheckCircle2,
@@ -26,7 +25,7 @@ const MAX_LOGO_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 export default function StoreSettings() {
-  const { t, isRTL } = useLanguage()
+  const { t } = useLanguage()
   const logoInputRef = useRef(null)
 
   const { data: configData, loading: configLoading, reload: reloadConfig } = useFetch('/store-config')
@@ -88,13 +87,13 @@ export default function StoreSettings() {
 
     setLogoError('')
     if (!ALLOWED_LOGO_TYPES.includes(file.type.toLowerCase())) {
-      setLogoError(t('errFileType') || 'نوع الملف غير مدعوم. الصيغ المسموحة هي PNG و JPG و WEBP.')
+      setLogoError(t('errFileType'))
       if (logoInputRef.current) logoInputRef.current.value = ''
       return
     }
 
     if (file.size > MAX_LOGO_SIZE) {
-      setLogoError(t('errFileSize') || 'حجم الشعار يتجاوز الحد الأقصى المسموح به (5 ميغابايت).')
+      setLogoError(t('errFileSize'))
       if (logoInputRef.current) logoInputRef.current.value = ''
       return
     }
@@ -109,14 +108,14 @@ export default function StoreSettings() {
       const uploadedUrl = res?.data?.url || res?.files?.[0]?.url || res?.url
 
       if (!uploadedUrl) {
-        throw new Error(t('errUploadGeneric') || 'لم يتم استلام رابط الشعار المرفوع')
+        throw new Error(t('errUploadGeneric'))
       }
 
       setForm((prev) => ({ ...prev, storeLogo: uploadedUrl }))
-      setSuccessMsg(t('logoUploadSuccess') || 'تم رفع وتعيين الشعار بنجاح')
+      setSuccessMsg(t('logoUploadSuccess'))
       setTimeout(() => setSuccessMsg(''), 4000)
     } catch (err) {
-      setLogoError(err.message || t('errUploadGeneric') || 'فشل رفع الشعار')
+      setLogoError(err.message || t('errUploadGeneric'))
     } finally {
       setUploadingLogo(false)
       if (logoInputRef.current) logoInputRef.current.value = ''
@@ -125,7 +124,7 @@ export default function StoreSettings() {
 
   const handleRemoveLogo = () => {
     setForm((prev) => ({ ...prev, storeLogo: '' }))
-    setSuccessMsg(t('logoRemoveSuccess') || 'تمت إزالة الشعار والعودة للشعار الافتراضي')
+    setSuccessMsg(t('logoRemoveSuccess'))
     setTimeout(() => setSuccessMsg(''), 4000)
   }
 
@@ -160,11 +159,11 @@ export default function StoreSettings() {
 
     try {
       await api.put('/store-config', payload)
-      setSuccessMsg(t('success') || 'تم حفظ وتحديث إعدادات وبيانات المتجر بنجاح')
+      setSuccessMsg(t('storeSettingsSaveSuccess'))
       reloadConfig()
       setTimeout(() => setSuccessMsg(''), 4000)
     } catch (err) {
-      setErrorMsg(err.message || t('error') || 'فشل حفظ إعدادات المتجر')
+      setErrorMsg(err.message || t('storeSettingsSaveError'))
     } finally {
       setBusy(false)
     }
@@ -173,8 +172,8 @@ export default function StoreSettings() {
   return (
     <div className="space-y-6 max-w-5xl">
       <PageHeader
-        title={t('storeSettingsTitle') || 'إعدادات المتجر والصفحة الرئيسية'}
-        subtitle={t('storeSettingsSubtitle') || 'التحكم في هوية المتجر، معلومات التواصل، نصوص الواجهة الترويجية، واختيار الكتاب المميز'}
+        title={t('storeSettingsTitle')}
+        subtitle={t('storeSettingsSubtitle')}
         actions={
           <Button
             variant="secondary"
@@ -183,7 +182,7 @@ export default function StoreSettings() {
             disabled={configLoading}
           >
             <RefreshCw className={`h-3.5 w-3.5 ${configLoading ? 'animate-spin' : ''}`} />
-            {t('refresh') || 'تحديث'}
+            {t('refresh')}
           </Button>
         }
       />
@@ -198,7 +197,7 @@ export default function StoreSettings() {
       {errorMsg && <ErrorBanner message={errorMsg} />}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 1. الهوية البصرية وشعار المتجر الرسمي (Brand Identity & Logo) */}
+        {/* 1. Brand Identity & Logo */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-line pb-3">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-purple-600/20 text-purple-400">
@@ -206,10 +205,10 @@ export default function StoreSettings() {
             </span>
             <div>
               <h2 className="text-sm font-semibold text-white">
-                {t('secBranding') || '1. الهوية البصرية وشعار المتجر'}
+                {t('secBranding')}
               </h2>
               <p className="text-xs text-[#8b80a8]">
-                {t('secBrandingDesc') || 'تحميل وتعديل الشعار الرسمي الذي يظهر في أعلى وأسفل واجهة المتجر'}
+                {t('secBrandingDesc')}
               </p>
             </div>
           </div>
@@ -236,15 +235,15 @@ export default function StoreSettings() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <Eye className="h-3.5 w-3.5 text-brand-400" />
-                  {t('logoPreviewTitle') || 'معاينة الشعار في واجهة المتجر'}
+                  {t('logoPreviewTitle')}
                 </span>
                 {form.storeLogo ? (
                   <span className="text-[11px] font-semibold text-ok-400 bg-ok-950/60 border border-ok-900/60 px-2 py-0.5 rounded-full">
-                    {t('currentLogo') || 'شعار مخصص مفعّل'}
+                    {t('currentLogo')}
                   </span>
                 ) : (
                   <span className="text-[11px] font-semibold text-[#8b80a8] bg-surface-800 border border-line px-2 py-0.5 rounded-full">
-                    {t('noLogoUploaded') || 'الشعار الافتراضي'}
+                    {t('noLogoUploaded')}
                   </span>
                 )}
               </div>
@@ -254,7 +253,7 @@ export default function StoreSettings() {
                 {/* Light Preview (Navbar style) */}
                 <div className="rounded-xl border border-line bg-white p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
-                    الهيدر (Header)
+                    {t('previewHeader')}
                   </span>
                   {form.storeLogo ? (
                     <img
@@ -270,9 +269,9 @@ export default function StoreSettings() {
                       <div className="bg-brand-700 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
                         <BookOpen className="w-4 h-4 text-white" strokeWidth={2} />
                       </div>
-                      <div className="leading-tight text-right">
-                        <div className="text-[0.85rem] font-bold text-brand-800">{form.storeName || 'مكتبة أرين'}</div>
-                        <div className="text-[0.55rem] text-gray-700">للكتب والعلوم الشرعية</div>
+                      <div className="leading-tight">
+                        <div className="text-[0.85rem] font-bold text-brand-800">{form.storeName || t('defaultStoreName')}</div>
+                        <div className="text-[0.55rem] text-gray-700">{t('defaultStoreTagline')}</div>
                       </div>
                     </div>
                   )}
@@ -281,7 +280,7 @@ export default function StoreSettings() {
                 {/* Dark Preview (Footer style) */}
                 <div className="rounded-xl border border-line bg-[#0F0D15] p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                    الفوتر (Footer)
+                    {t('previewFooter')}
                   </span>
                   {form.storeLogo ? (
                     <img
@@ -297,9 +296,9 @@ export default function StoreSettings() {
                       <div className="bg-brand-700 w-8 h-8 rounded-lg flex items-center justify-center">
                         <BookOpen className="w-4 h-4 text-white" />
                       </div>
-                      <div className="leading-tight text-right">
-                        <div className="text-[0.85rem] font-bold text-white">{form.storeName || 'مكتبة أرين'}</div>
-                        <div className="text-[0.55rem] text-white/50">للكتب والعلوم الشرعية</div>
+                      <div className="leading-tight">
+                        <div className="text-[0.85rem] font-bold text-white">{form.storeName || t('defaultStoreName')}</div>
+                        <div className="text-[0.55rem] text-white/50">{t('defaultStoreTagline')}</div>
                       </div>
                     </div>
                   )}
@@ -317,10 +316,10 @@ export default function StoreSettings() {
             <div className="flex flex-col justify-center space-y-3.5 bg-ink-950/40 p-4 rounded-xl border border-line">
               <div>
                 <h4 className="text-xs font-bold text-white mb-1">
-                  {t('brandLogoLabel') || 'تحميل شعار المتجر'}
+                  {t('brandLogoLabel')}
                 </h4>
                 <p className="text-[11px] text-[#8b80a8] leading-relaxed">
-                  {t('logoUploadHint') || 'الصيغ المدعومة: PNG، JPG، WEBP (يُفضل خلفية شفافة PNG/WEBP — الحد الأقصى 5 ميغابايت)'}
+                  {t('logoUploadHint')}
                 </p>
               </div>
 
@@ -335,12 +334,12 @@ export default function StoreSettings() {
                   {uploadingLogo ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>جارِ الرفع…</span>
+                      <span>{t('uploading')}</span>
                     </>
                   ) : (
                     <>
                       <UploadCloud className="h-4 w-4" />
-                      <span>{form.storeLogo ? (t('changeLogoBtn') || 'تغيير الشعار') : (t('uploadLogoBtn') || 'رفع شعار جديد')}</span>
+                      <span>{form.storeLogo ? t('changeLogoBtn') : t('uploadLogoBtn')}</span>
                     </>
                   )}
                 </Button>
@@ -354,7 +353,7 @@ export default function StoreSettings() {
                     disabled={uploadingLogo}
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span>{t('removeLogoBtn') || 'حذف الشعار'}</span>
+                    <span>{t('removeLogoBtn')}</span>
                   </Button>
                 )}
               </div>
@@ -362,7 +361,7 @@ export default function StoreSettings() {
           </div>
         </Card>
 
-        {/* 2. هوية المتجر وبيانات التواصل */}
+        {/* 2. Store Identity & Contact Information */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-line pb-3">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
@@ -370,37 +369,37 @@ export default function StoreSettings() {
             </span>
             <div>
               <h2 className="text-sm font-semibold text-white">
-                {t('secStoreIdentity') || '2. هوية المتجر وبيانات التواصل'}
+                {t('secStoreIdentity')}
               </h2>
               <p className="text-xs text-[#8b80a8]">
-                {t('storeSettingsSubtitle') || 'الاسم العام، النبذة التعريفية، وأرقام خدمة العملاء'}
+                {t('secStoreIdentityDesc')}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
-              label={t('storeNameField') || 'اسم المتجر *'}
+              label={`${t('storeNameField')} *`}
               value={form.storeName}
               onChange={set('storeName')}
-              placeholder="مثال: مكتبة أرين للكتب الشرعية"
+              placeholder={t('defaultStoreName')}
               required
             />
             <Input
-              label={t('storeAddressField') || 'العنوان / التغطية الجغرافية'}
+              label={t('storeAddressField')}
               value={form.address}
               onChange={set('address')}
-              placeholder="مثال: المغرب — توصيل لجميع المدن"
+              placeholder={t('storeAddressPlaceholder')}
             />
             <Input
-              label={t('storePhoneField') || 'رقم الهاتف للتواصل'}
+              label={t('storePhoneField')}
               dir="ltr"
               value={form.phone}
               onChange={set('phone')}
               placeholder="+212 600-000000"
             />
             <Input
-              label="رقم الواتساب (WhatsApp)"
+              label={t('storeWhatsappField')}
               dir="ltr"
               value={form.whatsapp}
               onChange={set('whatsapp')}
@@ -408,7 +407,7 @@ export default function StoreSettings() {
             />
             <div className="sm:col-span-2">
               <Input
-                label={t('storeEmailField') || 'البريد الإلكتروني الرسمي'}
+                label={t('storeEmailField')}
                 type="email"
                 dir="ltr"
                 value={form.email}
@@ -419,15 +418,15 @@ export default function StoreSettings() {
           </div>
 
           <Textarea
-            label={t('storeDescField') || 'نبذة تعريفية عن المتجر'}
+            label={t('storeDescField')}
             value={form.storeDescription}
             onChange={set('storeDescription')}
             rows={3}
-            placeholder="مكتبة مغربية متخصصة في توفير أمهات الكتب الإسلامية والمصادر الموثوقة…"
+            placeholder={t('storeDescPlaceholder')}
           />
         </Card>
 
-        {/* 3. واجهة الصفحة الرئيسية (Hero Section) */}
+        {/* 3. Hero Section */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-line pb-3">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-purple-600/20 text-purple-400">
@@ -435,55 +434,55 @@ export default function StoreSettings() {
             </span>
             <div>
               <h2 className="text-sm font-semibold text-white">
-                {t('secHeroConfig') || '3. نصوص واجهة المتجر الرئيسية (Hero Section)'}
+                {t('secHeroConfig')}
               </h2>
               <p className="text-xs text-[#8b80a8]">
-                العناوين والإحصائيات الترويجية التي تظهر في أعلى الصفحة الرئيسية
+                {t('secHeroConfigDesc')}
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
             <Input
-              label={t('heroBadgeField') || 'شارة الواجهة العلوية (Badge)'}
+              label={t('heroBadgeField')}
               value={form.heroBadge}
               onChange={set('heroBadge')}
-              placeholder="مثال: مكتبة أرين للكتب الشرعية"
+              placeholder={t('defaultStoreName')}
             />
 
             <Input
-              label={t('heroTitleField') || 'العنوان الترويجي الرئيسي (Hero Title) *'}
+              label={`${t('heroTitleField')} *`}
               value={form.heroTitle}
               onChange={set('heroTitle')}
-              placeholder="مثال: اكتشف كتابك القادم"
+              placeholder={t('heroTitlePlaceholder')}
               required
             />
 
             <Textarea
-              label={t('heroSubtitleField') || 'النص الفرعي الترحيبي (Hero Subtitle)'}
+              label={t('heroSubtitleField')}
               value={form.heroSubtitle}
               onChange={set('heroSubtitle')}
               rows={2}
-              placeholder="مجموعة مختارة من الكتب الشرعية والمعرفية لعشاق القراءة وطلب العلم."
+              placeholder={t('heroSubtitlePlaceholder')}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <Input
-                label="إحصائية الكتب المعروضة"
+                label={t('heroStatBooksField')}
                 dir="ltr"
                 value={form.heroStatBooks}
                 onChange={set('heroStatBooks')}
                 placeholder="+2000"
               />
               <Input
-                label="إحصائية سرعة التوصيل"
+                label={t('heroStatDeliveryField')}
                 dir="ltr"
                 value={form.heroStatDelivery}
                 onChange={set('heroStatDelivery')}
                 placeholder="24/48h"
               />
               <Input
-                label="إحصائية العملاء السعداء"
+                label={t('heroStatCustomersField')}
                 dir="ltr"
                 value={form.heroStatCustomers}
                 onChange={set('heroStatCustomers')}
@@ -493,7 +492,7 @@ export default function StoreSettings() {
           </div>
         </Card>
 
-        {/* 4. الكتاب المميز في الصفحة الرئيسية (Featured Book) */}
+        {/* 4. Homepage Featured Book */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-line pb-3">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-600/20 text-amber-400">
@@ -501,21 +500,21 @@ export default function StoreSettings() {
             </span>
             <div>
               <h2 className="text-sm font-semibold text-white">
-                {t('secFeaturedBook') || '4. الكتاب المميز (Featured Book)'}
+                {t('secFeaturedBook')}
               </h2>
               <p className="text-xs text-[#8b80a8]">
-                اختيار الكتاب الذي يظهر في قسم «كتاب الأسبوع / الكتاب المميز» بالرئيسية
+                {t('secFeaturedBookDesc')}
               </p>
             </div>
           </div>
 
           <div className="max-w-md">
             <Select
-              label={t('selectFeaturedBook') || 'اختر الكتاب المميز'}
+              label={t('selectFeaturedBook')}
               value={form.featuredBookId}
               onChange={set('featuredBookId')}
             >
-              <option value="">-- اختر كتاباً من القائمة --</option>
+              <option value="">{t('selectFeaturedBookPlaceholder')}</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
                   #{p.id} - {p.title} ({p.author})
@@ -523,7 +522,7 @@ export default function StoreSettings() {
               ))}
             </Select>
             <p className="text-[11px] text-[#8b80a8] mt-1.5">
-              سيتم عرض تفاصيل هذا الكتاب، مقتطف من وصفه، وسعره في القسم الترويجي الخاص بالرئيسية.
+              {t('featuredBookSectionDesc')}
             </p>
           </div>
         </Card>
@@ -532,11 +531,10 @@ export default function StoreSettings() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <Button type="submit" variant="primary" disabled={busy || uploadingLogo}>
             <Save className="h-4 w-4" aria-hidden="true" />
-            {busy ? (t('saving') || 'جارِ الحفظ…') : (t('saveChanges') || 'حفظ إعدادات المتجر')}
+            {busy ? t('saving') : t('saveChanges')}
           </Button>
         </div>
       </form>
     </div>
   )
 }
-

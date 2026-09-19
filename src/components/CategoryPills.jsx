@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
 import useCategories from '../hooks/useCategories'
 
+const DEFAULT_COLOR = '#6366f1'
+
 export default function CategoryPills({ onSelect, includeAll = false }) {
   const [active, setActive] = useState(includeAll ? 'all' : null)
   const [scrollPos, setScrollPos] = useState(0)
@@ -31,28 +33,38 @@ export default function CategoryPills({ onSelect, includeAll = false }) {
         {includeAll && (
           <button
             onClick={() => handleSelect('all')}
-            className={`flex-shrink-0 px-4.5 py-2 text-[0.84rem] font-medium rounded-full border transition-all duration-300 ${
+            style={
               active === 'all'
-                ? 'bg-brand-700 text-white border-brand-700 shadow-sm'
-                : 'bg-white text-foreground/70 border-border hover:border-brand-300 hover:text-brand-700'
+                ? { backgroundColor: DEFAULT_COLOR, color: '#ffffff', borderColor: DEFAULT_COLOR }
+                : { color: DEFAULT_COLOR, borderColor: DEFAULT_COLOR, backgroundColor: 'transparent' }
+            }
+            className={`flex-shrink-0 px-4.5 py-2 text-[0.84rem] font-medium rounded-full border transition-all duration-300 hover:opacity-90 ${
+              active === 'all' ? 'shadow-sm' : ''
             }`}
           >
             الكل
           </button>
         )}
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleSelect(cat.slug)}
-            className={`flex-shrink-0 px-4.5 py-2 text-[0.84rem] font-medium rounded-full border transition-all duration-300 ${
-              active === cat.slug
-                ? 'bg-brand-700 text-white border-brand-700 shadow-sm'
-                : 'bg-white text-foreground/70 border-border hover:border-brand-300 hover:text-brand-700'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const color = cat.color || DEFAULT_COLOR
+          const isSelected = active === cat.slug
+          return (
+            <button
+              key={cat.id}
+              onClick={() => handleSelect(cat.slug)}
+              style={
+                isSelected
+                  ? { backgroundColor: color, color: '#ffffff', borderColor: color }
+                  : { color: color, borderColor: color, backgroundColor: 'transparent' }
+              }
+              className={`flex-shrink-0 px-4.5 py-2 text-[0.84rem] font-medium rounded-full border transition-all duration-300 hover:opacity-90 ${
+                isSelected ? 'shadow-sm' : ''
+              }`}
+            >
+              {cat.name}
+            </button>
+          )
+        })}
       </div>
       {scrollPos > 0 && (
         <button

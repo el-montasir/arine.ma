@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Star, ShoppingCart, Minus, Plus, Box, Truck, Shield, RotateCcw, Loader2, Heart, ArrowLeft, ArrowRight } from 'lucide-react'
+import { ShoppingCart, Minus, Plus, Box, Truck, Shield, Loader2, Heart, ArrowLeft, ArrowRight } from 'lucide-react'
 import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -122,7 +122,6 @@ export default function BookDetails() {
 
   const currentImageUrl = imagesList[selectedImageIdx] || imagesList[0] || null
   const isFreeShipping = book.shippingMode === 'free' || book.shippingMode === 'FREE'
-  const ratingValue = Number(book.rating) || 5
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6 lg:py-10">
@@ -193,6 +192,20 @@ export default function BookDetails() {
                 {book.category}
               </span>
             )}
+            {book.availability === 'out-of-stock' ? (
+              <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[0.75rem] font-semibold rounded-full">
+                {t('outOfStock') || 'غير متوفر حالياً'}
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[0.75rem] font-semibold rounded-full">
+                {t('inStock') || 'متوفر'}
+              </span>
+            )}
+            {book.author && book.author.trim() ? (
+              <span className="px-3 py-1 bg-brand-50 text-brand-800 border border-brand-200/70 text-[0.75rem] font-medium rounded-full">
+                {book.author.trim()}
+              </span>
+            ) : null}
             {book.isNew && (
               <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[0.75rem] font-semibold rounded-full">
                 {t('newBadge') || 'جديد'}
@@ -204,43 +217,14 @@ export default function BookDetails() {
                 {t('freeShipping') || 'توصيل مجاني'}
               </span>
             )}
-            {book.availability === 'out-of-stock' ? (
-              <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[0.75rem] font-semibold rounded-full">
-                {t('outOfStock') || 'غير متوفر حالياً'}
-              </span>
-            ) : (
-              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[0.75rem] font-semibold rounded-full">
-                {t('inStock') || 'متوفر'}
-              </span>
-            )}
           </div>
 
           <h1 className="text-2xl lg:text-4xl font-bold text-foreground leading-snug">
             {book.title}
           </h1>
 
-          {book.author && (
-            <p className="text-muted mt-2 text-[0.95rem]">
-              {t('author') || 'تأليف'}: <span className="text-foreground font-medium">{book.author}</span>
-            </p>
-          )}
-
-          {/* Rating */}
-          <div className="flex items-center gap-1.5 mt-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className="w-4.5 h-4.5"
-                fill={i < ratingValue ? '#F59E0B' : 'none'}
-                stroke={i < ratingValue ? '#F59E0B' : '#D4D4D8'}
-                strokeWidth={1.5}
-              />
-            ))}
-            <span className="text-[0.82rem] text-muted mr-2">({ratingValue}/5)</span>
-          </div>
-
           {/* Price */}
-          <div className="flex items-baseline gap-3 mt-6">
+          <div className="flex items-baseline gap-3 mt-5">
             <span className="text-brand-700 font-bold text-3xl">{formatPrice(book.price)}</span>
             {book.oldPrice ? (
               <span className="text-muted/50 text-xl line-through">{formatPrice(book.oldPrice)}</span>
@@ -252,25 +236,19 @@ export default function BookDetails() {
             )}
           </div>
 
-          {/* Meta */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
-            {[
-              { label: t('publisher') || 'الناشر', value: book.publisher || 'دار نشر إسلامية' },
-              { label: t('pages') || 'الصفحات', value: book.pages || '—' },
-              { label: t('year') || 'السنة', value: book.year || '—' },
-            ].map((m) => (
-              <div key={m.label} className="bg-[#F3F4F6] rounded-xl px-3 py-3 text-center">
-                <div className="text-[0.72rem] text-muted">{m.label}</div>
-                <div className="text-[0.85rem] font-semibold text-foreground mt-0.5">{m.value}</div>
-              </div>
-            ))}
-          </div>
+          {/* Publisher (دار النشر) - rendered dynamically only when available */}
+          {book.publisher && book.publisher.trim() ? (
+            <div className="mt-5 inline-flex items-center gap-2 bg-[#F9FAFB] border border-border/70 rounded-xl px-3.5 py-2">
+              <span className="text-xs text-muted font-medium">{t('publisher') || 'دار النشر'}:</span>
+              <span className="text-xs font-semibold text-foreground">{book.publisher.trim()}</span>
+            </div>
+          ) : null}
 
           {/* Description */}
           <div className="mt-7">
-            <h3 className="font-bold text-foreground mb-2">{t('description') || 'وصف الكتاب'}</h3>
+            <h3 className="font-bold text-foreground mb-2">{t('description') || 'الوصف'}</h3>
             <p className="text-muted text-[0.9rem] leading-relaxed">
-              {book.description || (t('noDescription') || 'لا يوجد وصف تفصيلي مسجل لهذا الكتاب حالياً.')}
+              {book.description || (t('noDescription') || 'لا يوجد وصف متاح لهذا الكتاب.')}
             </p>
           </div>
 
@@ -342,11 +320,10 @@ export default function BookDetails() {
           </div>
 
           {/* Trust badges */}
-          <div className="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-border/60">
+          <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-border/60">
             {[
-              { icon: Truck, label: t('fastDelivery') || 'توصيل سريع', sub: '24-48 ساعة' },
+              { icon: Truck, label: t('fastDelivery') || 'توصيل سريع', sub: t('fastDeliverySub') || '24-48 ساعة لجميع المدن' },
               { icon: Shield, label: t('securePayment') || 'دفع آمن', sub: t('cashOnDelivery') || 'عند الاستلام' },
-              { icon: RotateCcw, label: t('easyReturns') || 'إرجاع سهل', sub: t('returnsDuration') || 'خلال 14 يوم' },
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <item.icon className="w-5 h-5 text-brand-700 mx-auto mb-1" />

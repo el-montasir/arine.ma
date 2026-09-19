@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
+import { logActivity } from '../../services/admin/activity-log.service.js'
 
 // GET /api/admin/banners
 export async function getBannersHandler(_req, res, next) {
@@ -63,6 +64,15 @@ export async function createBannerHandler(req, res, next) {
       },
     })
 
+    await logActivity({
+      actor: req.admin,
+      action: 'BANNER_CREATED',
+      resourceType: 'BANNER',
+      resourceId: banner.id,
+      details: { title: banner.title, type: banner.type },
+      req,
+    })
+
     return res.status(201).json({
       success: true,
       message: 'تم إنشاء العرض بنجاح',
@@ -114,6 +124,15 @@ export async function updateBannerHandler(req, res, next) {
       data,
     })
 
+    await logActivity({
+      actor: req.admin,
+      action: 'BANNER_UPDATED',
+      resourceType: 'BANNER',
+      resourceId: id,
+      details: { title: banner.title, type: banner.type },
+      req,
+    })
+
     return res.json({
       success: true,
       message: 'تم تحديث العرض بنجاح',
@@ -133,6 +152,15 @@ export async function deleteBannerHandler(req, res, next) {
     }
 
     await prisma.banner.delete({ where: { id } })
+
+    await logActivity({
+      actor: req.admin,
+      action: 'BANNER_DELETED',
+      resourceType: 'BANNER',
+      resourceId: id,
+      req,
+    })
+
     return res.json({ success: true, message: 'تم حذف العرض بنجاح' })
   } catch (err) {
     next(err)

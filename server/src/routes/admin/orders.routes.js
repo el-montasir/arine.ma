@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import { validate } from '../../middleware/validate.middleware.js'
+import { requirePermission } from '../../middleware/auth.middleware.js'
+import { PERMISSIONS } from '../../constants/permissions.js'
 import { updateOrderStatusSchema } from '../../validators/admin/order.validator.js'
 import {
   getOrders,
@@ -9,8 +11,13 @@ import {
 
 const router = Router()
 
-router.get('/', getOrders)
-router.get('/:id', getOrderById)
-router.patch('/:id/status', validate(updateOrderStatusSchema), patchOrderStatus)
+router.get('/', requirePermission(PERMISSIONS.ORDERS_VIEW), getOrders)
+router.get('/:id', requirePermission(PERMISSIONS.ORDERS_VIEW), getOrderById)
+router.patch(
+  '/:id/status',
+  requirePermission(PERMISSIONS.ORDERS_STATUS_UPDATE),
+  validate(updateOrderStatusSchema),
+  patchOrderStatus
+)
 
 export default router

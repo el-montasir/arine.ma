@@ -14,7 +14,7 @@ export default function Login() {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
-  const [username, setUsername] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -25,7 +25,7 @@ export default function Login() {
     setBusy(true)
     setError('')
     try {
-      await login(username.trim(), password)
+      await login(identifier.trim(), password)
       const from = location.state?.from?.pathname || '/dashboard'
       navigate(from, { replace: true })
     } catch (err) {
@@ -66,11 +66,11 @@ export default function Login() {
 
           <form onSubmit={onSubmit} className="space-y-4" aria-label="Sign In Form">
             <Input
-              label={t('emailField')}
+              label={t('emailOrUsernameField')}
               autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin@arine.ma"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="admin@arine.ma or username"
               required
             />
             <Input
@@ -100,7 +100,7 @@ export default function Login() {
         {/* Security badge */}
         <div className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-text-subtle">
           <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          <span>جلسة إدارة مشفرة ومؤمنة بالكامل</span>
+          <span>{t('secureSession')}</span>
         </div>
       </div>
     </div>

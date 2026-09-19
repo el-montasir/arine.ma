@@ -34,6 +34,14 @@ export async function createOrder(input) {
     const packageIds = (input.packages || []).map((i) => i.packageId)
     const packages = await tx.package.findMany({
       where: { id: { in: packageIds } },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
     })
     const packageById = new Map(packages.map((p) => [p.id, p]))
 
@@ -77,6 +85,7 @@ export async function createOrder(input) {
       return {
         productId: product.id,
         productTitle: product.title, // snapshot
+        productImage: product.image || null, // snapshot
         quantity: item.quantity,
         unitPrice, // snapshot
         totalPrice,
@@ -91,9 +100,16 @@ export async function createOrder(input) {
       const unitPrice = pkg.price
       const totalPrice = unitPrice * item.quantity
       subtotal += totalPrice
+      const itemsSnapshot = (pkg.items || []).map((pi) => ({
+        productId: pi.productId,
+        title: pi.product?.title || null,
+        author: pi.product?.author || null,
+      }))
       return {
         packageId: pkg.id,
         packageTitle: pkg.title, // snapshot
+        packageImage: pkg.image || null, // snapshot
+        itemsSnapshot: itemsSnapshot.length > 0 ? itemsSnapshot : null, // snapshot
         quantity: item.quantity,
         unitPrice, // snapshot
         totalPrice,

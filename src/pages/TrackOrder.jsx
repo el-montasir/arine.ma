@@ -261,11 +261,16 @@ export default function TrackOrder() {
             <div className="divide-y divide-border/60">
               {order.items?.map((item) => (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.productTitle}</h4>
-                    <span className="text-[0.78rem] text-muted">
-                      {item.quantity} × {formatPrice(item.unitPrice)}
-                    </span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item.productImage ? (
+                      <img src={item.productImage} alt="" className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0" />
+                    ) : null}
+                    <div className="min-w-0">
+                      <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.productTitle}</h4>
+                      <span className="text-[0.78rem] text-muted">
+                        {item.quantity} × {formatPrice(item.unitPrice)}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-[0.92rem] font-bold text-brand-800 shrink-0">
                     {formatPrice(item.totalPrice)}
@@ -274,16 +279,26 @@ export default function TrackOrder() {
               ))}
               {order.packageItems?.map((item) => (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[0.7rem] font-medium bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded">
-                        {t('package') || 'باقة'}
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item.packageImage ? (
+                      <img src={item.packageImage} alt="" className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0" />
+                    ) : null}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[0.7rem] font-medium bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded">
+                          {t('package') || 'باقة'}
+                        </span>
+                        <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.packageTitle}</h4>
+                      </div>
+                      {item.itemsSnapshot && Array.isArray(item.itemsSnapshot) && item.itemsSnapshot.length > 0 && (
+                        <p className="text-[0.75rem] text-muted truncate mt-0.5">
+                          {item.itemsSnapshot.map((i) => i.title).filter(Boolean).join(' + ')}
+                        </p>
+                      )}
+                      <span className="text-[0.78rem] text-muted block mt-0.5">
+                        {item.quantity} × {formatPrice(item.unitPrice)}
                       </span>
-                      <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.packageTitle}</h4>
                     </div>
-                    <span className="text-[0.78rem] text-muted">
-                      {item.quantity} × {formatPrice(item.unitPrice)}
-                    </span>
                   </div>
                   <div className="text-[0.92rem] font-bold text-brand-800 shrink-0">
                     {formatPrice(item.totalPrice)}

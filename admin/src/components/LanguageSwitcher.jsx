@@ -9,7 +9,7 @@ const LANG_OPTIONS = [
 ]
 
 export default function LanguageSwitcher({ variant = 'dropdown' }) {
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef(null)
 
@@ -55,10 +55,10 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="تغيير اللغة / Change Language / Changer la langue"
+        aria-label={t('secLanguage')}
         className="flex items-center gap-2 rounded-xl border border-line bg-surface-900 px-3 py-2 text-xs font-medium text-text-main transition-colors hover:border-brand-500/50 hover:bg-surface-800 focus:outline-none"
       >
-        <Globe className="h-4 w-4 text-brand-400" />
+        <Globe className="h-4 w-4 text-brand-600 dark:text-brand-400" />
         <span className="flex items-center gap-1.5">
           <span>{currentOption.flag}</span>
           <span className="hidden sm:inline">{currentOption.label}</span>
@@ -66,9 +66,9 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full z-50 mt-2 w-44 origin-top-right rounded-xl border border-line bg-surface-900 p-1.5 shadow-xl backdrop-blur-lg">
+        <div className="absolute end-0 top-full z-50 mt-2 w-44 origin-top-right rounded-xl border border-line bg-surface-900 p-1.5 shadow-lg backdrop-blur-lg">
           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            اللغة / Language
+            {t('secLanguage')}
           </div>
           <div className="mt-1 space-y-1">
             {LANG_OPTIONS.map((opt) => {
@@ -83,7 +83,7 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
                   }}
                   className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium transition-colors ${
                     active
-                      ? 'bg-brand-600/15 text-brand-400 font-semibold'
+                      ? 'bg-brand-50 text-brand-700 font-semibold dark:bg-brand-600/15 dark:text-brand-400'
                       : 'text-text-main hover:bg-surface-800'
                   }`}
                 >
@@ -91,7 +91,7 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
                     <span className="text-base">{opt.flag}</span>
                     <span>{opt.label}</span>
                   </span>
-                  {active && <Check className="h-3.5 w-3.5 text-brand-400" />}
+                  {active && <Check className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />}
                 </button>
               )
             })}

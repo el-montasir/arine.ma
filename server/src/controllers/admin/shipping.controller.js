@@ -5,6 +5,7 @@ import {
   invalidateShippingCache,
 } from '../../services/shipping/index.js'
 import { ApiError } from '../../utils/api-error.js'
+import { logActivity } from '../../services/admin/activity-log.service.js'
 
 // GET /api/admin/shipping/status
 export async function getShippingStatusHandler(_req, res, next) {
@@ -100,6 +101,15 @@ export async function updateShippingConfigHandler(req, res, next) {
     invalidateShippingCache()
 
     const updatedConfig = await getShippingConfig()
+
+    await logActivity({
+      actor: req.admin,
+      action: 'SHIPPING_CONFIG_UPDATED',
+      resourceType: 'SHIPPING',
+      details: { flatFee, freeThreshold, enabled, freeEnabled },
+      req,
+    })
+
     return res.json({
       success: true,
       message: 'تم حفظ إعدادات التوصيل بنجاح',

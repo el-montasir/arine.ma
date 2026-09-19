@@ -15,56 +15,151 @@ import {
   X,
   ChevronRight,
   ChevronLeft,
+  UserCog,
+  History,
+  ShieldCheck,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export function SidebarContent({ onNavigate }) {
   const { t, isRTL } = useLanguage()
+  const { can, isOwner } = useAuth()
 
-  const NAV_SECTIONS = [
+  const ALL_SECTIONS = [
     {
       items: [
-        { to: '/dashboard', label: t('navDashboard'), icon: LayoutDashboard, end: true },
+        {
+          to: '/dashboard',
+          label: t('navDashboard'),
+          icon: LayoutDashboard,
+          end: true,
+          permission: 'DASHBOARD_VIEW',
+        },
       ],
     },
     {
       title: t('navCatalog'),
       items: [
-        { to: '/products', label: t('navProducts'), icon: BookOpen },
-        { to: '/packages', label: t('navPackages'), icon: Package },
-        { to: '/categories', label: t('navCategories'), icon: FolderTree },
+        {
+          to: '/products',
+          label: t('navProducts'),
+          icon: BookOpen,
+          permission: 'PRODUCTS_VIEW',
+        },
+        {
+          to: '/packages',
+          label: t('navPackages'),
+          icon: Package,
+          permission: 'PACKAGES_VIEW',
+        },
+        {
+          to: '/categories',
+          label: t('navCategories'),
+          icon: FolderTree,
+          permission: 'CATEGORIES_VIEW',
+        },
       ],
     },
     {
       title: t('navSales'),
       items: [
-        { to: '/orders', label: t('navOrders'), icon: ShoppingBag },
-        { to: '/customers', label: t('navCustomers'), icon: Users },
-        { to: '/finance', label: t('navFinance'), icon: Wallet },
+        {
+          to: '/orders',
+          label: t('navOrders'),
+          icon: ShoppingBag,
+          permission: 'ORDERS_VIEW',
+        },
+        {
+          to: '/customers',
+          label: t('navCustomers'),
+          icon: Users,
+          permission: 'CUSTOMERS_VIEW',
+        },
+        {
+          to: '/finance',
+          label: t('navFinance'),
+          icon: Wallet,
+          permission: 'FINANCE_VIEW',
+        },
       ],
     },
     {
       title: t('navMarketing'),
       items: [
-        { to: '/banners', label: t('navBanners'), icon: Megaphone },
-        { to: '/store-settings', label: t('navStoreSettings'), icon: Store },
+        {
+          to: '/banners',
+          label: t('navBanners'),
+          icon: Megaphone,
+          permission: 'BANNERS_VIEW',
+        },
+        {
+          to: '/store-settings',
+          label: t('navStoreSettings'),
+          icon: Store,
+          permission: 'STORE_SETTINGS_VIEW',
+        },
+      ],
+    },
+    {
+      title: t('teamTitle') ? t('navAdminTeam') : 'Admin & Security',
+      items: [
+        {
+          to: '/admin-team',
+          label: t('navAdminTeam'),
+          icon: UserCog,
+          permission: 'ADMIN_USERS_VIEW',
+        },
+        {
+          to: '/activity-log',
+          label: t('navActivityLog'),
+          icon: History,
+          permission: 'ACTIVITY_LOG_VIEW',
+        },
+        {
+          to: '/security',
+          label: t('navSecurity'),
+          icon: ShieldCheck,
+          // All admins can access their own security settings
+          permission: null,
+        },
       ],
     },
     {
       title: t('navSystem'),
       items: [
-        { to: '/shipping-settings', label: t('navShippingSettings'), icon: Truck },
-        { to: '/settings', label: t('navSettings'), icon: Settings },
+        {
+          to: '/shipping-settings',
+          label: t('navShippingSettings'),
+          icon: Truck,
+          permission: 'SHIPPING_VIEW',
+        },
+        {
+          to: '/settings',
+          label: t('navSettings'),
+          icon: Settings,
+          permission: null,
+        },
       ],
     },
   ]
 
+  // Filter sections and items based on permissions
+  const visibleSections = ALL_SECTIONS.map((section) => {
+    const visibleItems = section.items.filter((item) => {
+      if (isOwner) return true
+      if (!item.permission) return true
+      return can(item.permission)
+    })
+    return { ...section, items: visibleItems }
+  }).filter((section) => section.items.length > 0)
+
   return (
     <nav className="flex flex-1 flex-col gap-4 p-3.5 overflow-y-auto" aria-label="Navigation Menu">
-      {NAV_SECTIONS.map((section, idx) => (
+      {visibleSections.map((section, idx) => (
         <div key={idx} className="space-y-1">
           {section.title && (
-            <p className="px-3 py-1 text-[11px] font-bold text-text-subtle uppercase tracking-wider">
+            <p className="px-3 py-1 text-[11px] font-semibold text-text-subtle uppercase tracking-wider">
               {section.title}
             </p>
           )}
@@ -76,15 +171,15 @@ export function SidebarContent({ onNavigate }) {
                 end={end}
                 onClick={onNavigate}
                 className={({ isActive }) =>
-                  `group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
+                  `group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-brand-600/15 text-brand-400 font-bold border border-brand-500/30 shadow-sm'
+                      ? 'bg-brand-50 text-brand-700 font-semibold border border-brand-200/80 dark:bg-brand-600/15 dark:text-brand-400 dark:border-brand-500/30'
                       : 'text-text-muted hover:bg-surface-800 hover:text-text-main border border-transparent'
                   }`
                 }
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" aria-hidden="true" />
+                  <Icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" aria-hidden="true" />
                   <span>{label}</span>
                 </div>
                 {isRTL ? (
@@ -107,11 +202,11 @@ export default function Sidebar({ open, onClose }) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 shrink-0 border-e border-line bg-surface-900 lg:flex lg:flex-col shadow-sm">
+      <aside className="hidden w-64 shrink-0 border-e border-line bg-surface-900 lg:flex lg:flex-col">
         <Brand />
         <SidebarContent />
         <div className="mt-auto p-3.5 border-t border-line">
-          <div className="rounded-xl border border-line bg-surface-800/60 p-3 text-[11px] leading-relaxed text-text-muted">
+          <div className="rounded-xl border border-line bg-surface-800 p-3 text-[11px] leading-relaxed text-text-muted">
             <p className="font-semibold text-text-main mb-0.5">⚡ {t('appName')} v2.5</p>
             <p className="text-[10px] text-text-subtle">{t('appTagline')}</p>
           </div>
@@ -121,8 +216,8 @@ export default function Sidebar({ open, onClose }) {
       {/* Mobile drawer */}
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-          <aside className="absolute inset-y-0 start-0 flex w-72 flex-col bg-surface-900 shadow-2xl border-e border-line">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+          <aside className="absolute inset-y-0 start-0 flex w-72 flex-col bg-surface-900 shadow-xl border-e border-line">
             <button
               onClick={onClose}
               aria-label={t('close')}
@@ -144,7 +239,7 @@ function Brand() {
 
   return (
     <div className="flex items-center gap-3 border-b border-line px-5 py-4.5 bg-surface-900">
-      <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-tr from-brand-700 to-brand-500 text-white shadow-md shadow-brand-600/25">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-600 text-white shadow-sm">
         <BookMarked className="h-5 w-5" aria-hidden="true" />
       </span>
       <div>

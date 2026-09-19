@@ -1,7 +1,7 @@
 import { useId } from 'react'
 
 const baseField =
-  'w-full rounded-lg border border-line bg-ink-900 px-3 py-2 text-sm text-[#f2eefb] placeholder:text-[#6f6488] transition-colors focus:border-brand-500 focus:outline-none'
+  'w-full rounded-lg border border-line bg-white dark:bg-ink-900 px-3 py-2 text-sm text-gray-900 dark:text-[#f2eefb] placeholder:text-gray-400 dark:placeholder:text-[#6f6488] transition-colors focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400'
 
 export function Input({ label, hint, error, className = '', id, ...rest }) {
   const auto = useId()

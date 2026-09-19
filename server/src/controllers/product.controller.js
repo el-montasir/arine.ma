@@ -21,6 +21,7 @@ export function serializeProduct(product) {
     title: product.title,
     author: product.author,
     category: product.category?.name ?? null,
+    categoryColor: product.category?.color ?? null,
     categoryId: product.categoryId,
     price: product.price,
     oldPrice: product.oldPrice,

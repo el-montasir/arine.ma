@@ -163,13 +163,11 @@ export async function updateProduct(id, inputData) {
 }
 
 export async function deleteProduct(id) {
-  try {
-    await prisma.product.delete({ where: { id } })
-    return true
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
-      throw new ApiError(409, 'PRODUCT_REFERENCED', 'لا يمكن حذف كتاب مسجّل في طلبات سابقة')
-    }
-    throw err
+  const existing = await prisma.product.findUnique({ where: { id } })
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'الكتاب غير موجود')
   }
+
+  await prisma.product.delete({ where: { id } })
+  return true
 }

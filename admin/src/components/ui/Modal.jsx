@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
+import { useLanguage } from '../../context/LanguageContext.jsx'
 
 export default function Modal({ open, onClose, title, children, width = 'max-w-lg' }) {
   const ref = useRef(null)
+  const { t } = useLanguage()
+
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
@@ -24,7 +27,7 @@ export default function Modal({ open, onClose, title, children, width = 'max-w-l
           <h2 className="text-sm font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
-            aria-label="إغلاق"
+            aria-label={t('close')}
             className="rounded-md p-1 text-[#8b80a8] transition-colors hover:bg-surface-800 hover:text-white"
           >
             <X className="h-4 w-4" />

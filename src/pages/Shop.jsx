@@ -78,27 +78,37 @@ export default function Shop() {
           <div className="hidden lg:flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('category', '')}
-              className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-all ${
+              style={
                 !category
-                  ? 'bg-brand-700 text-white border-brand-700'
-                  : 'bg-white text-foreground/65 border-border hover:border-brand-300 hover:text-brand-700'
+                  ? { backgroundColor: '#6366f1', color: '#ffffff', borderColor: '#6366f1' }
+                  : { color: '#6366f1', borderColor: '#6366f1', backgroundColor: 'transparent' }
+              }
+              className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+                !category ? 'shadow-sm' : ''
               }`}
             >
               {t('all')}
             </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setFilter('category', cat.slug)}
-                className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-all ${
-                  category === cat.slug
-                    ? 'bg-brand-700 text-white border-brand-700'
-                    : 'bg-white text-foreground/65 border-border hover:border-brand-300 hover:text-brand-700'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+            {categories.map((cat) => {
+              const color = cat.color || '#6366f1'
+              const isSelected = category === cat.slug
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setFilter('category', cat.slug)}
+                  style={
+                    isSelected
+                      ? { backgroundColor: color, color: '#ffffff', borderColor: color }
+                      : { color: color, borderColor: color, backgroundColor: 'transparent' }
+                  }
+                  className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+                    isSelected ? 'shadow-sm' : ''
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -143,27 +153,37 @@ export default function Shop() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('category', '')}
-              className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-all ${
+              style={
                 !category
-                  ? 'bg-brand-700 text-white border-brand-700'
-                  : 'bg-white text-foreground/65 border-border'
+                  ? { backgroundColor: '#6366f1', color: '#ffffff', borderColor: '#6366f1' }
+                  : { color: '#6366f1', borderColor: '#6366f1', backgroundColor: 'transparent' }
+              }
+              className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+                !category ? 'shadow-sm' : ''
               }`}
             >
               {t('all')}
             </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setFilter('category', cat.slug)}
-                className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-all ${
-                  category === cat.slug
-                    ? 'bg-brand-700 text-white border-brand-700'
-                    : 'bg-white text-foreground/65 border-border'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+            {categories.map((cat) => {
+              const color = cat.color || '#6366f1'
+              const isSelected = category === cat.slug
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setFilter('category', cat.slug)}
+                  style={
+                    isSelected
+                      ? { backgroundColor: color, color: '#ffffff', borderColor: color }
+                      : { color: color, borderColor: color, backgroundColor: 'transparent' }
+                  }
+                  className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+                    isSelected ? 'shadow-sm' : ''
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}

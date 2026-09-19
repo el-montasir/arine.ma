@@ -13,6 +13,7 @@ export async function getCategories(req, res, next) {
         id: c.id,
         name: c.name,
         slug: c.slug,
+        color: c.color || '#6366f1',
         count: c._count.products,
       })),
     })

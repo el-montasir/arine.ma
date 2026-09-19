@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { orderFinance } from '../../utils/admin-finance.js'
+import { hasPermission, PERMISSIONS } from '../../constants/permissions.js'
 
 const FINANCIAL = ['CONFIRMED', 'SHIPPING', 'DELIVERED']
 
@@ -7,7 +8,9 @@ function isFinancial(order) {
   return FINANCIAL.includes(order.status)
 }
 
-export async function getDashboardStats() {
+export async function getDashboardStats(admin = null) {
+  const canViewFinance = hasPermission(admin, PERMISSIONS.FINANCE_VIEW)
+
   const [orderCount, productCount, categoryCount, orders] = await Promise.all([
     prisma.order.count(),
     prisma.product.count(),
@@ -17,7 +20,9 @@ export async function getDashboardStats() {
 
   // Status counts (all orders).
   const byStatus = { PENDING: 0, CONFIRMED: 0, SHIPPING: 0, DELIVERED: 0, CANCELLED: 0 }
-  orders.forEach((o) => { byStatus[o.status] = (byStatus[o.status] ?? 0) + 1 })
+  orders.forEach((o) => {
+    byStatus[o.status] = (byStatus[o.status] ?? 0) + 1
+  })
 
   // Finance over non-cancelled orders.
   let revenue = 0 // goods revenue (subtotal basis)
@@ -40,13 +45,20 @@ export async function getDashboardStats() {
   // Recent orders + derived activity feed (newest first).
   const recentOrders = orders
     .slice()
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 8)
-    .map((o) => ({ id: o.id, orderNumber: o.orderNumber, fullName: o.fullName, status: o.status, total: o.total, createdAt: o.createdAt }))
+    .map((o) => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      fullName: o.fullName,
+      status: o.status,
+      total: canViewFinance ? o.total : null,
+      createdAt: o.createdAt,
+    }))
 
   const recentActivity = orders
     .slice()
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 10)
     .map((o) => ({
       type: 'ORDER_CREATED',
@@ -64,13 +76,17 @@ export async function getDashboardStats() {
     deliveredOrders: byStatus.DELIVERED,
     cancelledOrders: byStatus.CANCELLED,
     byStatus,
-    totalSales,
-    revenue,
-    cost,
-    collectedShipping,
-    profit,
-    profitMargin: revenue > 0 && profit != null ? Math.round((profit / revenue) * 1000) / 10 : null,
-    costUnknownItems,
+    canViewFinance,
+    totalSales: canViewFinance ? totalSales : null,
+    revenue: canViewFinance ? revenue : null,
+    cost: canViewFinance ? cost : null,
+    collectedShipping: canViewFinance ? collectedShipping : null,
+    profit: canViewFinance ? profit : null,
+    profitMargin:
+      canViewFinance && revenue > 0 && profit != null
+        ? Math.round((profit / revenue) * 1000) / 10
+        : null,
+    costUnknownItems: canViewFinance ? costUnknownItems : null,
     recentOrders,
     recentActivity,
   }
