@@ -12,7 +12,7 @@ import Modal from '../components/ui/Modal.jsx'
 import Button from '../components/ui/Button.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
-const AVAILABILITY_KEYS = ['in-stock', 'out-of-stock', 'pre_order']
+const AVAILABILITY_KEYS = ['in-stock', 'out-of-stock', 'pre-order']
 
 export default function Products() {
   const navigate = useNavigate()

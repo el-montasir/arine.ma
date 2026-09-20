@@ -196,6 +196,10 @@ export default function BookDetails() {
               <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[0.75rem] font-semibold rounded-full">
                 {t('outOfStock') || 'غير متوفر حالياً'}
               </span>
+            ) : book.availability === 'pre-order' ? (
+              <span className="px-2.5 py-1 bg-blue-50 text-blue-600 text-[0.75rem] font-semibold rounded-full">
+                {t('preOrder') || 'طلب مسبق'}
+              </span>
             ) : (
               <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[0.75rem] font-semibold rounded-full">
                 {t('inStock') || 'متوفر'}

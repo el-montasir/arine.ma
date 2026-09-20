@@ -13,6 +13,7 @@ export default function ProductCard({ book }) {
 
   const fav = isFavorite(book.id)
   const outOfStock = book.availability === 'out-of-stock'
+  const isPreOrder = book.availability === 'pre-order'
 
   // Extract primary image from book.images array or fallback to book.image
   const primaryImage = (() => {
@@ -72,6 +73,11 @@ export default function ProductCard({ book }) {
             {outOfStock && (
               <span className="bg-zinc-600 text-white text-[0.72rem] font-bold px-2.5 py-0.5 rounded-lg shadow-sm">
                 {t('outOfStock')}
+              </span>
+            )}
+            {isPreOrder && (
+              <span className="bg-blue-600 text-white text-[0.72rem] font-bold px-2.5 py-0.5 rounded-lg shadow-sm">
+                {t('preOrder')}
               </span>
             )}
           </div>

@@ -63,7 +63,7 @@ export function getAvailability(status, t) {
   const map = {
     'in-stock': { label: t ? t('inStock') : 'متوفر', color: 'status-ok' },
     'out-of-stock': { label: t ? t('outOfStock') : 'غير متوفر', color: 'status-danger' },
-    pre_order: { label: t ? t('preOrder') : 'طلب مسبق', color: 'status-info' },
+    'pre-order': { label: t ? t('preOrder') : 'طلب مسبق', color: 'status-info' },
   }
   return map[status] || { label: status, color: 'status-neutral' }
 }
@@ -90,7 +90,7 @@ export const PAYMENT_LABEL = {
 export const AVAILABILITY = {
   'in-stock': { label: 'متوفر', color: 'status-ok' },
   'out-of-stock': { label: 'غير متوفر', color: 'status-danger' },
-  pre_order: { label: 'طلب مسبق', color: 'status-info' },
+  'pre-order': { label: 'طلب مسبق', color: 'status-info' },
 }
 
 export function orderStatus(status, t) {
