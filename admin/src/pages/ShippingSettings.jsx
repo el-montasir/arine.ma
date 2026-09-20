@@ -95,20 +95,20 @@ export default function ShippingSettings() {
 
       {/* 1. Main Shipping Pricing & Rules Card */}
       <Card>
-        <div className="flex items-center gap-2.5 border-b border-line pb-4 mb-5">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
+        <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5 mb-5">
+          <span className="grid h-9 w-9 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
             <Truck className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="text-base font-semibold text-white">{t('shippingRulesCardTitle')}</h2>
-            <p className="text-xs text-[#8b80a8]">
+            <h2 className="text-sm font-bold text-[var(--ink)]">{t('shippingRulesCardTitle')}</h2>
+            <p className="text-xs text-[var(--ink-soft)]">
               {t('shippingRulesCardDesc')}
             </p>
           </div>
         </div>
 
         {shippingSuccess && (
-          <div className="mb-5 flex items-center gap-2 rounded-xl border border-ok-900/60 bg-ok-950/60 p-3 text-xs text-ok-400">
+          <div className="mb-5 flex items-center gap-2 rounded-[10px] border border-[var(--green)]/30 bg-[var(--green-bg)] p-3 text-xs font-semibold text-[var(--green)]">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>{shippingSuccess}</span>
           </div>
@@ -122,10 +122,10 @@ export default function ShippingSettings() {
 
         <form onSubmit={saveShippingConfig} className="space-y-5">
           {/* Global shipping toggle */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-line bg-ink-900/40">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-[12px] border border-[var(--line)] bg-[var(--bg)]">
             <div>
-              <span className="text-sm font-semibold text-white block">{t('shippingSystemTitle')}</span>
-              <span className="text-xs text-[#8b80a8] block mt-0.5">
+              <span className="text-xs font-bold text-[var(--ink)] block">{t('shippingSystemTitle')}</span>
+              <span className="text-[11px] text-[var(--ink-soft)] block mt-0.5">
                 {t('shippingSystemDisabledDesc')}
               </span>
             </div>
@@ -136,15 +136,15 @@ export default function ShippingSettings() {
                 onChange={(e) => setShippingForm((prev) => ({ ...prev, enabled: e.target.checked }))}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-surface-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
-              <span className="ms-3 text-xs font-semibold text-white">
+              <div className="w-11 h-6 bg-[var(--card)] border border-[var(--line)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--purple)]"></div>
+              <span className="ms-3 text-xs font-semibold text-[var(--ink)]">
                 {shippingForm.enabled ? t('active') : t('inactive')}
               </span>
             </label>
           </div>
 
           {/* Default shipping fee */}
-          <div className="p-4 rounded-xl border border-line bg-ink-900/40">
+          <div className="p-4 rounded-[12px] border border-[var(--line)] bg-[var(--bg)]">
             <div className="max-w-md">
               <Input
                 label={t('standardShippingFeeLabel', { currency: t('currency') })}
@@ -160,11 +160,11 @@ export default function ShippingSettings() {
           </div>
 
           {/* Optional Order-Value Free Shipping Toggle & Threshold */}
-          <div className="p-4 rounded-xl border border-line bg-ink-900/40 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line/60 pb-3">
+          <div className="p-4 rounded-[12px] border border-[var(--line)] bg-[var(--bg)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--line)] pb-3">
               <div>
-                <span className="text-sm font-semibold text-white block">{t('freeShippingByValueTitle')}</span>
-                <span className="text-xs text-[#8b80a8] block mt-0.5">
+                <span className="text-xs font-bold text-[var(--ink)] block">{t('freeShippingByValueTitle')}</span>
+                <span className="text-[11px] text-[var(--ink-soft)] block mt-0.5">
                   {t('freeShippingByValueDesc')}
                 </span>
               </div>
@@ -175,8 +175,8 @@ export default function ShippingSettings() {
                   onChange={(e) => setShippingForm((prev) => ({ ...prev, freeEnabled: e.target.checked }))}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-surface-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ok-500"></div>
-                <span className={`ms-3 text-xs font-semibold ${shippingForm.freeEnabled ? 'text-ok-400' : 'text-[#8b80a8]'}`}>
+                <div className="w-11 h-6 bg-[var(--card)] border border-[var(--line)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--green)]"></div>
+                <span className={`ms-3 text-xs font-semibold ${shippingForm.freeEnabled ? 'text-[var(--green)]' : 'text-[var(--ink-soft)]'}`}>
                   {shippingForm.freeEnabled ? `[ ${t('active')} ]` : `[ ${t('inactive')} ]`}
                 </span>
               </label>
@@ -196,7 +196,7 @@ export default function ShippingSettings() {
                     required
                   />
                 </div>
-                <div className="p-3 rounded-lg bg-ok-950/30 border border-ok-900/40 text-xs text-ok-400">
+                <div className="p-3 rounded-[10px] bg-[var(--green-bg)]/40 border border-[var(--green)]/20 text-xs text-[var(--green)] font-medium">
                   {t('freeShippingActiveInfo', {
                     threshold: formatMoney(shippingForm.freeThreshold || 0, language),
                     fee: formatMoney(shippingForm.flatFee, language),
@@ -204,38 +204,38 @@ export default function ShippingSettings() {
                 </div>
               </div>
             ) : (
-              <div className="p-3 rounded-lg bg-ink-950/50 border border-line text-xs text-[#8b80a8]">
+              <div className="p-3 rounded-[10px] bg-[var(--card)] border border-[var(--line)] text-xs text-[var(--ink-soft)]">
                 {t('freeShippingInactiveInfo', { fee: formatMoney(shippingForm.flatFee, language) })}
               </div>
             )}
           </div>
 
           {/* Live Summary Box */}
-          <div className="rounded-xl border border-brand-500/30 bg-brand-950/20 p-4 space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-400 mb-2">
+          <div className="rounded-[12px] border border-[var(--purple)]/30 bg-[var(--purple-bg)]/30 p-4 space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--purple)] mb-2">
               {t('currentShippingRulesSummary')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-2.5 rounded-lg bg-ink-900/60 border border-line">
-                <span className="text-[#8b80a8] block mb-1">{t('globalShippingStatus')}</span>
-                <span className={`font-bold ${shippingForm.enabled ? 'text-ok-400' : 'text-danger-400'}`}>
+              <div className="p-2.5 rounded-[9px] bg-[var(--card)] border border-[var(--line)]">
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('globalShippingStatus')}</span>
+                <span className={`font-bold ${shippingForm.enabled ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
                   {shippingForm.enabled ? t('active') : `${t('inactive')} (${formatMoney(0, language)})`}
                 </span>
               </div>
-              <div className="p-2.5 rounded-lg bg-ink-900/60 border border-line">
-                <span className="text-[#8b80a8] block mb-1">{t('standardOrderShippingFee')}</span>
-                <span className="font-bold text-white tabular-nums">
+              <div className="p-2.5 rounded-[9px] bg-[var(--card)] border border-[var(--line)]">
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('standardOrderShippingFee')}</span>
+                <span className="font-bold text-[var(--ink)] tabular-nums">
                   {formatMoney(shippingForm.flatFee, language)}
                 </span>
               </div>
-              <div className="p-2.5 rounded-lg bg-ink-900/60 border border-line">
-                <span className="text-[#8b80a8] block mb-1">{t('freeShippingThreshold')}</span>
-                <span className={`font-bold ${shippingForm.freeEnabled ? 'text-ok-400' : 'text-[#8b80a8]'}`}>
+              <div className="p-2.5 rounded-[9px] bg-[var(--card)] border border-[var(--line)]">
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('freeShippingThreshold')}</span>
+                <span className={`font-bold ${shippingForm.freeEnabled ? 'text-[var(--green)]' : 'text-[var(--ink-soft)]'}`}>
                   {shippingForm.freeEnabled ? `${t('active')} (≥ ${formatMoney(shippingForm.freeThreshold, language)})` : t('inactive')}
                 </span>
               </div>
             </div>
-            <p className="text-[11px] text-[#8b80a8] pt-1">
+            <p className="text-[11px] text-[var(--ink-soft)] pt-1">
               {t('shippingPerBookRuleNote')}
             </p>
           </div>
@@ -251,14 +251,14 @@ export default function ShippingSettings() {
 
       {/* 2. Registered Shipping Carriers / Providers */}
       <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-3.5 mb-4">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
+            <span className="grid h-9 w-9 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">{t('shippingProvidersTitle')}</h2>
-              <p className="text-xs text-[#8b80a8]">
+              <h2 className="text-sm font-bold text-[var(--ink)]">{t('shippingProvidersTitle')}</h2>
+              <p className="text-xs text-[var(--ink-soft)]">
                 {t('shippingProvidersDesc')}
               </p>
             </div>
@@ -281,31 +281,31 @@ export default function ShippingSettings() {
               return (
                 <div
                   key={prov.id}
-                  className={`rounded-xl border p-4 transition-all ${
+                  className={`rounded-[12px] border p-4 transition-all ${
                     isSelected
-                      ? 'border-brand-500 bg-brand-950/30'
-                      : 'border-line bg-ink-900/40 opacity-80'
+                      ? 'border-[var(--purple)] bg-[var(--purple-bg)]/20'
+                      : 'border-[var(--line)] bg-[var(--card)]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{prov.name}</span>
+                        <span className="text-xs font-bold text-[var(--ink)]">{prov.name}</span>
                         {isSelected && <Badge kind="brand">{t('activeCarrierBadge')}</Badge>}
                       </div>
-                      <span dir="ltr" className="font-mono text-[11px] text-[#8b80a8] block mt-0.5">
+                      <span dir="ltr" className="font-mono text-[11px] text-[var(--ink-soft)] block mt-0.5">
                         id: {prov.id} ({prov.mode === 'api' ? t('providerModeApi') : t('providerModeLocal')})
                       </span>
                     </div>
 
                     <div className="shrink-0">
                       {prov.isConfigured ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ok-400 bg-ok-950/60 border border-ok-900/60 px-2 py-0.5 rounded-md">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--green)] bg-[var(--green-bg)] border border-[var(--green)]/20 px-2 py-0.5 rounded-full">
                           <ShieldCheck className="h-3 w-3" />
                           {t('configured')}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-400 bg-amber-950/60 border border-amber-900/60 px-2 py-0.5 rounded-md">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--orange)] bg-[var(--orange-bg)] border border-[var(--orange)]/20 px-2 py-0.5 rounded-full">
                           <AlertCircle className="h-3 w-3" />
                           {t('notConfigured')}
                         </span>
@@ -313,18 +313,18 @@ export default function ShippingSettings() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#a79cc4] leading-relaxed mb-3">
+                  <p className="text-xs text-[var(--ink-soft)] leading-relaxed mb-3">
                     {prov.description}
                   </p>
 
-                  <div className="pt-2 border-t border-line/50 flex items-center justify-between text-xs">
-                    <span className="text-[#8b80a8] text-[11px]">{prov.statusLabel}</span>
+                  <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between text-xs">
+                    <span className="text-[var(--ink-soft)] text-[11px]">{prov.statusLabel}</span>
                     {!isSelected && (
                       <button
                         type="button"
                         onClick={() => handleProviderChange(prov.id)}
                         disabled={providerChanging}
-                        className="text-brand-400 hover:text-brand-300 font-medium underline text-xs disabled:opacity-50"
+                        className="text-[var(--purple)] hover:underline font-semibold text-xs disabled:opacity-50 cursor-pointer"
                       >
                         {t('setAsActiveProviderBtn')}
                       </button>

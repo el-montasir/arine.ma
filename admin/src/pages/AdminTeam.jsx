@@ -26,7 +26,8 @@ import Table from '../components/ui/Table.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Modal from '../components/ui/Modal.jsx'
 import Button from '../components/ui/Button.jsx'
-import { Input, Select } from '../components/ui/Input.jsx'
+import { Input, Select, Textarea } from '../components/ui/Input.jsx'
+import { Badge, StatusBadge } from '../components/ui/Badge.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -286,8 +287,14 @@ export default function AdminTeam() {
     setFormError('')
     try {
       if (modal.mode === 'create') {
+        if (!form.name.trim()) {
+          throw new Error(t('nameRequired'))
+        }
         if (!form.username.trim()) {
           throw new Error(t('usernameRequired'))
+        }
+        if (!form.email.trim()) {
+          throw new Error(t('emailRequired'))
         }
         if (!form.password || form.password.length < 8) {
           throw new Error(t('passwordMinLength'))
@@ -297,9 +304,9 @@ export default function AdminTeam() {
         }
 
         await api.post('/admin-users', {
-          name: form.name.trim() || undefined,
+          name: form.name.trim(),
           username: form.username.trim(),
-          email: form.email.trim() || undefined,
+          email: form.email.trim().toLowerCase(),
           phone: form.phone.trim() || undefined,
           password: form.password,
           confirmPassword: form.confirmPassword,
@@ -310,9 +317,16 @@ export default function AdminTeam() {
         })
         setActionSuccess(t('staffCreatedSuccess'))
       } else {
+        if (!form.name.trim()) {
+          throw new Error(t('nameRequired'))
+        }
+        if (!form.email.trim()) {
+          throw new Error(t('emailRequired'))
+        }
+
         await api.put(`/admin-users/${modal.user.id}`, {
-          name: form.name.trim() || undefined,
-          email: form.email.trim() || undefined,
+          name: form.name.trim(),
+          email: form.email.trim().toLowerCase(),
           phone: form.phone.trim() || undefined,
           role: form.role,
           status: form.status,
@@ -410,19 +424,19 @@ export default function AdminTeam() {
       label: t('colStaffName'),
       render: (r) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 font-bold border border-brand-500/20 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] text-white font-bold text-sm shadow-sm">
             {(r.name || r.username || 'A').charAt(0).toUpperCase()}
           </div>
           <div>
-            <div className="font-semibold text-white flex items-center gap-2">
-              {r.name || r.username}
+            <div className="font-semibold text-xs text-[var(--ink)] flex items-center gap-2">
+              <span>{r.name || r.username}</span>
               {currentUser?.id === r.id && (
-                <span className="text-[10px] bg-brand-500/20 text-brand-300 border border-brand-500/30 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-bold bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--purple)]/30 px-2 py-0.5 rounded-full">
                   {t('currentSessionBadge')}
                 </span>
               )}
             </div>
-            <div className="text-xs text-[#8b80a8] flex items-center gap-2 mt-0.5">
+            <div className="text-[11px] text-[var(--ink-soft)] flex items-center gap-2 mt-0.5 font-mono" dir="ltr">
               <span>@{r.username}</span>
               {r.email && (
                 <span className="flex items-center gap-1">
@@ -449,14 +463,14 @@ export default function AdminTeam() {
             <span
               className={`inline-flex items-center gap-1.5 w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                 isSuper
-                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                  : 'bg-brand-500/15 text-brand-300 border border-brand-500/30'
+                  ? 'bg-[var(--orange-bg)] text-[var(--orange)] border border-[var(--orange)]/30'
+                  : 'bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--purple)]/30'
               }`}
             >
               {isSuper ? <ShieldAlert className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-              {isSuper ? t('roleSuperAdmin') : t('roleAdmin')}
+              {isSuper ? 'Super Admin' : 'Admin'}
             </span>
-            <span className="text-[11px] text-[#8b80a8]">
+            <span className="text-[11px] text-[var(--ink-soft)]">
               {isSuper
                 ? t('fullAccessBadge')
                 : `${(r.permissions || []).length} ${t('allPermsCount')}`}
@@ -469,25 +483,17 @@ export default function AdminTeam() {
       key: 'status',
       label: t('colStaffStatus'),
       render: (r) => {
-        const statusMap = {
-          ACTIVE: { label: t('statusActive'), cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
-          INACTIVE: { label: t('statusInactive'), cls: 'bg-neutral-500/15 text-neutral-300 border-neutral-500/30' },
-          SUSPENDED: { label: t('statusSuspended'), cls: 'bg-danger-500/15 text-danger-300 border-danger-500/30' },
-        }
-        const s = statusMap[r.status] || { label: r.status, cls: 'bg-neutral-500/15 text-neutral-300' }
-        return (
-          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border ${s.cls}`}>
-            {s.label}
-          </span>
-        )
+        const statusKind = r.status === 'ACTIVE' ? 'ok' : r.status === 'SUSPENDED' ? 'danger' : 'neutral'
+        const label = r.status === 'ACTIVE' ? t('statusActive') : r.status === 'SUSPENDED' ? t('statusSuspended') : t('statusInactive')
+        return <StatusBadge kind={statusKind} label={label} />
       },
     },
     {
       key: 'lastLogin',
       label: t('colStaffLastLogin'),
       render: (r) => (
-        <span className="text-xs text-[#a79cc4] flex items-center gap-1.5 tabular-nums">
-          <Clock className="h-3.5 w-3.5 text-[#8b80a8]" />
+        <span className="text-xs text-[var(--ink-soft)] flex items-center gap-1.5 tabular-nums font-mono">
+          <Clock className="h-3.5 w-3.5 text-[var(--ink-soft)]" />
           {formatDate(r.lastLoginAt, language)}
         </span>
       ),
@@ -505,30 +511,33 @@ export default function AdminTeam() {
           <div className="flex items-center justify-end gap-1">
             {canUpdate && (
               <button
+                type="button"
                 onClick={() => openEdit(r)}
                 title={t('editStaffBtn')}
-                className="rounded-lg p-2 text-[#a79cc4] hover:bg-surface-700 hover:text-white transition-colors"
+                className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)] transition-colors cursor-pointer"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3.5 w-3.5" />
               </button>
             )}
 
             {canUpdate && (
               <button
+                type="button"
                 onClick={() => {
                   setResetModal(r)
                   setResetPassword('')
                   setResetConfirmPassword('')
                 }}
                 title={t('resetPasswordTitle')}
-                className="rounded-lg p-2 text-[#a79cc4] hover:bg-brand-500/15 hover:text-brand-300 transition-colors"
+                className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--purple-bg)] hover:text-[var(--purple)] transition-colors cursor-pointer"
               >
-                <KeyRound className="h-4 w-4" />
+                <KeyRound className="h-3.5 w-3.5" />
               </button>
             )}
 
             {canDisable && !isSelf && (
               <button
+                type="button"
                 onClick={() =>
                   setStatusAction({
                     user: r,
@@ -536,33 +545,35 @@ export default function AdminTeam() {
                   })
                 }
                 title={r.status === 'ACTIVE' ? t('confirmDisableStaffTitle') : t('confirmEnableStaffTitle')}
-                className={`rounded-lg p-2 transition-colors ${
+                className={`rounded-[8px] p-1.5 transition-colors cursor-pointer ${
                   r.status === 'ACTIVE'
-                    ? 'text-[#a79cc4] hover:bg-warn-500/15 hover:text-warn-300'
-                    : 'text-emerald-400 hover:bg-emerald-500/15'
+                    ? 'text-[var(--ink-soft)] hover:bg-[var(--orange-bg)] hover:text-[var(--orange)]'
+                    : 'text-[var(--green)] hover:bg-[var(--green-bg)]'
                 }`}
               >
-                <Power className="h-4 w-4" />
+                <Power className="h-3.5 w-3.5" />
               </button>
             )}
 
             {canUpdate && (
               <button
+                type="button"
                 onClick={() => setRevokeAction(r)}
                 title={t('revokeSessionsTitle')}
-                className="rounded-lg p-2 text-[#a79cc4] hover:bg-surface-700 hover:text-amber-300 transition-colors"
+                className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--orange-bg)] hover:text-[var(--orange)] transition-colors cursor-pointer"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5" />
               </button>
             )}
 
             {canDelete && !isSelf && (
               <button
+                type="button"
                 onClick={() => setDeleteAction(r)}
                 title={t('deleteStaffTitle')}
-                className="rounded-lg p-2 text-[#a79cc4] hover:bg-danger-500/15 hover:text-danger-400 transition-colors"
+                className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--red-bg)] hover:text-[var(--red)] transition-colors cursor-pointer"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -588,41 +599,41 @@ export default function AdminTeam() {
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="flex items-center gap-4 p-4 border border-surface-700/60 bg-surface-800/40">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-sm">
+        <Card className="flex items-center gap-4 p-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--purple-bg)] text-[var(--purple)]">
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-white tabular-nums">{stats.total}</div>
-            <div className="text-xs text-[#8b80a8]">{t('totalStaffLabel')}</div>
+            <div className="text-2xl font-bold text-[var(--ink)] tabular-nums">{stats.total}</div>
+            <div className="text-xs text-[var(--ink-soft)]">{t('totalStaffLabel')}</div>
           </div>
         </Card>
 
-        <Card className="flex items-center gap-4 p-4 border border-emerald-500/20 bg-emerald-500/5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+        <Card className="flex items-center gap-4 p-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--green-bg)] text-[var(--green)]">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-emerald-300 tabular-nums">{stats.active}</div>
-            <div className="text-xs text-[#8b80a8]">{t('activeStaffLabel')}</div>
+            <div className="text-2xl font-bold text-[var(--green)] tabular-nums">{stats.active}</div>
+            <div className="text-xs text-[var(--ink-soft)]">{t('activeStaffLabel')}</div>
           </div>
         </Card>
 
-        <Card className="flex items-center gap-4 p-4 border border-neutral-700/60 bg-surface-800/40">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-500/10 text-neutral-400 border border-neutral-500/20 shadow-sm">
+        <Card className="flex items-center gap-4 p-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--bg)] text-[var(--ink-soft)] border border-[var(--line)]">
             <ShieldAlert className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-neutral-300 tabular-nums">{stats.inactive}</div>
-            <div className="text-xs text-[#8b80a8]">{t('inactiveStaffLabel')}</div>
+            <div className="text-2xl font-bold text-[var(--ink-soft)] tabular-nums">{stats.inactive}</div>
+            <div className="text-xs text-[var(--ink-soft)]">{t('inactiveStaffLabel')}</div>
           </div>
         </Card>
       </div>
 
       {actionSuccess && (
-        <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-sm text-emerald-300">
+        <div className="flex items-center justify-between rounded-[10px] border border-[var(--green)]/30 bg-[var(--green-bg)] p-3 text-xs font-semibold text-[var(--green)]">
           <span>✓ {actionSuccess}</span>
-          <button onClick={() => setActionSuccess('')} className="text-emerald-400 hover:text-white text-xs">
+          <button type="button" onClick={() => setActionSuccess('')} className="text-[var(--green)] hover:underline cursor-pointer">
             ✕
           </button>
         </div>
@@ -635,13 +646,13 @@ export default function AdminTeam() {
       <Card className="p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8b80a8]" />
+            <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ink-soft)]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('searchStaffPlaceholder')}
-              className="w-full rounded-xl border border-line bg-white dark:bg-surface-800/80 py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-[#8b80a8] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] py-2 ps-10 pe-4 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
             />
           </div>
 
@@ -649,7 +660,7 @@ export default function AdminTeam() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-line bg-white dark:bg-surface-800 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+              className="rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
             >
               <option value="ALL">{t('filterAllStatus')}</option>
               <option value="ACTIVE">{t('statusActive')}</option>
@@ -676,17 +687,17 @@ export default function AdminTeam() {
         open={Boolean(modal)}
         onClose={() => setModal(null)}
         title={modal?.mode === 'edit' ? t('editStaffBtn') : t('addStaffBtn')}
-        maxWidth="max-w-3xl"
+        width="max-w-3xl"
       >
-        <div className="space-y-6">
+        <div className="space-y-5">
           {formError ? <ErrorBanner message={formError} /> : null}
 
           {/* Section 1: Basic Info */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--purple)]">
               {t('staffSectionAccount')}
             </h4>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
                 label={`${t('staffNameLabel')} *`}
                 value={form.name}
@@ -695,22 +706,25 @@ export default function AdminTeam() {
                 required
               />
               <Input
-                label={`${t('staffEmailLabel')} *`}
+                label={`${t('staffUsernameLabel')} *`}
                 value={form.username}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    username: e.target.value,
-                    email: e.target.value.includes('@') ? e.target.value : f.email,
-                  }))
-                }
-                placeholder={t('staffEmailPlaceholder')}
+                onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                placeholder={t('staffUsernamePlaceholder')}
                 disabled={modal?.mode === 'edit'}
                 required
                 dir="ltr"
               />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Input
+                label={`${t('staffEmailLabel')} *`}
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder={t('staffEmailPlaceholder')}
+                required
+                dir="ltr"
+              />
               <Input
                 label={t('staffPhoneLabel')}
                 value={form.phone}
@@ -718,30 +732,27 @@ export default function AdminTeam() {
                 placeholder={t('staffPhonePlaceholder')}
                 dir="ltr"
               />
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#d9d1e9]">
-                  {t('staffStatusLabel')}
-                </label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-                  className="w-full rounded-xl border border-line bg-white dark:bg-surface-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
-                >
-                  <option value="ACTIVE">{t('statusActive')}</option>
-                  <option value="INACTIVE">{t('statusInactive')}</option>
-                  <option value="SUSPENDED">{t('statusSuspended')}</option>
-                </select>
-              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Select
+                label={t('staffStatusLabel')}
+                value={form.status}
+                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+              >
+                <option value="ACTIVE">{t('statusActive')}</option>
+                <option value="INACTIVE">{t('statusInactive')}</option>
+                <option value="SUSPENDED">{t('statusSuspended')}</option>
+              </Select>
             </div>
           </div>
 
           {/* Section 2: Password (Create Mode Only) */}
           {modal?.mode === 'create' && (
-            <div className="space-y-4 rounded-xl border border-surface-700/60 bg-surface-800/30 p-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+            <div className="space-y-3 rounded-[12px] border border-[var(--line)] bg-[var(--bg)] p-3.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--purple)]">
                 {t('staffSectionSecurity')}
               </h4>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input
                   label={`${t('passwordField')} *`}
                   type="password"
@@ -763,65 +774,62 @@ export default function AdminTeam() {
           )}
 
           {/* Section 3: Role & Granular Permissions */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--purple)]">
               {t('staffSectionRole')}
             </h4>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#d9d1e9]">
-                {t('staffRoleLabel')}
-              </label>
-              <select
+              <Select
+                label={t('staffRoleLabel')}
                 value={form.role}
                 onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                className="w-full rounded-xl border border-line bg-white dark:bg-surface-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
               >
-                <option value="ADMIN">{t('staffRoleAdmin')}</option>
-                <option value="SUPER_ADMIN">{t('staffRoleSuperAdmin')}</option>
-              </select>
+                <option value="ADMIN">Admin</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
+              </Select>
             </div>
 
             {form.role === 'SUPER_ADMIN' ? (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300 flex items-center gap-3">
-                <ShieldAlert className="h-5 w-5 flex-shrink-0" />
+              <div className="rounded-[10px] border border-[var(--orange)]/30 bg-[var(--orange-bg)] p-3.5 text-xs text-[var(--orange)] flex items-center gap-2.5 font-medium">
+                <ShieldAlert className="h-5 w-5 shrink-0" />
                 <span>
                   Super Admin has unrestricted full access to all store modules, settings, finance, and staff management without limitation.
                 </span>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Presets */}
                 <div>
-                  <div className="mb-2 text-xs font-medium text-[#8b80a8]">
+                  <div className="mb-2 text-xs font-bold text-[var(--ink-soft)]">
                     {t('rolePresetLabel')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => applyPreset('ORDER_MANAGER')}
-                      className="rounded-lg border border-surface-700 bg-surface-800 px-3 py-1.5 text-xs text-white hover:border-brand-500 hover:bg-brand-500/10 transition-colors"
+                      className="rounded-[8px] border border-[var(--line)] bg-[var(--card)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] hover:border-[var(--purple)] hover:bg-[var(--purple-bg)] transition-colors cursor-pointer"
                     >
-                      📦 {t('presetOrderManager')}
+                      📦 Order Manager
                     </button>
                     <button
                       type="button"
                       onClick={() => applyPreset('CATALOG_MANAGER')}
-                      className="rounded-lg border border-surface-700 bg-surface-800 px-3 py-1.5 text-xs text-white hover:border-brand-500 hover:bg-brand-500/10 transition-colors"
+                      className="rounded-[8px] border border-[var(--line)] bg-[var(--card)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] hover:border-[var(--purple)] hover:bg-[var(--purple-bg)] transition-colors cursor-pointer"
                     >
-                      📚 {t('presetCatalogManager')}
+                      📚 Catalog Manager
                     </button>
                     <button
                       type="button"
                       onClick={() => applyPreset('SUPPORT_STAFF')}
-                      className="rounded-lg border border-surface-700 bg-surface-800 px-3 py-1.5 text-xs text-white hover:border-brand-500 hover:bg-brand-500/10 transition-colors"
+                      className="rounded-[8px] border border-[var(--line)] bg-[var(--card)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] hover:border-[var(--purple)] hover:bg-[var(--purple-bg)] transition-colors cursor-pointer"
                     >
-                      💬 {t('presetSupportStaff')}
+                      💬 Support Staff
                     </button>
                     <button
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, permissions: [] }))}
-                      className="rounded-lg border border-surface-700 bg-surface-800 px-3 py-1.5 text-xs text-[#8b80a8] hover:text-white hover:border-surface-600 transition-colors"
+                      className="rounded-[8px] border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-xs text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors cursor-pointer"
                     >
                       ✕ {t('deselectAllGroup')}
                     </button>
@@ -829,33 +837,28 @@ export default function AdminTeam() {
                 </div>
 
                 {/* Granular Matrix */}
-                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-80 overflow-y-auto pe-1">
                   {PERMISSION_GROUPS.map((grp) => {
                     const allSelected = grp.permissions.every((p) =>
-                      form.permissions.includes(p)
-                    )
-                    const someSelected = grp.permissions.some((p) =>
                       form.permissions.includes(p)
                     )
 
                     return (
                       <div
                         key={grp.key}
-                        className="rounded-xl border border-surface-700/60 bg-surface-800/40 p-3.5 transition-colors"
+                        className="rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-3 transition-colors"
                       >
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-surface-700/40">
-                          <span className="text-xs font-semibold text-white">
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--line)]">
+                          <span className="text-xs font-bold text-[var(--ink)]">
                             {t(grp.labelKey)}
                           </span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => toggleGroup(grp.permissions, !allSelected)}
-                              className="text-[11px] text-brand-400 hover:text-brand-300 font-medium"
-                            >
-                              {allSelected ? t('deselectAllGroup') : t('selectAllGroup')}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleGroup(grp.permissions, !allSelected)}
+                            className="text-[11px] text-[var(--purple)] hover:underline font-semibold cursor-pointer"
+                          >
+                            {allSelected ? t('deselectAllGroup') : t('selectAllGroup')}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -865,17 +868,17 @@ export default function AdminTeam() {
                             return (
                               <label
                                 key={perm}
-                                className={`flex items-center gap-2.5 rounded-lg p-2 text-xs cursor-pointer transition-colors ${
+                                className={`flex items-center gap-2 rounded-[8px] p-2 text-xs font-medium cursor-pointer transition-colors ${
                                   checked
-                                    ? 'bg-brand-500/10 text-white border border-brand-500/20'
-                                    : 'text-[#8b80a8] hover:bg-surface-700/50 hover:text-white border border-transparent'
+                                    ? 'bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--purple)]/20'
+                                    : 'text-[var(--ink-soft)] hover:bg-[var(--card)] hover:text-[var(--ink)] border border-transparent'
                                 }`}
                               >
                                 <input
                                   type="checkbox"
                                   checked={checked}
                                   onChange={() => togglePermission(perm)}
-                                  className="h-4 w-4 rounded border-surface-700 bg-surface-800 text-brand-500 focus:ring-0 focus:ring-offset-0"
+                                  className="h-4 w-4 rounded-[4px] border-[var(--line)] text-[var(--purple)] accent-[var(--purple)]"
                                 />
                                 <span className="select-none">{t(permKey) || perm}</span>
                               </label>
@@ -891,21 +894,18 @@ export default function AdminTeam() {
           </div>
 
           {/* Section 4: Internal Notes */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-[#d9d1e9]">
-              {t('staffNotesLabel')}
-            </label>
-            <textarea
+          <div>
+            <Textarea
+              label={t('staffNotesLabel')}
               rows={2}
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               placeholder={t('staffNotesPlaceholder')}
-              className="w-full rounded-xl border border-surface-700 bg-surface-800 p-3 text-sm text-white placeholder-[#8b80a8] focus:border-brand-500 focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-3 border-t border-surface-700/60 pt-4">
+        <div className="mt-5 flex justify-end gap-2 border-t border-[var(--line)] pt-4">
           <Button variant="secondary" onClick={() => setModal(null)}>
             {t('cancel')}
           </Button>
@@ -920,10 +920,10 @@ export default function AdminTeam() {
         open={Boolean(resetModal)}
         onClose={() => setResetModal(null)}
         title={t('resetPasswordTitle')}
-        maxWidth="max-w-md"
+        width="max-w-md"
       >
         <div className="space-y-4">
-          <p className="text-xs text-[#8b80a8]">
+          <p className="text-xs text-[var(--ink-soft)]">
             {t('resetPasswordDesc')} (<strong>{resetModal?.name || resetModal?.username}</strong>)
           </p>
 
@@ -945,18 +945,18 @@ export default function AdminTeam() {
             required
           />
 
-          <label className="flex items-center gap-2.5 text-xs text-[#d9d1e9] cursor-pointer pt-1">
+          <label className="flex items-center gap-2 text-xs font-semibold text-[var(--ink)] cursor-pointer pt-1">
             <input
               type="checkbox"
               checked={resetRevokeSessions}
               onChange={(e) => setResetRevokeSessions(e.target.checked)}
-              className="h-4 w-4 rounded border-surface-700 bg-surface-800 text-brand-500"
+              className="h-4 w-4 rounded-[4px] border-[var(--line)] text-[var(--purple)] accent-[var(--purple)]"
             />
             <span>{t('revokeSessionsCheckbox')}</span>
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-5 flex justify-end gap-2 border-t border-[var(--line)] pt-3">
           <Button variant="secondary" onClick={() => setResetModal(null)}>
             {t('cancel')}
           </Button>
@@ -972,12 +972,12 @@ export default function AdminTeam() {
         onClose={() => setStatusAction(null)}
         title={statusAction?.nextStatus === 'ACTIVE' ? t('confirmEnableStaffTitle') : t('confirmDisableStaffTitle')}
       >
-        <p className="text-sm text-[#d9d1e9]">
+        <p className="text-xs text-[var(--ink-soft)]">
           {statusAction?.nextStatus === 'ACTIVE'
             ? t('confirmEnableStaffMsg')
             : t('confirmDisableStaffMsg')}
         </p>
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex justify-end gap-2 border-t border-[var(--line)] pt-3">
           <Button variant="secondary" onClick={() => setStatusAction(null)}>
             {t('cancel')}
           </Button>
@@ -997,10 +997,10 @@ export default function AdminTeam() {
         onClose={() => setRevokeAction(null)}
         title={t('revokeSessionsTitle')}
       >
-        <p className="text-sm text-[#d9d1e9]">
+        <p className="text-xs text-[var(--ink-soft)]">
           {t('revokeSessionsConfirmMsg')}
         </p>
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex justify-end gap-2 border-t border-[var(--line)] pt-3">
           <Button variant="secondary" onClick={() => setRevokeAction(null)}>
             {t('cancel')}
           </Button>
@@ -1016,10 +1016,10 @@ export default function AdminTeam() {
         onClose={() => setDeleteAction(null)}
         title={t('deleteStaffTitle')}
       >
-        <p className="text-sm text-[#d9d1e9]">
+        <p className="text-xs text-[var(--ink-soft)]">
           {t('deleteStaffConfirmMsg')} (<strong>{deleteAction?.name || deleteAction?.username}</strong>)
         </p>
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex justify-end gap-2 border-t border-[var(--line)] pt-3">
           <Button variant="secondary" onClick={() => setDeleteAction(null)}>
             {t('cancel')}
           </Button>

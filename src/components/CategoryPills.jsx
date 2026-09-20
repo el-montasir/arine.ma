@@ -35,10 +35,10 @@ export default function CategoryPills({ onSelect, includeAll = false }) {
             onClick={() => handleSelect('all')}
             style={
               active === 'all'
-                ? { backgroundColor: DEFAULT_COLOR, color: '#ffffff', borderColor: DEFAULT_COLOR }
+                ? { backgroundColor: DEFAULT_COLOR, borderColor: DEFAULT_COLOR, color: '#ffffff' }
                 : { color: DEFAULT_COLOR, borderColor: DEFAULT_COLOR, backgroundColor: 'transparent' }
             }
-            className={`flex-shrink-0 px-4.5 py-2 text-[0.84rem] font-medium rounded-full border transition-all duration-300 hover:opacity-90 ${
+            className={`flex-shrink-0 px-4 py-1.5 text-[0.84rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
               active === 'all' ? 'shadow-sm' : ''
             }`}
           >
@@ -46,7 +46,6 @@ export default function CategoryPills({ onSelect, includeAll = false }) {
           </button>
         )}
         {categories.map((cat) => {
-          const color = cat.color || DEFAULT_COLOR
           const isSelected = active === cat.slug
           return (
             <button
@@ -54,10 +53,10 @@ export default function CategoryPills({ onSelect, includeAll = false }) {
               onClick={() => handleSelect(cat.slug)}
               style={
                 isSelected
-                  ? { backgroundColor: color, color: '#ffffff', borderColor: color }
-                  : { color: color, borderColor: color, backgroundColor: 'transparent' }
+                  ? { backgroundColor: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', color: '#ffffff' }
+                  : { color: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', backgroundColor: 'transparent' }
               }
-              className={`flex-shrink-0 px-4.5 py-2 text-[0.84rem] font-medium rounded-full border transition-all duration-300 hover:opacity-90 ${
+              className={`flex-shrink-0 px-4 py-1.5 text-[0.84rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
                 isSelected ? 'shadow-sm' : ''
               }`}
             >

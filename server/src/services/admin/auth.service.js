@@ -29,8 +29,8 @@ export async function authenticate(identifier, password) {
   const admin = await prisma.admin.findFirst({
     where: {
       OR: [
-        { username: trimmed },
-        { email: normalizedEmail },
+        { username: { equals: trimmed, mode: 'insensitive' } },
+        { email: { equals: normalizedEmail, mode: 'insensitive' } },
       ],
     },
   })
@@ -95,29 +95,115 @@ export async function getAdminPasswordHash(adminId) {
 
 export async function getAdminActiveSessionsCount(adminId) {
   try {
-    const id = parseInt(adminId, 10)
+    const id = String(adminId)
     const count = await prisma.$queryRawUnsafe(
-      `SELECT COUNT(*)::int as count FROM session WHERE (sess->>'adminId')::int = $1`,
+      `SELECT COUNT(*)::int as count FROM session WHERE (sess->>'adminId') = $1`,
       id
     )
     return count[0]?.count || 1
-  } catch {
+  } catch (err) {
+    console.error('[GET_ADMIN_SESSIONS_COUNT_ERROR]', err.message)
     return 1
+  }
+}
+
+function parseUserAgentInfo(userAgent = '') {
+  let browser = 'Web Browser'
+  let os = 'Desktop'
+
+  if (!userAgent) return { browser, os }
+
+  if (/edg/i.test(userAgent)) browser = 'Microsoft Edge'
+  else if (/chrome|crios/i.test(userAgent) && !/opr|opera/i.test(userAgent)) browser = 'Google Chrome'
+  else if (/firefox|fxios/i.test(userAgent)) browser = 'Mozilla Firefox'
+  else if (/safari/i.test(userAgent) && !/chrome|crios/i.test(userAgent)) browser = 'Apple Safari'
+  else if (/opr|opera/i.test(userAgent)) browser = 'Opera'
+
+  if (/windows nt/i.test(userAgent)) os = 'Windows'
+  else if (/macintosh|mac os x/i.test(userAgent)) os = 'macOS'
+  else if (/android/i.test(userAgent)) os = 'Android'
+  else if (/iphone|ipad|ipod/i.test(userAgent)) os = 'iOS'
+  else if (/linux/i.test(userAgent)) os = 'Linux'
+
+  return { browser, os }
+}
+
+export async function getAdminSessionsList(adminId, currentSessionId = null, currentReq = null) {
+  try {
+    const id = String(adminId)
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT sid, sess, expire FROM session WHERE (sess->>'adminId') = $1 ORDER BY expire DESC`,
+      id
+    )
+
+    if (!rows || rows.length === 0) {
+      const ua = parseUserAgentInfo(currentReq?.headers?.['user-agent'])
+      return [
+        {
+          sid: currentSessionId || 'current',
+          isCurrent: true,
+          browser: ua.browser,
+          os: ua.os,
+          ipAddress: currentReq?.ip || currentReq?.headers?.['x-forwarded-for'] || '127.0.0.1',
+          lastActiveAt: new Date(),
+        },
+      ]
+    }
+
+    return rows.map((r) => {
+      const isCurrent = Boolean(currentSessionId && r.sid === currentSessionId)
+      let sessData = {}
+      try {
+        sessData = typeof r.sess === 'string' ? JSON.parse(r.sess) : (r.sess || {})
+      } catch {
+        sessData = {}
+      }
+
+      const ua = isCurrent && currentReq
+        ? parseUserAgentInfo(currentReq.headers?.['user-agent'])
+        : { browser: 'Web Browser', os: 'Desktop' }
+
+      const ipAddress = isCurrent && currentReq
+        ? (currentReq.ip || currentReq.headers?.['x-forwarded-for'] || '127.0.0.1')
+        : '—'
+
+      return {
+        sid: r.sid,
+        isCurrent,
+        browser: ua.browser,
+        os: ua.os,
+        ipAddress,
+        lastActiveAt: sessData.cookie?.expires ? new Date(sessData.cookie.expires) : r.expire,
+      }
+    })
+  } catch (err) {
+    console.error('[GET_ADMIN_SESSIONS_ERROR]', err.message)
+    const ua = parseUserAgentInfo(currentReq?.headers?.['user-agent'])
+    return [
+      {
+        sid: currentSessionId || 'current',
+        isCurrent: true,
+        browser: ua.browser,
+        os: ua.os,
+        ipAddress: currentReq?.ip || '127.0.0.1',
+        lastActiveAt: new Date(),
+      },
+    ]
   }
 }
 
 export async function revokeOtherSessions(adminId, currentSessionId) {
   try {
-    const id = parseInt(adminId, 10)
+    const id = String(adminId)
     if (currentSessionId) {
       await prisma.$executeRawUnsafe(
-        `DELETE FROM session WHERE (sess->>'adminId')::int = $1 AND sid != $2`,
+        `DELETE FROM session WHERE (sess->>'adminId') = $1 AND sid != $2`,
         id,
         currentSessionId
       )
     } else {
       await prisma.$executeRawUnsafe(
-        `DELETE FROM session WHERE (sess->>'adminId')::int = $1`,
+        `DELETE FROM session WHERE (sess->>'adminId') = $1`,
         id
       )
     }

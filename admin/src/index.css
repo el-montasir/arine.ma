@@ -1,82 +1,147 @@
 @import "tailwindcss";
 
-/* Arine Admin — Clean, Minimalist, High-Legibility Light Theme Dashboard. RTL & LTR. */
-
-@theme {
-  --font-arabic: "IBM Plex Sans Arabic", "Cairo", "Noto Sans Arabic", -apple-system, sans-serif;
-  --font-latin: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-sans: var(--font-arabic);
-
-  --color-ink-950: var(--ink-950, #f8fafc);
-  --color-ink-900: var(--ink-900, #ffffff);
-  --color-ink-850: var(--ink-850, #f1f5f9);
-  --color-ink-800: var(--ink-800, #e2e8f0);
-
-  --color-surface-900: var(--surface-900, #ffffff);
-  --color-surface-800: var(--surface-800, #f8fafc);
-  --color-surface-700: var(--surface-700, #f1f5f9);
-
-  --color-line: var(--line, #e2e8f0);
-  --color-line-soft: var(--line-soft, #f1f5f9);
-
-  --color-text-main: var(--text-main, #0f172a);
-  --color-text-muted: var(--text-muted, #64748b);
-  --color-text-subtle: var(--text-subtle, #94a3b8);
-
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
-
-  --color-ok-400: #34d399;
-  --color-ok-500: #10b981;
-  --color-ok-600: #059669;
-  --color-warn-400: #fbbf24;
-  --color-danger-400: #f87171;
-  --color-info-400: #38bdf8;
-}
+/* Arine Admin — Reference Design System (SaaS geometric cards, purple brand accent, full light/dark & RTL/LTR support) */
 
 :root,
 [data-theme="light"],
 .light-theme {
-  --ink-950: #f8fafc;
-  --ink-900: #ffffff;
+  --purple: #7c3aed;
+  --purple-dark: #5b21b6;
+  --purple-bg: #f3ebfe;
+  --green: #12b76a;
+  --green-bg: #e6f9ef;
+  --orange: #f79009;
+  --orange-bg: #fff4e5;
+  --blue: #3b82f6;
+  --blue-bg: #eaf1ff;
+  --red: #f04438;
+  --red-bg: #feeceb;
+  --ink: #101323;
+  --ink-soft: #6b7280;
+  --line: #eef0f4;
+  --bg: #f5f6fa;
+  --card: #ffffff;
+  --shadow: 0 1px 2px rgba(16, 19, 35, 0.04), 0 8px 20px -8px rgba(16, 19, 35, 0.08);
+
+  /* Compatibility bindings */
+  --ink-950: var(--bg);
+  --ink-900: var(--card);
   --ink-850: #f1f5f9;
-  --ink-800: #e2e8f0;
-  --surface-900: #ffffff;
+  --ink-800: var(--line);
+  --surface-900: var(--card);
   --surface-800: #f8fafc;
   --surface-700: #f1f5f9;
-  --line: #e2e8f0;
-  --line-soft: #f1f5f9;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  --text-main: var(--ink);
+  --text-muted: var(--ink-soft);
+  --text-subtle: #9ca3af;
+  --line-soft: #f3f4f6;
+
   color-scheme: light;
 }
 
 [data-theme="dark"],
 .dark-theme {
-  --ink-950: #0a0d14;
-  --ink-900: #0f131d;
-  --ink-850: #141a27;
-  --ink-800: #1a2233;
-  --surface-900: #141a29;
-  --surface-800: #1b2337;
-  --surface-700: #242f49;
-  --line: #232d44;
+  --purple: #7c3aed;
+  --purple-dark: #5b21b6;
+  --purple-bg: #2a1f4a;
+  --green: #12b76a;
+  --green-bg: #0f2a22;
+  --orange: #f79009;
+  --orange-bg: #332212;
+  --blue: #3b82f6;
+  --blue-bg: #132039;
+  --red: #f04438;
+  --red-bg: #331a1a;
+  --ink: #eef0f6;
+  --ink-soft: #9a9fb5;
+  --line: #262a3f;
+  --bg: #12131e;
+  --card: #1a1c2c;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -8px rgba(0, 0, 0, 0.4);
+
+  /* Compatibility bindings */
+  --ink-950: var(--bg);
+  --ink-900: var(--card);
+  --ink-850: #161826;
+  --ink-800: var(--line);
+  --surface-900: var(--card);
+  --surface-800: #202336;
+  --surface-700: #282c44;
+  --text-main: var(--ink);
+  --text-muted: var(--ink-soft);
+  --text-subtle: #71768f;
   --line-soft: rgba(255, 255, 255, 0.08);
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --text-subtle: #64748b;
+
   color-scheme: dark;
+}
+
+@theme {
+  --font-arabic: "IBM Plex Sans Arabic", "Cairo", "Noto Sans Arabic", -apple-system, sans-serif;
+  --font-latin: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-latin);
+
+  --color-purple: var(--purple);
+  --color-purple-dark: var(--purple-dark);
+  --color-purple-bg: var(--purple-bg);
+  --color-green: var(--green);
+  --color-green-bg: var(--green-bg);
+  --color-orange: var(--orange);
+  --color-orange-bg: var(--orange-bg);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-red: var(--red);
+  --color-red-bg: var(--red-bg);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+
+  --color-brand-50: var(--purple-bg);
+  --color-brand-100: #ede4fe;
+  --color-brand-200: #ddd0fd;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: var(--purple);
+  --color-brand-700: var(--purple-dark);
+
+  --color-ok-400: #34d399;
+  --color-ok-500: var(--green);
+  --color-warn-400: #fbbf24;
+  --color-warn-500: var(--orange);
+  --color-danger-400: #f87171;
+  --color-danger-500: var(--red);
+  --color-info-400: #60a5fa;
+  --color-info-500: var(--blue);
+
+  --color-surface-900: var(--card);
+  --color-surface-800: var(--surface-800);
+  --color-surface-700: var(--surface-700);
+  --color-text-main: var(--ink);
+  --color-text-muted: var(--ink-soft);
+  --color-text-subtle: var(--text-subtle);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-latin);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 html[lang="ar"],
@@ -87,33 +152,17 @@ html[lang="ar"],
 html[lang="fr"],
 html[lang="en"],
 .font-latin {
-  font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-body {
-  background-color: var(--ink-950);
-  color: var(--text-main);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Background mesh / ambient background */
+/* Background class */
 .app-bg {
-  background-color: var(--ink-950);
-}
-
-.dark-theme .app-bg,
-[data-theme="dark"] .app-bg {
-  background-image:
-    radial-gradient(50rem 35rem at 85% -10%, rgba(37, 99, 235, 0.12), transparent 60%),
-    radial-gradient(40rem 30rem at 5% 105%, rgba(16, 185, 129, 0.08), transparent 60%);
+  background-color: var(--bg);
 }
 
 /* Scrollbars */
@@ -130,117 +179,164 @@ body {
 }
 
 /* Form inputs & interactive accessibility */
-input, select, textarea {
-  color: var(--text-main);
+input,
+select,
+textarea {
+  color: var(--ink);
 }
 
-.light-theme input,
-.light-theme select,
-.light-theme textarea,
-:root input,
-:root select,
-:root textarea {
-  background-color: #ffffff;
-  color: #0f172a;
+/* Reference Card & Panel Classes */
+.card-ref {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
 }
 
-/* Status pills — Pastel, Minimalist, High-Legibility */
+/* Status Badges & Pills */
+.badge,
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.2rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.25;
-  border: 1px solid transparent;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
   white-space: nowrap;
-  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
-.status-pill .dot {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 9999px;
-  background-color: currentColor;
-  flex-shrink: 0;
-}
-
-/* Delivered / Success / Ok (Emerald / Green) */
-.status-ok {
-  color: #047857;
-  background-color: #ecfdf5;
-  border-color: #a7f3d0;
-}
-.dark-theme .status-ok,
-[data-theme="dark"] .status-ok {
-  color: #34d399;
-  background-color: rgba(52, 211, 153, 0.12);
-  border-color: rgba(52, 211, 153, 0.28);
-}
-
-/* Pending / Warning (Amber / Orange) */
+.badge.pending,
 .status-warn {
-  color: #b45309;
-  background-color: #fffbeb;
-  border-color: #fde68a;
-}
-.dark-theme .status-warn,
-[data-theme="dark"] .status-warn {
-  color: #fbbf24;
-  background-color: rgba(251, 191, 36, 0.12);
-  border-color: rgba(251, 191, 36, 0.28);
+  background: var(--orange-bg);
+  color: var(--orange);
 }
 
-/* Cancelled / Danger (Red / Rose) */
-.status-danger {
-  color: #b91c1c;
-  background-color: #fef2f2;
-  border-color: #fecaca;
-}
-.dark-theme .status-danger,
-[data-theme="dark"] .status-danger {
-  color: #f87171;
-  background-color: rgba(248, 113, 113, 0.12);
-  border-color: rgba(248, 113, 113, 0.28);
+.badge.delivered,
+.status-ok {
+  background: var(--green-bg);
+  color: var(--green);
 }
 
-/* Shipping / Info (Sky / Blue) */
-.status-info {
-  color: #0369a1;
-  background-color: #f0f9ff;
-  border-color: #bae6fd;
-}
-.dark-theme .status-info,
-[data-theme="dark"] .status-info {
-  color: #38bdf8;
-  background-color: rgba(56, 189, 248, 0.12);
-  border-color: rgba(56, 189, 248, 0.28);
-}
-
-/* Confirmed / Brand (Indigo / Blue) */
+.badge.confirmed,
 .status-brand {
-  color: #4338ca;
-  background-color: #eef2ff;
-  border-color: #c7d2fe;
-}
-.dark-theme .status-brand,
-[data-theme="dark"] .status-brand {
-  color: #60a5fa;
-  background-color: rgba(96, 165, 250, 0.14);
-  border-color: rgba(96, 165, 250, 0.32);
+  background: var(--blue-bg);
+  color: var(--blue);
 }
 
-/* Neutral */
-.status-neutral {
-  color: #475569;
-  background-color: #f8fafc;
-  border-color: #e2e8f0;
+.badge.shipping,
+.status-info {
+  background: var(--purple-bg);
+  color: var(--purple);
 }
-.dark-theme .status-neutral,
-[data-theme="dark"] .status-neutral {
-  color: #94a3b8;
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+
+.badge.cancelled,
+.status-danger {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.badge.neutral,
+.status-neutral {
+  background: var(--line);
+  color: var(--ink-soft);
+}
+
+/* Reference Button System */
+.btn-ref {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.btn-ref-primary {
+  background: var(--purple);
+  color: #ffffff;
+}
+.btn-ref-primary:hover {
+  background: var(--purple-dark);
+}
+
+.btn-ref-light {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+.btn-ref-light:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-ref-white {
+  background: #ffffff;
+  color: var(--purple-dark);
+}
+.btn-ref-white:hover {
+  background: #f8fafc;
+}
+
+.btn-ref-secondary {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.btn-ref-secondary:hover {
+  background: var(--bg);
+}
+
+/* Icon button */
+.icon-btn-ref {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  cursor: pointer;
+  position: relative;
+  flex: none;
+  transition: all 0.15s ease;
+}
+.icon-btn-ref:hover {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+/* Reference Tables */
+table.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table.orders-table th {
+  text-align: start;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+table.orders-table td {
+  padding: 11px 12px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--line);
+}
+table.orders-table tr:last-child td {
+  border-bottom: none;
+}
+table.orders-table tr {
+  transition: background 0.15s ease;
+}
+table.orders-table tr:hover {
+  background: var(--bg);
 }

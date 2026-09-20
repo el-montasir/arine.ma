@@ -7,6 +7,7 @@ import {
   updateAdminProfile,
   getAdminPasswordHash,
   getAdminActiveSessionsCount,
+  getAdminSessionsList,
   revokeOtherSessions,
 } from '../../services/admin/auth.service.js'
 import { verifyPassword } from '../../utils/password.js'
@@ -55,10 +56,24 @@ export const login = asyncHandler(async (req, res) => {
     return errorResponse(res, 403, 'ACCOUNT_DISABLED', 'الحساب معطّل أو موقوف، يرجى مراجعة إدارة المتجر')
   }
 
-  // Regenerate the session id on login to prevent session fixation.
-  req.session.regenerate(async (err) => {
-    if (err) return errorResponse(res, 500, 'INTERNAL_ERROR', 'حدث خطأ غير متوقع')
+  // Regenerate session ID on login to prevent session fixation,
+  // then explicitly persist the new session to the store before responding.
+  try {
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((err) => {
+        if (err) return reject(err)
+        resolve()
+      })
+    })
+
     req.session.adminId = result.admin.id
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) return reject(err)
+        resolve()
+      })
+    })
 
     await logActivity({
       actor: result.admin,
@@ -68,8 +83,11 @@ export const login = asyncHandler(async (req, res) => {
       req,
     })
 
-    res.json({ success: true, admin: serializeAdmin(result.admin) })
-  })
+    return res.json({ success: true, admin: serializeAdmin(result.admin) })
+  } catch (err) {
+    console.error('[AUTH_LOGIN_SESSION_ERROR] Failed to regenerate/save admin session:', err)
+    return errorResponse(res, 500, 'INTERNAL_ERROR', 'حدث خطأ غير متوقع أثناء إنشاء الجلسة')
+  }
 })
 
 export const me = asyncHandler(async (req, res) => {
@@ -86,7 +104,14 @@ export const logout = asyncHandler(async (req, res) => {
       req,
     })
   }
-  req.session.destroy(() => res.json({ success: true }))
+  try {
+    await new Promise((resolve) => req.session.destroy(() => resolve()))
+    res.clearCookie('arine.admin.sid')
+    return res.json({ success: true })
+  } catch (err) {
+    console.error('[AUTH_LOGOUT_ERROR]', err)
+    return res.json({ success: true })
+  }
 })
 
 export const changePassword = asyncHandler(async (req, res) => {
@@ -120,10 +145,11 @@ export const changePassword = asyncHandler(async (req, res) => {
 })
 
 export const getSessionsInfo = asyncHandler(async (req, res) => {
-  const count = await getAdminActiveSessionsCount(req.admin.id)
+  const sessions = await getAdminSessionsList(req.admin.id, req.sessionID, req)
   res.json({
     success: true,
-    sessionsCount: count,
+    sessionsCount: sessions.length,
+    sessions,
     currentSession: {
       id: req.sessionID,
       ip: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',

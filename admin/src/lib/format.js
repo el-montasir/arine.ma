@@ -48,49 +48,73 @@ export function formatBookCount(count, lang = 'ar') {
   return `${n} كتاباً`
 }
 
-export function getOrderStatus(status, t) {
+export function getOrderStatus(status, t, lang = 'ar') {
   const map = {
-    PENDING: { label: t ? t('statusPending') : 'قيد الانتظار', color: 'status-warn' },
-    CONFIRMED: { label: t ? t('statusConfirmed') : 'مؤكد', color: 'status-brand' },
-    SHIPPING: { label: t ? t('statusShipping') : 'قيد الشحن', color: 'status-info' },
-    DELIVERED: { label: t ? t('statusDelivered') : 'تم التسليم', color: 'status-ok' },
-    CANCELLED: { label: t ? t('statusCancelled') : 'ملغي', color: 'status-danger' },
+    PENDING: {
+      label: t ? t('statusPending') : (lang === 'en' ? 'Pending' : (lang === 'fr' ? 'En attente' : 'قيد الانتظار')),
+      color: 'status-warn',
+    },
+    CONFIRMED: {
+      label: t ? t('statusConfirmed') : (lang === 'en' ? 'Confirmed' : (lang === 'fr' ? 'Confirmée' : 'مؤكد')),
+      color: 'status-brand',
+    },
+    SHIPPING: {
+      label: t ? t('statusShipping') : (lang === 'en' ? 'Shipping' : (lang === 'fr' ? 'En cours' : 'قيد الشحن')),
+      color: 'status-info',
+    },
+    DELIVERED: {
+      label: t ? t('statusDelivered') : (lang === 'en' ? 'Delivered' : (lang === 'fr' ? 'Livrée' : 'تم التسليم')),
+      color: 'status-ok',
+    },
+    CANCELLED: {
+      label: t ? t('statusCancelled') : (lang === 'en' ? 'Cancelled' : (lang === 'fr' ? 'Annulée' : 'ملغي')),
+      color: 'status-danger',
+    },
   }
   return map[status] || { label: status, color: 'status-neutral' }
 }
 
-export function getAvailability(status, t) {
+export function getAvailability(status, t, lang = 'ar') {
   const map = {
-    'in-stock': { label: t ? t('inStock') : 'متوفر', color: 'status-ok' },
-    'out-of-stock': { label: t ? t('outOfStock') : 'غير متوفر', color: 'status-danger' },
-    'pre-order': { label: t ? t('preOrder') : 'طلب مسبق', color: 'status-info' },
+    'in-stock': {
+      label: t ? t('inStock') : (lang === 'en' ? 'In stock' : (lang === 'fr' ? 'En stock' : 'متوفر')),
+      color: 'status-ok',
+    },
+    'out-of-stock': {
+      label: t ? t('outOfStock') : (lang === 'en' ? 'Out of stock' : (lang === 'fr' ? 'Rupture' : 'غير متوفر')),
+      color: 'status-danger',
+    },
+    'pre-order': {
+      label: t ? t('preOrder') : (lang === 'en' ? 'Pre-order' : (lang === 'fr' ? 'Précommande' : 'طلب مسبق')),
+      color: 'status-info',
+    },
   }
   return map[status] || { label: status, color: 'status-neutral' }
 }
 
-export function getPaymentLabel(method, t) {
+export function getPaymentLabel(method, t, lang = 'ar') {
   const map = {
-    CASH_ON_DELIVERY: t ? t('cashOnDelivery') : 'الدفع عند الاستلام',
+    CASH_ON_DELIVERY: t ? t('cashOnDelivery') : (lang === 'en' ? 'Cash on Delivery' : (lang === 'fr' ? 'Paiement à la livraison' : 'الدفع عند الاستلام')),
   }
   return map[method] || method
 }
 
 export const ORDER_STATUS = {
-  PENDING: { label: 'قيد الانتظار', color: 'status-warn' },
-  CONFIRMED: { label: 'مؤكد', color: 'status-brand' },
-  SHIPPING: { label: 'قيد الشحن', color: 'status-info' },
-  DELIVERED: { label: 'تم التسليم', color: 'status-ok' },
-  CANCELLED: { label: 'ملغي', color: 'status-danger' },
+  PENDING: { label: 'Pending', color: 'status-warn' },
+  CONFIRMED: { label: 'Confirmed', color: 'status-brand' },
+  SHIPPING: { label: 'Shipping', color: 'status-info' },
+  DELIVERED: { label: 'Delivered', color: 'status-ok' },
+  CANCELLED: { label: 'Cancelled', color: 'status-danger' },
 }
 
 export const PAYMENT_LABEL = {
-  CASH_ON_DELIVERY: 'الدفع عند الاستلام',
+  CASH_ON_DELIVERY: 'Cash on Delivery',
 }
 
 export const AVAILABILITY = {
-  'in-stock': { label: 'متوفر', color: 'status-ok' },
-  'out-of-stock': { label: 'غير متوفر', color: 'status-danger' },
-  'pre-order': { label: 'طلب مسبق', color: 'status-info' },
+  'in-stock': { label: 'In Stock', color: 'status-ok' },
+  'out-of-stock': { label: 'Out of Stock', color: 'status-danger' },
+  'pre-order': { label: 'Pre-Order', color: 'status-info' },
 }
 
 export function orderStatus(status, t) {

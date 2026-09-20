@@ -3,10 +3,21 @@ import { z } from 'zod'
 // Password complexity regex: at least 8 chars, must contain letters and numbers
 const passwordComplexityRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
 
-export const loginSchema = z.object({
-  identifier: z.string().trim().min(1, 'اسم المستخدم أو البريد الإلكتروني مطلوب').max(150),
-  password: z.string().min(1, 'كلمة المرور مطلوبة').max(200),
-})
+export const loginSchema = z
+  .object({
+    identifier: z.string().trim().min(1, 'اسم المستخدم أو البريد الإلكتروني مطلوب').max(150).optional(),
+    username: z.string().trim().min(1).max(150).optional(),
+    email: z.string().trim().min(1).max(150).optional(),
+    password: z.string().min(1, 'كلمة المرور مطلوبة').max(200),
+  })
+  .refine((data) => Boolean(data.identifier || data.username || data.email), {
+    message: 'اسم المستخدم أو البريد الإلكتروني مطلوب',
+    path: ['identifier'],
+  })
+  .transform((data) => ({
+    identifier: (data.identifier || data.username || data.email).trim(),
+    password: data.password,
+  }))
 
 export const changePasswordSchema = z
   .object({

@@ -22,7 +22,10 @@ export default function useFetch(path, deps = []) {
     api
       .get(path)
       .then((json) => {
-        if (active) setData(json.data)
+        if (active) {
+          const payload = json?.data !== undefined ? json.data : (json?.users !== undefined ? json.users : json)
+          setData(payload)
+        }
       })
       .catch((err) => {
         if (active) setError(err.message)

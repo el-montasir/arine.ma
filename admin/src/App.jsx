@@ -23,6 +23,12 @@ import Settings from './pages/Settings.jsx'
 import AdminTeam from './pages/AdminTeam.jsx'
 import ActivityLog from './pages/ActivityLog.jsx'
 import SecuritySettings from './pages/SecuritySettings.jsx'
+import MarketingOverview from './pages/MarketingOverview.jsx'
+import MarketingCampaigns from './pages/MarketingCampaigns.jsx'
+import MarketingTracking from './pages/MarketingTracking.jsx'
+import MarketingAttribution from './pages/MarketingAttribution.jsx'
+import MarketingCatalog from './pages/MarketingCatalog.jsx'
+import MarketingSettings from './pages/MarketingSettings.jsx'
 
 function RequireAuth({ children }) {
   const { admin, loading } = useAuth()
@@ -161,6 +167,56 @@ export default function App() {
           element={
             <PermissionGate permission="BANNERS_VIEW" showDeniedView>
               <Banners />
+            </PermissionGate>
+          }
+        />
+
+        {/* Marketing & Meta Ads */}
+        <Route
+          path="marketing"
+          element={
+            <PermissionGate permission="MARKETING_VIEW" showDeniedView>
+              <MarketingOverview />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="marketing/campaigns"
+          element={
+            <PermissionGate permission="MARKETING_VIEW" showDeniedView>
+              <MarketingCampaigns />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="marketing/tracking"
+          element={
+            <PermissionGate permission="MARKETING_VIEW" showDeniedView>
+              <MarketingTracking />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="marketing/attribution"
+          element={
+            <PermissionGate permission="MARKETING_VIEW" showDeniedView>
+              <MarketingAttribution />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="marketing/catalog"
+          element={
+            <PermissionGate permission="MARKETING_VIEW" showDeniedView>
+              <MarketingCatalog />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="marketing/settings"
+          element={
+            <PermissionGate permission="MARKETING_VIEW" showDeniedView>
+              <MarketingSettings />
             </PermissionGate>
           }
         />

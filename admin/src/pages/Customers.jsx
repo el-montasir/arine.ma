@@ -10,12 +10,12 @@ export default function Customers() {
   const { data: customers, loading, error } = useFetch('/customers')
 
   const columns = [
-    { key: 'name', label: t('customerNameLabel'), render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: 'phone', label: t('customerPhoneLabel'), render: (r) => <span dir="ltr">{r.phone}</span> },
-    { key: 'city', label: t('customerCityCol'), render: (r) => r.city },
-    { key: 'orderCount', label: t('ordersPlaced'), render: (r) => <span className="tabular-nums">{formatNumber(r.orderCount)}</span> },
-    { key: 'totalSpent', label: t('totalSpent'), render: (r) => <span className="tabular-nums">{formatMoney(r.totalSpent, language)}</span> },
-    { key: 'lastOrder', label: t('lastOrderDate'), render: (r) => <span className="text-xs text-[#8b80a8]">{formatDateShort(r.lastOrderAt, language)}</span> },
+    { key: 'name', label: t('customerNameLabel'), render: (r) => <span className="font-semibold text-[var(--ink)]">{r.name}</span> },
+    { key: 'phone', label: t('customerPhoneLabel'), render: (r) => <span dir="ltr" className="font-mono text-xs text-[var(--purple)]">{r.phone}</span> },
+    { key: 'city', label: t('customerCityCol'), render: (r) => <span className="text-xs text-[var(--ink)]">{r.city}</span> },
+    { key: 'orderCount', label: t('ordersPlaced'), render: (r) => <span className="tabular-nums font-semibold text-[var(--ink)]">{formatNumber(r.orderCount)}</span> },
+    { key: 'totalSpent', label: t('totalSpent'), render: (r) => <span className="tabular-nums font-bold text-[var(--ink)]">{formatMoney(r.totalSpent, language)}</span> },
+    { key: 'lastOrder', label: t('lastOrderDate'), render: (r) => <span className="text-xs text-[var(--ink-soft)]">{formatDateShort(r.lastOrderAt, language)}</span> },
   ]
 
   return (

@@ -8,8 +8,6 @@ import {
   UploadCloud,
   Loader2,
   AlertCircle,
-  Eye,
-  CheckCircle2,
   Image as ImageIcon,
 } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
@@ -201,7 +199,7 @@ export default function Banners() {
       key: 'image',
       label: t('bannerPreviewCol'),
       render: (b) => (
-        <div className="h-14 w-24 overflow-hidden rounded-lg bg-surface-900 border border-line/60 flex items-center justify-center">
+        <div className="h-14 w-24 overflow-hidden rounded-[8px] bg-[var(--bg)] border border-[var(--line)] flex items-center justify-center">
           {b.image ? (
             <img
               src={b.image}
@@ -212,7 +210,7 @@ export default function Banners() {
               }}
             />
           ) : (
-            <Megaphone className="h-5 w-5 text-[#8b80a8]" />
+            <Megaphone className="h-5 w-5 text-[var(--ink-soft)]" />
           )}
         </div>
       ),
@@ -222,16 +220,16 @@ export default function Banners() {
       label: t('bannerDetailsCol'),
       render: (b) => (
         <div className="space-y-1 max-w-xs">
-          <p className="font-semibold text-white text-sm">{b.title}</p>
+          <p className="font-semibold text-[var(--ink)] text-xs">{b.title}</p>
           {b.description && (
-            <p className="text-xs text-[#8b80a8] line-clamp-1">{b.description}</p>
+            <p className="text-[11px] text-[var(--ink-soft)] line-clamp-1">{b.description}</p>
           )}
           {b.link && (
             <a
               href={b.link}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] text-brand-400 hover:underline"
+              className="inline-flex items-center gap-1 text-[11px] text-[var(--purple)] hover:underline"
               dir="ltr"
             >
               <ExternalLink className="h-3 w-3" />
@@ -254,7 +252,7 @@ export default function Banners() {
     {
       key: 'sortOrder',
       label: t('bannerOrderCol'),
-      render: (b) => <span className="font-mono text-xs text-white">#{b.sortOrder}</span>,
+      render: (b) => <span className="font-mono text-xs font-semibold text-[var(--ink)]">#{b.sortOrder}</span>,
     },
     {
       key: 'isActive',
@@ -270,7 +268,7 @@ export default function Banners() {
       key: 'dates',
       label: t('bannerDatesCol'),
       render: (b) => (
-        <div className="text-[11px] text-[#8b80a8] space-y-0.5 font-mono">
+        <div className="text-[11px] text-[var(--ink-soft)] space-y-0.5 font-mono">
           {b.startDate ? (
             <div>{t('bannerFromDate')} {formatDateShort(b.startDate, language)}</div>
           ) : null}
@@ -289,7 +287,7 @@ export default function Banners() {
           <button
             type="button"
             onClick={() => openEditModal(b)}
-            className="rounded-lg border border-line bg-surface-800/80 p-1.5 text-[#a79cc4] transition-colors hover:bg-surface-700 hover:text-white"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)] transition-colors cursor-pointer"
             title={t('edit')}
             aria-label={t('edit')}
           >
@@ -298,7 +296,7 @@ export default function Banners() {
           <button
             type="button"
             onClick={() => openDeleteModal(b.id)}
-            className="rounded-lg border border-danger-900/40 bg-danger-950/30 p-1.5 text-danger-400 transition-colors hover:bg-danger-900/50 hover:text-danger-300"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--red-bg)] hover:text-[var(--red)] transition-colors cursor-pointer"
             title={t('delete')}
             aria-label={t('delete')}
           >
@@ -325,14 +323,14 @@ export default function Banners() {
       {error ? <ErrorBanner message={error} /> : null}
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() => setFilterType('all')}
-          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
             filterType === 'all'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'border border-line bg-surface-800 text-[#a79cc4] hover:text-white'
+              ? 'bg-[var(--purple)] text-white shadow-sm'
+              : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
           }`}
         >
           {t('bannersFilterAll')} ({(banners || []).length})
@@ -340,10 +338,10 @@ export default function Banners() {
         <button
           type="button"
           onClick={() => setFilterType('promotional')}
-          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
             filterType === 'promotional'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'border border-line bg-surface-800 text-[#a79cc4] hover:text-white'
+              ? 'bg-[var(--purple)] text-white shadow-sm'
+              : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
           }`}
         >
           {t('bannersFilterPromo')}
@@ -351,10 +349,10 @@ export default function Banners() {
         <button
           type="button"
           onClick={() => setFilterType('announcement')}
-          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
             filterType === 'announcement'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'border border-line bg-surface-800 text-[#a79cc4] hover:text-white'
+              ? 'bg-[var(--purple)] text-white shadow-sm'
+              : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
           }`}
         >
           {t('bannersFilterAnnouncement')}
@@ -362,10 +360,10 @@ export default function Banners() {
         <button
           type="button"
           onClick={() => setFilterType('hero')}
-          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
             filterType === 'hero'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'border border-line bg-surface-800 text-[#a79cc4] hover:text-white'
+              ? 'bg-[var(--purple)] text-white shadow-sm'
+              : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
           }`}
         >
           {t('bannersFilterHero')}
@@ -373,10 +371,10 @@ export default function Banners() {
         <button
           type="button"
           onClick={() => setFilterType('featured')}
-          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
             filterType === 'featured'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'border border-line bg-surface-800 text-[#a79cc4] hover:text-white'
+              ? 'bg-[var(--purple)] text-white shadow-sm'
+              : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
           }`}
         >
           {t('bannersFilterFeatured')}
@@ -444,20 +442,20 @@ export default function Banners() {
           </div>
 
           {/* Image Upload & Preview Section */}
-          <div className="space-y-2 rounded-xl border border-line bg-ink-950/40 p-3.5">
+          <div className="space-y-2 rounded-[12px] border border-[var(--line)] bg-[var(--bg)] p-3.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5 text-brand-400" />
+              <label className="text-xs font-bold text-[var(--ink)] flex items-center gap-1.5">
+                <ImageIcon className="h-3.5 w-3.5 text-[var(--purple)]" />
                 <span>{t('bannerImage')}</span>
               </label>
-              <span className="text-[10px] text-[#8b80a8]">
+              <span className="text-[10px] text-[var(--ink-soft)]">
                 {t('bannerImageUploadHint')}
               </span>
             </div>
 
             {imageError && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-danger-950/80 border border-danger-800/80 text-danger-300 text-xs">
-                <AlertCircle className="h-4 w-4 shrink-0 text-danger-400" />
+              <div className="flex items-center gap-2 p-2.5 rounded-[8px] bg-[var(--red-bg)] border border-[var(--red)]/20 text-[var(--red)] text-xs font-medium">
+                <AlertCircle className="h-4 w-4 shrink-0 text-[var(--red)]" />
                 <span>{imageError}</span>
               </div>
             )}
@@ -472,7 +470,7 @@ export default function Banners() {
 
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
               {/* Image Preview Box */}
-              <div className="h-16 w-28 rounded-lg bg-surface-900 border border-line flex items-center justify-center overflow-hidden shrink-0">
+              <div className="h-16 w-28 rounded-[8px] bg-[var(--card)] border border-[var(--line)] flex items-center justify-center overflow-hidden shrink-0">
                 {form.image ? (
                   <img
                     src={form.image}
@@ -483,7 +481,7 @@ export default function Banners() {
                     }}
                   />
                 ) : (
-                  <Megaphone className="h-5 w-5 text-[#8b80a8]" />
+                  <Megaphone className="h-5 w-5 text-[var(--ink-soft)]" />
                 )}
               </div>
 
@@ -558,18 +556,18 @@ export default function Banners() {
           </div>
 
           <div className="flex items-center gap-2 pt-2">
-            <label className="flex items-center gap-2 text-xs font-semibold text-white cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--ink)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.isActive}
                 onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                className="h-4 w-4 rounded border-line bg-surface-800 text-brand-600 accent-brand-600"
+                className="h-4 w-4 rounded-[4px] border-[var(--line)] bg-[var(--card)] text-[var(--purple)] accent-[var(--purple)]"
               />
               {t('bannerActiveCheckbox')}
             </label>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-line">
+          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--line)]">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
               {t('cancel')}
             </Button>
@@ -587,7 +585,7 @@ export default function Banners() {
         title={t('deleteBannerTitle')}
       >
         <div className="space-y-4">
-          <p className="text-sm text-[#e3dcf0]">
+          <p className="text-xs text-[var(--ink-soft)]">
             {t('deleteBannerConfirmMsg')}
           </p>
           <div className="flex justify-end gap-2 pt-3">
@@ -595,8 +593,7 @@ export default function Banners() {
               {t('cancel')}
             </Button>
             <Button
-              variant="primary"
-              className="bg-danger-600 hover:bg-danger-500"
+              variant="danger"
               onClick={handleDelete}
               disabled={busy}
             >

@@ -14,3 +14,17 @@ export const authLimiter = rateLimit({
     })
   },
 })
+
+// Protection against automated order submission spam on checkout.
+export const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: { code: 'TOO_MANY_ORDERS', message: 'تم تجاوز الحد المسموح من الطلبات، يرجى المحاولة لاحقاً' },
+    })
+  },
+})

@@ -32,36 +32,36 @@ export default function Finance() {
   const profit = overview.profit
 
   const productCols = [
-    { key: 'title', label: t('colBook'), render: (r) => <span className="font-medium">{r.productTitle}</span> },
-    { key: 'qty', label: t('unitsSold'), render: (r) => <span className="tabular-nums">{formatNumber(r.quantity)}</span> },
-    { key: 'revenue', label: t('revenueGenerated'), render: (r) => <span className="tabular-nums">{formatMoney(r.revenue, language)}</span> },
-    { key: 'cost', label: t('totalCogs'), render: (r) => <span className="tabular-nums">{formatMoney(r.cost, language)}</span> },
+    { key: 'title', label: t('colBook'), render: (r) => <span className="font-semibold text-[var(--ink)]">{r.productTitle}</span> },
+    { key: 'qty', label: t('unitsSold'), render: (r) => <span className="tabular-nums font-semibold text-[var(--ink)]">{formatNumber(r.quantity)}</span> },
+    { key: 'revenue', label: t('revenueGenerated'), render: (r) => <span className="tabular-nums font-bold text-[var(--ink)]">{formatMoney(r.revenue, language)}</span> },
+    { key: 'cost', label: t('totalCogs'), render: (r) => <span className="tabular-nums text-xs text-[var(--ink-soft)]">{formatMoney(r.cost, language)}</span> },
     {
       key: 'profit',
       label: t('profit'),
       render: (r) =>
         r.profit == null ? (
-          <span className="text-xs text-[#8b80a8]">—</span>
+          <span className="text-xs text-[var(--ink-soft)]">—</span>
         ) : (
-          <span className={`tabular-nums ${r.profit < 0 ? 'text-danger-400' : 'text-ok-400'}`}>{formatMoney(r.profit, language)}</span>
+          <span className={`tabular-nums font-bold ${r.profit < 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>{formatMoney(r.profit, language)}</span>
         ),
     },
-    { key: 'unitProfit', label: t('avgUnitProfit'), render: (r) => (r.unitProfit == null ? <span className="text-xs text-[#8b80a8]">—</span> : <span className="tabular-nums">{formatMoney(r.unitProfit, language)}</span>) },
+    { key: 'unitProfit', label: t('avgUnitProfit'), render: (r) => (r.unitProfit == null ? <span className="text-xs text-[var(--ink-soft)]">—</span> : <span className="tabular-nums text-xs text-[var(--ink)]">{formatMoney(r.unitProfit, language)}</span>) },
   ]
 
   const periodCols = [
-    { key: 'period', label: t('periodCol'), render: (r) => <span dir="ltr" className="font-mono text-xs">{r.period}</span> },
-    { key: 'orders', label: t('statTotalOrders'), render: (r) => <span className="tabular-nums">{formatNumber(r.orders)}</span> },
-    { key: 'revenue', label: t('revenueGenerated'), render: (r) => <span className="tabular-nums">{formatMoney(r.revenue, language)}</span> },
-    { key: 'cost', label: t('totalCogs'), render: (r) => <span className="tabular-nums">{formatMoney(r.cost, language)}</span> },
+    { key: 'period', label: t('periodCol'), render: (r) => <span dir="ltr" className="font-mono text-xs font-semibold text-[var(--purple)]">{r.period}</span> },
+    { key: 'orders', label: t('statTotalOrders'), render: (r) => <span className="tabular-nums font-semibold text-[var(--ink)]">{formatNumber(r.orders)}</span> },
+    { key: 'revenue', label: t('revenueGenerated'), render: (r) => <span className="tabular-nums font-bold text-[var(--ink)]">{formatMoney(r.revenue, language)}</span> },
+    { key: 'cost', label: t('totalCogs'), render: (r) => <span className="tabular-nums text-xs text-[var(--ink-soft)]">{formatMoney(r.cost, language)}</span> },
     {
       key: 'profit',
       label: t('profit'),
       render: (r) =>
         r.profit == null ? (
-          <span className="text-xs text-[#8b80a8]">—</span>
+          <span className="text-xs text-[var(--ink-soft)]">—</span>
         ) : (
-          <span className={`tabular-nums ${r.profit < 0 ? 'text-danger-400' : 'text-ok-400'}`}>{formatMoney(r.profit, language)}</span>
+          <span className={`tabular-nums font-bold ${r.profit < 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>{formatMoney(r.profit, language)}</span>
         ),
     },
   ]
@@ -89,7 +89,7 @@ export default function Finance() {
         />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4">
         <StatCard label={t('collectedShipping')} value={formatMoney(overview.collectedShipping, language)} />
       </div>
 
@@ -101,14 +101,14 @@ export default function Finance() {
 
       <div className="mt-8 space-y-6">
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-white">{t('profitByProductTitle')}</h2>
+          <h2 className="mb-3 text-sm font-bold text-[var(--ink)]">{t('profitByProductTitle')}</h2>
           <Card padded={false}>
             <Table columns={productCols} rows={byProduct} rowKey={(r) => r.id || r.productId} empty={t('noSalesYet')} />
           </Card>
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-white">{t('profitByPeriodTitle')}</h2>
+          <h2 className="mb-3 text-sm font-bold text-[var(--ink)]">{t('profitByPeriodTitle')}</h2>
           <Card padded={false}>
             <Table columns={periodCols} rows={byPeriod} rowKey={(r) => r.period} empty={t('noPeriodSales')} />
           </Card>

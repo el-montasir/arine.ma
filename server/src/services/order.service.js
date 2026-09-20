@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import { generateOrderNumber } from '../utils/order-number.js'
 import { calcShipping } from '../utils/shipping.js'
+import { recordOrderAttribution } from './marketing/attribution.service.js'
+import { sendCapiEvent, buildUserData } from './marketing/meta-capi.service.js'
 
 export class OrderError extends Error {
   constructor(status, code, message) {
@@ -169,6 +171,89 @@ export async function createOrder(input) {
 
     return order
   })
+
+  // Post-transaction Marketing & CAPI Integration:
+  // Runs outside the database transaction so marketing failures NEVER roll back a committed order.
+  try {
+    const attrInput = input.attribution || {}
+    let attributionRecord = null
+
+    // 1. Record marketing attribution snapshot if any context is present
+    attributionRecord = await recordOrderAttribution({
+      orderId: order.id,
+      utmSource: attrInput.utmSource,
+      utmMedium: attrInput.utmMedium,
+      utmCampaign: attrInput.utmCampaign,
+      utmContent: attrInput.utmContent,
+      utmTerm: attrInput.utmTerm,
+      fbclid: attrInput.fbclid,
+      fbp: attrInput.fbp,
+      fbc: attrInput.fbc,
+      metaCampaignId: attrInput.metaCampaignId,
+      metaCampaignName: attrInput.metaCampaignName,
+      firstTouch: attrInput.firstTouch,
+      lastTouch: attrInput.lastTouch,
+      landingPage: attrInput.landingPage,
+      referrer: attrInput.referrer,
+      deviceType: attrInput.deviceType,
+      ipAddress: input._clientIp || null,
+      userAgent: input._userAgent || null,
+    })
+
+    // 2. Build contents payload for Meta CAPI
+    const contents = [
+      ...(order.items || []).map((item) => ({
+        id: item.productId ? `book-${item.productId}` : `item-${item.id}`,
+        item_price: item.unitPrice,
+        quantity: item.quantity,
+        title: item.productTitle,
+      })),
+      ...(order.packageItems || []).map((item) => ({
+        id: item.packageId ? `pkg-${item.packageId}` : `item-${item.id}`,
+        item_price: item.unitPrice,
+        quantity: item.quantity,
+        title: item.packageTitle,
+      })),
+    ]
+
+    const userData = buildUserData({
+      fullName: order.fullName,
+      phone: order.phone,
+      city: order.city,
+      clientIp: input._clientIp,
+      userAgent: input._userAgent,
+      fbp: attrInput.fbp,
+      fbc: attrInput.fbc,
+    })
+
+    // Stable event ID for deduplication with storefront pixel
+    const purchaseEventId = input.eventId || order.orderNumber
+
+    // Dispatch Purchase event to Meta Conversions API
+    await sendCapiEvent({
+      eventName: 'Purchase',
+      eventId: purchaseEventId,
+      orderId: order.id,
+      attributionId: attributionRecord?.id || null,
+      eventSourceUrl: attrInput.landingPage || null,
+      actionSource: 'website',
+      userData,
+      customData: {
+        value: order.total,
+        currency: 'MAD',
+        content_type: 'product',
+        contents,
+        content_ids: contents.map((c) => c.id),
+        num_items: contents.length,
+        order_id: order.orderNumber,
+      },
+    })
+  } catch (mErr) {
+    // Isolated error logging: Marketing failures must not disrupt order response
+    console.error('[MARKETING_CAPI_ERROR] Post-order CAPI dispatch failed:', mErr.message)
+  }
+
+  return order
 }
 
 /**

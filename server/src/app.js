@@ -11,6 +11,7 @@ import orderRoutes from './routes/orders.routes.js'
 import shippingRoutes from './routes/shipping.routes.js'
 import bannerRoutes from './routes/banners.routes.js'
 import storeConfigRoutes from './routes/store-config.routes.js'
+import marketingPublicRoutes from './routes/marketing.routes.js'
 import adminRoutes from './routes/admin/index.js'
 import { sessionMiddleware } from './lib/session.js'
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js'
@@ -68,6 +69,7 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/shipping', shippingRoutes)
 app.use('/api/banners', bannerRoutes)
 app.use('/api/store-config', storeConfigRoutes)
+app.use('/api/marketing', marketingPublicRoutes)
 
 // Admin API — the router itself forces authentication on everything but login.
 app.use('/api/admin', adminRoutes)

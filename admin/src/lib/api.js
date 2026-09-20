@@ -3,6 +3,43 @@
 // localStorage, nothing readable by JavaScript beyond the /auth/me payload.
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/admin'
 
+function getErrorMessage(key) {
+  const lang = (typeof localStorage !== 'undefined' && localStorage.getItem('arine_admin_lang')) || 'ar'
+  const messages = {
+    NETWORK_ERROR: {
+      ar: 'تعذر الاتصال بالخادم',
+      fr: 'Impossible de se connecter au serveur',
+      en: 'Unable to connect to server',
+    },
+    UNAUTHORIZED: {
+      ar: 'جلسة غير مصادق عليها / بيانات الدخول غير صحيحة',
+      fr: 'Session non authentifiée / identifiants invalides',
+      en: 'Unauthorized session / Invalid credentials',
+    },
+    FORBIDDEN: {
+      ar: 'ليس لديك صلاحية للدخول',
+      fr: 'Accès refusé / permissions insuffisantes',
+      en: 'Access denied / Insufficient permissions',
+    },
+    NOT_FOUND: {
+      ar: 'المسار المطلوب غير موجود',
+      fr: 'Ressource demandée non trouvée',
+      en: 'Requested resource not found',
+    },
+    SERVER_ERROR: {
+      ar: 'حدث خطأ في الخادم',
+      fr: 'Erreur interne du serveur',
+      en: 'Internal server error',
+    },
+    FAILED: {
+      ar: 'تعذر تنفيذ العملية',
+      fr: 'Impossible d\'exécuter l\'opération',
+      en: 'Failed to process request',
+    },
+  }
+  return messages[key]?.[lang] || messages[key]?.en || 'An error occurred'
+}
+
 async function request(path, { method = 'GET', body: payload } = {}) {
   let res
   const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData
@@ -15,7 +52,7 @@ async function request(path, { method = 'GET', body: payload } = {}) {
       body: isFormData ? payload : (payload ? JSON.stringify(payload) : undefined),
     })
   } catch {
-    const err = new Error('Failed to reach server')
+    const err = new Error(getErrorMessage('NETWORK_ERROR'))
     err.code = 'NETWORK_ERROR'
     err.status = 0
     throw err
@@ -29,8 +66,22 @@ async function request(path, { method = 'GET', body: payload } = {}) {
   }
 
   if (!res.ok) {
-    const err = new Error(json?.error?.message || 'Request failed')
-    err.code = json?.error?.code || 'NETWORK_ERROR'
+    let message = json?.error?.message || json?.message
+    if (!message) {
+      if (res.status === 401) {
+        message = getErrorMessage('UNAUTHORIZED')
+      } else if (res.status === 403) {
+        message = getErrorMessage('FORBIDDEN')
+      } else if (res.status === 404) {
+        message = getErrorMessage('NOT_FOUND')
+      } else if (res.status >= 500) {
+        message = getErrorMessage('SERVER_ERROR')
+      } else {
+        message = getErrorMessage('FAILED')
+      }
+    }
+    const err = new Error(message)
+    err.code = json?.error?.code || (res.status >= 500 ? 'SERVER_ERROR' : 'REQUEST_FAILED')
     err.status = res.status
     throw err
   }

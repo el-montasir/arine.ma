@@ -1,8 +1,7 @@
-import { useLocation } from 'react-router-dom'
-import { Menu, LogOut, ExternalLink, Shield } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Menu, LogOut, ExternalLink, Search, Bell } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
-import Button from './ui/Button.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
 
@@ -10,6 +9,7 @@ export default function Topbar({ onMenu }) {
   const { admin, logout } = useAuth()
   const { pathname } = useLocation()
   const { t } = useLanguage()
+  const navigate = useNavigate()
 
   const getPageTitle = () => {
     if (pathname.startsWith('/dashboard')) return t('navDashboard')
@@ -34,68 +34,89 @@ export default function Topbar({ onMenu }) {
     return t('adminPanel')
   }
 
+  const initial = (admin?.name || admin?.username || 'A').trim().charAt(0).toUpperCase()
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-line bg-surface-900/95 px-4 backdrop-blur-md sm:px-6">
-      {/* Start / Left: Mobile toggle & Breadcrumb / Page Title */}
+    <header className="sticky top-0 z-20 flex items-center justify-between gap-3.5 bg-[var(--card)] border-b border-[var(--line)] px-4 sm:px-6 py-3">
+      {/* Start / Left: Mobile toggle & Search Input */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenu}
           aria-label={t('open')}
-          className="rounded-xl border border-line bg-surface-800 p-2 text-text-muted transition-colors hover:border-brand-300 hover:text-text-main lg:hidden"
+          className="w-9 h-9 rounded-[9px] border border-[var(--line)] bg-[var(--card)] text-[var(--ink)] flex items-center justify-center cursor-pointer lg:hidden"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center gap-2">
-          <span className="hidden text-xs font-medium text-text-muted sm:inline">
-            {t('appName')} /
-          </span>
-          <h1 className="text-sm font-bold text-text-main sm:text-base">
-            {getPageTitle()}
-          </h1>
+        <div className="relative hidden md:flex items-center gap-2 bg-[var(--bg)] border border-[var(--line)] rounded-[10px] px-3.5 py-2 w-64 lg:w-72 text-[13px] text-[var(--ink-soft)]">
+          <Search className="h-3.5 w-3.5 shrink-0 text-[var(--ink-soft)]" />
+          <input
+            type="text"
+            placeholder={t('search') || 'Search orders, books…'}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.target.value.trim()) {
+                navigate(`/orders?search=${encodeURIComponent(e.target.value.trim())}`)
+              }
+            }}
+            className="w-full bg-transparent border-none outline-none text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
+          />
+        </div>
+
+        <div className="md:hidden flex items-center gap-1.5 text-xs font-semibold text-[var(--ink)]">
+          <span>{getPageTitle()}</span>
         </div>
       </div>
 
-      {/* End / Right: Store link, Language Switcher, Theme Toggle, User badge, Logout */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* End / Right: Theme toggle, notifications, Storefront link, Language Switcher, Avatar, Logout */}
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Public Storefront Link */}
         <a
-          href="http://localhost:5173"
+          href={import.meta.env.VITE_STOREFRONT_URL || '/'}
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden items-center gap-1.5 rounded-xl border border-line bg-surface-800/80 px-3 py-2 text-xs font-medium text-text-muted transition-colors hover:border-brand-300 hover:text-text-main md:flex"
+          title={t('storefront')}
+          aria-label={t('storefront')}
+          className="w-9 h-9 rounded-[10px] border border-[var(--line)] bg-[var(--card)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)] transition-colors cursor-pointer shrink-0"
         >
-          <ExternalLink className="h-3.5 w-3.5" />
-          <span>{t('storefront')}</span>
+          <ExternalLink className="h-4 w-4" />
         </a>
 
-        {/* Multilingual Selector */}
-        <LanguageSwitcher />
-
-        {/* Dark / Light Theme Toggle */}
+        {/* Theme Toggle */}
         <ThemeToggle />
 
-        <div className="h-5 w-[1px] bg-line mx-1 hidden sm:block" />
+        {/* Notification Bell with red dot */}
+        <button
+          type="button"
+          onClick={() => navigate('/activity-log')}
+          title={t('navActivityLog')}
+          aria-label={t('navActivityLog')}
+          className="w-9 h-9 rounded-[10px] border border-[var(--line)] bg-[var(--card)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)] transition-colors cursor-pointer relative shrink-0"
+        >
+          <Bell className="h-4 w-4" />
+          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 rounded-full bg-[var(--red)]" />
+        </button>
 
-        {/* Super Admin / Admin Role Badge */}
-        <div className="flex items-center">
-          <span className="inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 dark:border-brand-500/30 dark:bg-brand-600/15 dark:text-brand-400">
-            <Shield className="h-3.5 w-3.5" />
-            <span>{admin?.role === 'SUPER_ADMIN' ? t('roleSuperAdmin') : t('roleAdmin')}</span>
-          </span>
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
+        {/* Admin Avatar */}
+        <div
+          onClick={() => navigate('/security')}
+          title={admin?.name || admin?.username}
+          className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] text-white flex items-center justify-center font-bold text-xs shrink-0 cursor-pointer shadow-sm"
+        >
+          {initial}
         </div>
 
-        {/* Logout */}
-        <Button
-          variant="ghost"
-          size="sm"
+        {/* Logout button */}
+        <button
           onClick={logout}
+          title={t('logout')}
           aria-label={t('logout')}
-          className="hover:text-danger-500"
+          className="w-9 h-9 rounded-[10px] border border-[var(--line)] bg-[var(--card)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--red)] hover:bg-[var(--red-bg)] transition-colors cursor-pointer shrink-0"
         >
           <LogOut className="h-4 w-4" />
-          <span className="hidden md:inline">{t('logout')}</span>
-        </Button>
+        </button>
       </div>
     </header>
   )

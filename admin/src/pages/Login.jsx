@@ -36,7 +36,7 @@ export default function Login() {
   }
 
   return (
-    <div className="app-bg relative flex min-h-screen items-center justify-center p-4">
+    <div className="relative flex min-h-screen items-center justify-center p-4 bg-[var(--bg)] text-[var(--ink)]">
       {/* Top right quick controls */}
       <div className="absolute top-4 end-4 flex items-center gap-2">
         <LanguageSwitcher />
@@ -45,21 +45,21 @@ export default function Login() {
 
       <div className="w-full max-w-md">
         {/* Brand header */}
-        <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-tr from-brand-700 to-brand-500 text-white shadow-lg shadow-brand-600/30">
+        <div className="mb-6 flex flex-col items-center gap-2.5 text-center">
+          <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] flex items-center justify-center text-white shadow-lg shadow-[var(--purple)]/20">
             <BookMarked className="h-7 w-7" aria-hidden="true" />
-          </span>
+          </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-text-main">{t('appName')}</h1>
-            <p className="mt-1 text-sm text-text-muted">{t('appTagline')}</p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[var(--ink)]">{t('appName')}</h1>
+            <p className="mt-0.5 text-xs text-[var(--ink-soft)] font-medium">{t('appTagline')}</p>
           </div>
         </div>
 
         {/* Login form */}
-        <div className="rounded-2xl border border-line bg-surface-900 p-6 sm:p-8 shadow-xl">
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-text-main">{t('loginTitle')}</h2>
-            <p className="text-xs text-text-muted mt-1">{t('loginSubtitle')}</p>
+        <div className="card-ref p-6 sm:p-8">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold text-[var(--ink)]">{t('loginTitle')}</h2>
+            <p className="text-xs text-[var(--ink-soft)] mt-1">{t('loginSubtitle')}</p>
           </div>
 
           <ErrorBanner message={error} />
@@ -90,16 +90,16 @@ export default function Login() {
           </form>
 
           {/* Demo helper */}
-          <div className="mt-6 rounded-xl border border-line bg-surface-800/70 p-3 text-center">
-            <p className="text-[11px] font-mono text-text-muted">
+          <div className="mt-5 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-3 text-center">
+            <p className="text-[11px] font-mono text-[var(--ink-soft)]">
               {t('loginDemoHint')}
             </p>
           </div>
         </div>
 
         {/* Security badge */}
-        <div className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-text-subtle">
-          <ShieldCheck className="h-4 w-4 text-emerald-500" />
+        <div className="mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-[var(--ink-soft)]">
+          <ShieldCheck className="h-4 w-4 text-[var(--green)]" />
           <span>{t('secureSession')}</span>
         </div>
       </div>

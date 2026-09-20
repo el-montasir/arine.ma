@@ -25,6 +25,7 @@ import Table from '../components/ui/Table.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Modal from '../components/ui/Modal.jsx'
 import Button from '../components/ui/Button.jsx'
+import { Badge, StatusBadge } from '../components/ui/Badge.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
 const ACTION_OPTIONS = [
@@ -59,6 +60,15 @@ const ACTION_OPTIONS = [
   'STORE_SETTINGS_UPDATED',
   'ORDER_STATUS_UPDATED',
   'SECURITY_SETTINGS_UPDATED',
+  'UPDATE_MARKETING_SETTINGS',
+  'TEST_META_CONNECTION',
+  'DISCONNECT_META',
+  'SYNC_META_CAMPAIGNS',
+  'UPDATE_CAMPAIGN_STATUS',
+  'RETRY_MARKETING_EVENT',
+  'RETRY_ALL_FAILED_MARKETING_EVENTS',
+  'SEND_TEST_MARKETING_EVENT',
+  'SYNC_CATALOG_ITEMS',
 ]
 
 const RESOURCE_OPTIONS = [
@@ -73,6 +83,13 @@ const RESOURCE_OPTIONS = [
   'BANNER',
   'SHIPPING',
   'SECURITY',
+  'MARKETING_SETTINGS',
+  'MARKETING_CONNECTION',
+  'MARKETING_CAMPAIGNS',
+  'MARKETING_CAMPAIGN',
+  'MARKETING_EVENTS',
+  'MARKETING_EVENT',
+  'MARKETING_CATALOG',
 ]
 
 export default function ActivityLog() {
@@ -129,13 +146,28 @@ export default function ActivityLog() {
   }, [fetchLogs])
 
   function renderActionBadge(action) {
-    if (!action) return <span className="text-text-muted">—</span>
+    if (!action) return <span className="text-[var(--ink-soft)]">—</span>
     const style = getActionStyle(action)
     const label = formatActionString(action, language, t)
 
+    let kind = 'neutral'
+    if (action.includes('SUCCESS') || action.includes('CREATED') || action.includes('ENABLED')) kind = 'ok'
+    else if (action.includes('FAILED') || action.includes('BLOCKED') || action.includes('DELETED') || action.includes('DISABLED')) kind = 'danger'
+    else if (action.includes('UPDATED') || action.includes('RESET') || action.includes('REVOKED')) kind = 'warn'
+    else if (action.includes('LOGOUT')) kind = 'purple'
+
     return (
-      <span className={`status-pill ${style}`}>
-        <span className="dot" />
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+        kind === 'ok'
+          ? 'bg-[var(--green-bg)] text-[var(--green)] border border-[var(--green)]/20'
+          : kind === 'danger'
+          ? 'bg-[var(--red-bg)] text-[var(--red)] border border-[var(--red)]/20'
+          : kind === 'warn'
+          ? 'bg-[var(--orange-bg)] text-[var(--orange)] border border-[var(--orange)]/20'
+          : kind === 'purple'
+          ? 'bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--purple)]/20'
+          : 'bg-[var(--bg)] text-[var(--ink-soft)] border border-[var(--line)]'
+      }`}>
         <span>{label}</span>
       </span>
     )
@@ -146,7 +178,7 @@ export default function ActivityLog() {
       key: 'createdAt',
       label: t('colLogDate'),
       render: (r) => (
-        <span className="text-xs text-text-muted tabular-nums">
+        <span className="text-xs text-[var(--ink-soft)] tabular-nums font-mono">
           {formatDate(r.createdAt, language)}
         </span>
       ),
@@ -155,14 +187,14 @@ export default function ActivityLog() {
       key: 'actor',
       label: t('colLogActor'),
       render: (r) => (
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-800 border border-line text-xs font-bold text-brand-600">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-[var(--purple-bg)] text-[var(--purple)] text-xs font-bold shrink-0">
             {(r.actorName || r.actorEmail || 'S').charAt(0).toUpperCase()}
           </div>
           <div className="text-xs">
-            <div className="font-medium text-text-main">{r.actorName || r.actorEmail || 'System'}</div>
+            <div className="font-semibold text-[var(--ink)]">{r.actorName || r.actorEmail || 'System'}</div>
             {r.actorEmail && r.actorName && (
-              <div className="text-[11px] text-text-muted">{r.actorEmail}</div>
+              <div className="text-[11px] text-[var(--ink-soft)] font-mono" dir="ltr">{r.actorEmail}</div>
             )}
           </div>
         </div>
@@ -178,9 +210,9 @@ export default function ActivityLog() {
       label: t('colLogResource'),
       render: (r) => (
         <div className="text-xs">
-          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-main bg-surface-800 px-2 py-0.5 rounded-md border border-line">
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--ink)] bg-[var(--bg)] px-2 py-0.5 rounded-[6px] border border-[var(--line)]">
             <span>{formatResourceString(r.resourceType, null, language, t)}</span>
-            {r.resourceId && <span className="text-brand-600 font-semibold">#{r.resourceId}</span>}
+            {r.resourceId && <span className="text-[var(--purple)] font-bold">#{r.resourceId}</span>}
           </span>
         </div>
       ),
@@ -189,8 +221,8 @@ export default function ActivityLog() {
       key: 'ip',
       label: t('colLogIp'),
       render: (r) => (
-        <span className="text-xs font-mono text-text-muted flex items-center gap-1.5">
-          <Globe className="h-3.5 w-3.5 text-text-subtle shrink-0" />
+        <span className="text-xs font-mono text-[var(--ink-soft)] flex items-center gap-1.5" dir="ltr">
+          <Globe className="h-3.5 w-3.5 text-[var(--ink-soft)] shrink-0" />
           <span>{r.ipAddress || '—'}</span>
         </span>
       ),
@@ -201,10 +233,11 @@ export default function ActivityLog() {
       render: (r) => (
         <div className="flex justify-end">
           <button
+            type="button"
             onClick={() => setSelectedLog(r)}
             title={t('logDetailsTitle')}
             aria-label={t('logDetailsTitle')}
-            className="rounded-lg p-1.5 text-text-muted hover:bg-surface-800 hover:text-text-main transition-colors"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)] transition-colors cursor-pointer"
           >
             <Eye className="h-4 w-4" />
           </button>
@@ -219,8 +252,8 @@ export default function ActivityLog() {
         title={t('activityLogTitle')}
         subtitle={t('activityLogSubtitle')}
         actions={
-          <Button variant="secondary" onClick={() => fetchLogs(pagination.page)}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button variant="secondary" size="sm" onClick={() => fetchLogs(pagination.page)}>
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>{t('refresh')}</span>
           </Button>
         }
@@ -233,13 +266,13 @@ export default function ActivityLog() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {/* Search input */}
           <div className="relative lg:col-span-2">
-            <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-subtle" />
+            <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ink-soft)]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('searchLogsPlaceholder')}
-              className="w-full rounded-xl border border-line bg-white dark:bg-surface-900 py-2 ps-10 pe-4 text-sm text-gray-900 dark:text-text-main placeholder:text-gray-400 dark:placeholder:text-text-subtle focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] py-2 ps-10 pe-4 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
             />
           </div>
 
@@ -248,7 +281,7 @@ export default function ActivityLog() {
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="w-full rounded-xl border border-line bg-white dark:bg-surface-900 px-3 py-2 text-sm text-gray-900 dark:text-text-main focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
             >
               <option value="">{t('filterAllActions')}</option>
               {ACTION_OPTIONS.map((opt) => (
@@ -264,7 +297,7 @@ export default function ActivityLog() {
             <select
               value={resourceFilter}
               onChange={(e) => setResourceFilter(e.target.value)}
-              className="w-full rounded-xl border border-line bg-white dark:bg-surface-900 px-3 py-2 text-sm text-gray-900 dark:text-text-main focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
             >
               <option value="">{t('filterAllResources')}</option>
               {RESOURCE_OPTIONS.map((res) => (
@@ -281,14 +314,14 @@ export default function ActivityLog() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-xl border border-line bg-surface-900 px-2.5 py-1.5 text-xs text-text-main focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-2.5 py-1.5 text-xs text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
             />
-            <span className="text-text-subtle text-xs">-</span>
+            <span className="text-[var(--ink-soft)] text-xs">-</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-xl border border-line bg-surface-900 px-2.5 py-1.5 text-xs text-text-main focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-2.5 py-1.5 text-xs text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
             />
           </div>
         </div>
@@ -306,7 +339,7 @@ export default function ActivityLog() {
 
         {/* Pagination Controls */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-line px-4 py-3 text-xs text-text-muted">
+          <div className="flex items-center justify-between border-t border-[var(--line)] px-4 py-3 text-xs text-[var(--ink-soft)]">
             <div>
               {pagination.total} records (Page {pagination.page} of {pagination.totalPages})
             </div>
@@ -318,7 +351,7 @@ export default function ActivityLog() {
                 onClick={() => fetchLogs(pagination.page - 1)}
               >
                 {isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                <span>{language === 'ar' ? 'السابق' : (language === 'fr' ? 'Précédent' : 'Prev')}</span>
+                <span>{t('prev')}</span>
               </Button>
               <Button
                 variant="secondary"
@@ -326,7 +359,7 @@ export default function ActivityLog() {
                 disabled={pagination.page >= pagination.totalPages || loading}
                 onClick={() => fetchLogs(pagination.page + 1)}
               >
-                <span>{language === 'ar' ? 'التالي' : (language === 'fr' ? 'Suivant' : 'Next')}</span>
+                <span>{t('next')}</span>
                 {isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </div>
@@ -339,54 +372,54 @@ export default function ActivityLog() {
         open={Boolean(selectedLog)}
         onClose={() => setSelectedLog(null)}
         title={t('logDetailsTitle')}
-        maxWidth="max-w-2xl"
+        width="max-w-2xl"
       >
         {selectedLog && (
           <div className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-3 rounded-xl border border-line bg-surface-800/50 p-3.5">
+            <div className="grid grid-cols-2 gap-3 rounded-[12px] border border-[var(--line)] bg-[var(--bg)] p-3.5">
               <div>
-                <span className="text-text-muted block mb-1">{t('colLogAction')}</span>
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('colLogAction')}</span>
                 <div>{renderActionBadge(selectedLog.action)}</div>
               </div>
               <div>
-                <span className="text-text-muted block mb-1">{t('colLogDate')}</span>
-                <span className="font-medium text-text-main">{formatDate(selectedLog.createdAt, language)}</span>
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('colLogDate')}</span>
+                <span className="font-semibold text-[var(--ink)]">{formatDate(selectedLog.createdAt, language)}</span>
               </div>
               <div>
-                <span className="text-text-muted block mb-1">{t('colLogActor')}</span>
-                <span className="font-medium text-text-main">
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('colLogActor')}</span>
+                <span className="font-semibold text-[var(--ink)]">
                   {selectedLog.actorName || selectedLog.actorEmail || 'System'}
                   {selectedLog.actorId ? ` (ID: ${selectedLog.actorId})` : ''}
                 </span>
               </div>
               <div>
-                <span className="text-text-muted block mb-1">{t('colLogResource')}</span>
-                <span className="font-mono text-text-main font-medium">
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('colLogResource')}</span>
+                <span className="font-mono text-[var(--ink)] font-semibold">
                   {formatResourceString(selectedLog.resourceType, selectedLog.resourceId, language, t)}
                 </span>
               </div>
               <div className="col-span-2">
-                <span className="text-text-muted block mb-1">{t('colLogIp')}</span>
-                <span className="font-mono text-text-main">{selectedLog.ipAddress || '—'}</span>
+                <span className="text-[var(--ink-soft)] block mb-1 font-medium">{t('colLogIp')}</span>
+                <span className="font-mono text-[var(--ink)]" dir="ltr">{selectedLog.ipAddress || '—'}</span>
               </div>
               {selectedLog.userAgent && (
                 <div className="col-span-2">
-                  <span className="text-text-muted block mb-1">User Agent</span>
-                  <span className="font-mono text-[11px] text-text-muted break-all">{selectedLog.userAgent}</span>
+                  <span className="text-[var(--ink-soft)] block mb-1 font-medium">User Agent</span>
+                  <span className="font-mono text-[11px] text-[var(--ink-soft)] break-all" dir="ltr">{selectedLog.userAgent}</span>
                 </div>
               )}
             </div>
 
             <div>
-              <span className="text-text-muted font-semibold uppercase tracking-wider block mb-1.5">
+              <span className="text-[var(--ink-soft)] font-bold uppercase tracking-wider block mb-1.5">
                 {t('colLogDetails')} (Sanitized Metadata)
               </span>
-              <pre className="rounded-xl border border-line bg-surface-800 p-4 font-mono text-[11px] text-text-main overflow-x-auto max-h-60">
+              <pre className="rounded-[12px] border border-[var(--line)] bg-[var(--bg)] p-4 font-mono text-[11px] text-[var(--ink)] overflow-x-auto max-h-60" dir="ltr">
                 {JSON.stringify(selectedLog.details || {}, null, 2)}
               </pre>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end pt-2 border-t border-[var(--line)]">
               <Button variant="secondary" onClick={() => setSelectedLog(null)}>
                 {t('close')}
               </Button>
@@ -397,4 +430,3 @@ export default function ActivityLog() {
     </div>
   )
 }
-

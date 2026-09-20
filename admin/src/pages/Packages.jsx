@@ -63,47 +63,47 @@ export default function Packages() {
         const booksCount = r.booksCount || (r.books ? r.books.length : 0)
         return (
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative shrink-0">
               {r.image ? (
-                <img src={r.image} alt="" className="h-11 w-10 rounded-lg object-cover border border-line" loading="lazy" />
+                <img src={r.image} alt="" className="h-11 w-10 rounded-[8px] object-cover border border-[var(--line)]" loading="lazy" />
               ) : (
-                <span className="grid h-11 w-10 place-items-center rounded-lg bg-surface-800 text-brand-400 border border-line">
+                <span className="grid h-11 w-10 place-items-center rounded-[8px] bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--line)]">
                   <PackageIcon className="h-5 w-5" />
                 </span>
               )}
               {imgCount > 1 && (
-                <span className="absolute -bottom-1 -start-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[9px] font-bold text-white shadow">
+                <span className="absolute -bottom-1 -start-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--purple)] text-[9px] font-bold text-white shadow">
                   {imgCount}
                 </span>
               )}
             </div>
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="font-semibold text-[#f2eefb]">{r.title}</p>
+                <p className="font-semibold text-[var(--ink)]">{r.title}</p>
                 {r.isNew && (
-                  <span className="text-[10px] font-bold text-brand-400 bg-brand-950/80 px-1.5 py-0.5 rounded border border-brand-800/60">
+                  <span className="text-[10px] font-bold text-[var(--purple)] bg-[var(--purple-bg)] px-1.5 py-0.5 rounded-[6px] border border-[var(--purple)]/20">
                     {t('badgeNew')}
                   </span>
                 )}
                 {r.isPopular && (
-                  <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-800/60">
+                  <span className="text-[10px] font-bold text-[var(--orange)] bg-[var(--orange-bg)] px-1.5 py-0.5 rounded-[6px] border border-[var(--orange)]/20">
                     {t('badgePopular')}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-xs text-[#8b80a8]">
-                  <BookOpen className="h-3 w-3 text-brand-400" />
+                <span className="inline-flex items-center gap-1 text-xs text-[var(--ink-soft)]">
+                  <BookOpen className="h-3 w-3 text-[var(--purple)]" />
                   {formatBookCount(booksCount, language)}
                 </span>
                 {r.shippingMode === 'free' && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] text-ok-400 bg-ok-950/60 px-1.5 py-0.2 rounded border border-ok-900/60">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--green)] bg-[var(--green-bg)] px-1.5 py-0.5 rounded-[6px] border border-[var(--green)]/20">
                     <Truck className="h-2.5 w-2.5" />
                     {t('freeShippingBadge')}
                   </span>
                 )}
                 {r.shippingMode === 'custom' && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] text-brand-400 bg-brand-950/60 px-1.5 py-0.2 rounded border border-brand-900/60">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--purple)] bg-[var(--purple-bg)] px-1.5 py-0.5 rounded-[6px] border border-[var(--purple)]/20">
                     <Truck className="h-2.5 w-2.5" />
                     {t('customShippingBadge')} ({formatMoney(r.customShipping, language)})
                   </span>
@@ -120,19 +120,19 @@ export default function Packages() {
       render: (r) => {
         const booksList = r.books || []
         if (booksList.length === 0) {
-          return <span className="text-xs text-[#6f6488]">—</span>
+          return <span className="text-xs text-[var(--ink-soft)]">—</span>
         }
         const remaining = booksList.length - 2
         return (
           <div className="max-w-xs space-y-0.5">
             {booksList.slice(0, 2).map((b, idx) => (
-              <p key={idx} className="text-xs text-[#d9d1e9] truncate flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-brand-400 shrink-0" />
+              <p key={idx} className="text-xs text-[var(--ink)] truncate flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--purple)] shrink-0" />
                 <span className="truncate">{b.title}</span>
               </p>
             ))}
             {remaining > 0 && (
-              <p className="text-[11px] text-brand-400 font-medium">
+              <p className="text-[11px] text-[var(--purple)] font-semibold">
                 +{formatBookCount(remaining, language)} {t('moreBooks')}
               </p>
             )}
@@ -145,11 +145,18 @@ export default function Packages() {
       label: t('colPrice'),
       render: (r) => (
         <div>
-          <span className="tabular-nums font-semibold text-white">{formatMoney(r.price, language)}</span>
+          <span className="tabular-nums font-bold text-[var(--ink)]">{formatMoney(r.price, language)}</span>
           {r.oldPrice && r.oldPrice > r.price && (
-            <span className="block text-[11px] text-[#6f6488] line-through tabular-nums">
-              {formatMoney(r.oldPrice, language)}
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[11px] text-[var(--ink-soft)] line-through tabular-nums">
+                {formatMoney(r.oldPrice, language)}
+              </span>
+              {Number.isFinite(r.discount) && r.discount > 0 && (
+                <span className="text-[10px] font-bold text-[var(--purple)] bg-[var(--purple-bg)] px-1.5 py-0.2 rounded border border-[var(--purple)]/20">
+                  -{Math.round(r.discount)}%
+                </span>
+              )}
+            </div>
           )}
         </div>
       ),
@@ -158,7 +165,7 @@ export default function Packages() {
       key: 'costPrice',
       label: t('colCostPrice'),
       render: (r) => (
-        <span className="tabular-nums text-[#a79cc4]">
+        <span className="tabular-nums text-xs text-[var(--ink-soft)]">
           {r.costPrice != null ? formatMoney(r.costPrice, language) : '—'}
         </span>
       ),
@@ -169,9 +176,9 @@ export default function Packages() {
       render: (r) => {
         const profit = r.profit != null ? r.profit : (r.costPrice != null ? r.price - r.costPrice : null)
         return profit == null ? (
-          <span className="text-xs text-[#6f6488]">—</span>
+          <span className="text-xs text-[var(--ink-soft)]">—</span>
         ) : (
-          <span className={`tabular-nums font-medium ${profit < 0 ? 'text-danger-400' : 'text-ok-400'}`}>
+          <span className={`tabular-nums font-bold text-xs ${profit < 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
             {formatMoney(profit, language)}
           </span>
         )
@@ -196,7 +203,7 @@ export default function Packages() {
               navigate(`/packages/${r.id}/edit`)
             }}
             aria-label={t('edit')}
-            className="rounded-md p-1.5 text-[#a79cc4] hover:bg-surface-700 hover:text-white"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)] transition-colors cursor-pointer"
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -207,7 +214,7 @@ export default function Packages() {
               setToDelete(r)
             }}
             aria-label={t('delete')}
-            className="rounded-md p-1.5 text-[#a79cc4] hover:bg-danger-400/15 hover:text-danger-400"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--red-bg)] hover:text-[var(--red)] transition-colors cursor-pointer"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -231,21 +238,21 @@ export default function Packages() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative">
-          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-gray-400 dark:text-[#6f6488]" aria-hidden="true" />
+          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-[var(--ink-soft)]" aria-hidden="true" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPackagesPlaceholder')}
             aria-label={t('search')}
-            className="w-72 rounded-lg border border-line bg-white dark:bg-ink-900 py-2 pe-3 ps-9 text-sm text-gray-900 dark:text-[#f2eefb] placeholder:text-gray-400 dark:placeholder:text-[#6f6488] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+            className="w-72 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
           />
         </div>
         <select
           value={availability}
           onChange={(e) => setAvailability(e.target.value)}
           aria-label={t('filterByAvailability')}
-          className="rounded-lg border border-line bg-white dark:bg-ink-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+          className="rounded-[10px] border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
         >
           <option value="">{t('filterByAvailability')}</option>
           {AVAILABILITY_KEYS.map((value) => (
@@ -267,8 +274,8 @@ export default function Packages() {
       </Card>
 
       <Modal open={Boolean(toDelete)} onClose={() => setToDelete(null)} title={t('deletePackageTitle')}>
-        <p className="text-sm text-[#d9d1e9]">
-          {t('deletePackageConfirm')} <strong>{toDelete?.title}</strong>? {t('deletePackageWarning')}
+        <p className="text-xs text-[var(--ink-soft)]">
+          {t('deletePackageConfirm')} <strong className="text-[var(--ink)] font-semibold">{toDelete?.title}</strong>? {t('deletePackageWarning')}
         </p>
         {deleteError ? <div className="mt-3"><ErrorBanner message={deleteError} /></div> : null}
         <div className="mt-5 flex justify-end gap-2">

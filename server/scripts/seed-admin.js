@@ -13,10 +13,12 @@ async function main() {
       passwordHash,
       isActive: true,
       role: 'SUPER_ADMIN',
+      email: 'admin@arine.ma',
     },
     create: {
       username: 'admin@arine.ma',
-      name: 'مدير النظام الرئيسي',
+      email: 'admin@arine.ma',
+      name: 'Super Admin',
       passwordHash,
       role: 'SUPER_ADMIN',
       isActive: true,
@@ -32,7 +34,8 @@ async function main() {
     },
     create: {
       username: 'admin',
-      name: 'مدير النظام',
+      email: 'admin@arine.local',
+      name: 'Admin',
       passwordHash,
       role: 'SUPER_ADMIN',
       isActive: true,

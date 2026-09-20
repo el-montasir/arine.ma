@@ -27,7 +27,7 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
 
   if (variant === 'segmented') {
     return (
-      <div className="inline-flex rounded-xl border border-line bg-surface-900 p-1">
+      <div className="inline-flex rounded-[10px] border border-[var(--line)] bg-[var(--card)] p-1">
         {LANG_OPTIONS.map((opt) => {
           const active = opt.code === language
           return (
@@ -35,10 +35,10 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
               key={opt.code}
               type="button"
               onClick={() => setLanguage(opt.code)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-xs font-medium transition-all ${
                 active
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'text-text-muted hover:text-text-main hover:bg-surface-800'
+                  ? 'bg-[var(--purple)] text-white shadow-sm font-semibold'
+                  : 'text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)]'
               }`}
             >
               <span>{opt.flag}</span>
@@ -56,9 +56,9 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-label={t('secLanguage')}
-        className="flex items-center gap-2 rounded-xl border border-line bg-surface-900 px-3 py-2 text-xs font-medium text-text-main transition-colors hover:border-brand-500/50 hover:bg-surface-800 focus:outline-none"
+        className="flex items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--ink)] transition-colors hover:bg-[var(--bg)] focus:outline-none"
       >
-        <Globe className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+        <Globe className="h-4 w-4 text-[var(--purple)]" />
         <span className="flex items-center gap-1.5">
           <span>{currentOption.flag}</span>
           <span className="hidden sm:inline">{currentOption.label}</span>
@@ -66,11 +66,11 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full z-50 mt-2 w-44 origin-top-right rounded-xl border border-line bg-surface-900 p-1.5 shadow-lg backdrop-blur-lg">
-          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+        <div className="absolute end-0 top-full z-50 mt-2 w-44 origin-top-right rounded-[12px] border border-[var(--line)] bg-[var(--card)] p-1.5 shadow-xl backdrop-blur-lg">
+          <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-soft)]">
             {t('secLanguage')}
           </div>
-          <div className="mt-1 space-y-1">
+          <div className="mt-1 space-y-0.5">
             {LANG_OPTIONS.map((opt) => {
               const active = opt.code === language
               return (
@@ -81,17 +81,17 @@ export default function LanguageSwitcher({ variant = 'dropdown' }) {
                     setLanguage(opt.code)
                     setOpen(false)
                   }}
-                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-[8px] px-2.5 py-2 text-xs font-medium transition-colors ${
                     active
-                      ? 'bg-brand-50 text-brand-700 font-semibold dark:bg-brand-600/15 dark:text-brand-400'
-                      : 'text-text-main hover:bg-surface-800'
+                      ? 'bg-[var(--purple-bg)] text-[var(--purple)] font-semibold'
+                      : 'text-[var(--ink)] hover:bg-[var(--bg)]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-base">{opt.flag}</span>
                     <span>{opt.label}</span>
                   </span>
-                  {active && <Check className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />}
+                  {active && <Check className="h-3.5 w-3.5 text-[var(--purple)]" />}
                 </button>
               )
             })}

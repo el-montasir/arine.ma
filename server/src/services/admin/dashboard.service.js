@@ -15,7 +15,7 @@ export async function getDashboardStats(admin = null) {
     prisma.order.count(),
     prisma.product.count(),
     prisma.category.count(),
-    prisma.order.findMany({ include: { items: true } }),
+    prisma.order.findMany({ include: { items: true, packageItems: true } }),
   ])
 
   // Status counts (all orders).
@@ -62,7 +62,9 @@ export async function getDashboardStats(admin = null) {
     .slice(0, 10)
     .map((o) => ({
       type: 'ORDER_CREATED',
-      label: `طلب جديد ${o.orderNumber} — ${o.fullName}`,
+      orderId: o.id,
+      orderNumber: o.orderNumber,
+      customerName: o.fullName,
       createdAt: o.createdAt,
     }))
 

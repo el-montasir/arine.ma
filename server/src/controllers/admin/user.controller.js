@@ -16,7 +16,7 @@ import { ALL_PERMISSIONS, PERMISSION_GROUPS, ROLE_PRESETS } from '../../constant
 export const getUsers = asyncHandler(async (req, res) => {
   const { page, limit, search, status, role } = req.query
   const result = await listUsers({ page, limit, search, status, role })
-  res.json({ success: true, ...result })
+  res.json({ success: true, data: result.users, users: result.users, stats: result.stats, pagination: result.pagination })
 })
 
 export const getUser = asyncHandler(async (req, res) => {

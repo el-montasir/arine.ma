@@ -139,7 +139,7 @@ export default function ProductForm() {
       <button
         type="button"
         onClick={() => navigate('/products')}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-[#8b80a8] hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors cursor-pointer"
       >
         <BackIcon className="h-4 w-4" aria-hidden="true" />
         {t('back')} — {t('productsTitle')}
@@ -153,15 +153,15 @@ export default function ProductForm() {
       <form onSubmit={onSubmit} className="space-y-6">
         {error ? <ErrorBanner message={error} /> : null}
 
-        {/* 1. معلومات الكتاب الأساسية */}
+        {/* 1. Basic Book Information */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <BookOpen className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">{t('secBookInfo')}</h2>
-              <p className="text-xs text-[#8b80a8]">{t('secBookInfoDesc')}</p>
+              <h2 className="text-sm font-bold text-[var(--ink)]">{t('secBookInfo')}</h2>
+              <p className="text-xs text-[var(--ink-soft)]">{t('secBookInfoDesc')}</p>
             </div>
           </div>
 
@@ -207,21 +207,21 @@ export default function ProductForm() {
           />
         </Card>
 
-        {/* 2. الأسعار والأرباح */}
+        {/* 2. Pricing and Margins */}
         <Card className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--line)] pb-3.5">
             <div className="flex items-center gap-2.5">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600/20 text-emerald-400">
+              <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--green-bg)] text-[var(--green)]">
                 <DollarSign className="h-4 w-4" />
               </span>
               <div>
-                <h2 className="text-sm font-semibold text-white">{t('secPricing')}</h2>
-                <p className="text-xs text-[#8b80a8]">{t('secPricingDesc')}</p>
+                <h2 className="text-sm font-bold text-[var(--ink)]">{t('secPricing')}</h2>
+                <p className="text-xs text-[var(--ink-soft)]">{t('secPricingDesc')}</p>
               </div>
             </div>
 
             {profit != null && Number.isFinite(profit) ? (
-              <span className={`status-pill ${profit < 0 ? 'status-danger' : 'status-ok'}`}>
+              <span className={`inline-flex items-center px-3 py-1 rounded-[20px] text-xs font-bold ${profit < 0 ? 'bg-[var(--red-bg)] text-[var(--red)]' : 'bg-[var(--green-bg)] text-[var(--green)]'}`}>
                 {t('colProfit')}: {formatMoney(profit, language)}
               </span>
             ) : null}
@@ -273,15 +273,15 @@ export default function ProductForm() {
           </div>
         </Card>
 
-        {/* 3. المخزون والتوفر */}
+        {/* 3. Stock and Availability */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-600/20 text-blue-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--blue-bg)] text-[var(--blue)]">
               <Package className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">{t('secStock')}</h2>
-              <p className="text-xs text-[#8b80a8]">{t('secStockDesc')}</p>
+              <h2 className="text-sm font-bold text-[var(--ink)]">{t('secStock')}</h2>
+              <p className="text-xs text-[var(--ink-soft)]">{t('secStockDesc')}</p>
             </div>
           </div>
 
@@ -299,15 +299,15 @@ export default function ProductForm() {
           </div>
         </Card>
 
-        {/* 4. صور الكتاب (MultiImageUpload) */}
+        {/* 4. Book Images (MultiImageUpload) */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-600/20 text-amber-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--orange-bg)] text-[var(--orange)]">
               <ImageIcon className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">{t('secImages')}</h2>
-              <p className="text-xs text-[#8b80a8]">{t('secImagesDesc')}</p>
+              <h2 className="text-sm font-bold text-[var(--ink)]">{t('secImages')}</h2>
+              <p className="text-xs text-[var(--ink-soft)]">{t('secImagesDesc')}</p>
             </div>
           </div>
 
@@ -318,59 +318,59 @@ export default function ProductForm() {
           />
         </Card>
 
-        {/* 5. إعدادات التوصيل لهذا الكتاب */}
+        {/* 5. Shipping Settings for this Book */}
         <Card className="space-y-4">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <Truck className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">{t('secShipping')}</h2>
-              <p className="text-xs text-[#8b80a8]">{t('secShippingDesc')}</p>
+              <h2 className="text-sm font-bold text-[var(--ink)]">{t('secShipping')}</h2>
+              <p className="text-xs text-[var(--ink-soft)]">{t('secShippingDesc')}</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <label className="flex items-start gap-3 p-3.5 rounded-xl border border-line bg-ink-900/40 hover:bg-ink-900/80 cursor-pointer transition-colors">
+            <label className="flex items-start gap-3 p-3.5 rounded-[12px] border border-[var(--line)] bg-[var(--card)] hover:bg-[var(--bg)] cursor-pointer transition-colors">
               <input
                 type="radio"
                 name="shippingMode"
                 value=""
                 checked={!form.shippingMode || form.shippingMode === 'default'}
                 onChange={() => setForm((f) => ({ ...f, shippingMode: null, customShipping: '' }))}
-                className="mt-1 h-4 w-4 accent-brand-500"
+                className="mt-1 h-4 w-4 accent-[var(--purple)]"
               />
               <div>
-                <span className="text-sm font-semibold text-white block">{t('shippingDefault')}</span>
+                <span className="text-xs font-bold text-[var(--ink)] block">{t('shippingDefault')}</span>
               </div>
             </label>
 
-            <label className="flex items-start gap-3 p-3.5 rounded-xl border border-line bg-ink-900/40 hover:bg-ink-900/80 cursor-pointer transition-colors">
+            <label className="flex items-start gap-3 p-3.5 rounded-[12px] border border-[var(--line)] bg-[var(--card)] hover:bg-[var(--bg)] cursor-pointer transition-colors">
               <input
                 type="radio"
                 name="shippingMode"
                 value="free"
                 checked={form.shippingMode === 'free' || form.shippingMode === 'FREE'}
                 onChange={() => setForm((f) => ({ ...f, shippingMode: 'free', customShipping: '' }))}
-                className="mt-1 h-4 w-4 accent-brand-500"
+                className="mt-1 h-4 w-4 accent-[var(--purple)]"
               />
               <div>
-                <span className="text-sm font-semibold text-ok-400 block">{t('shippingFree')}</span>
-                <span className="text-xs text-[#8b80a8] block mt-0.5">{t('shippingFreeDesc')}</span>
+                <span className="text-xs font-bold text-[var(--green)] block">{t('shippingFree')}</span>
+                <span className="text-[11px] text-[var(--ink-soft)] block mt-0.5">{t('shippingFreeDesc')}</span>
               </div>
             </label>
 
-            <label className="flex items-start gap-3 p-3.5 rounded-xl border border-line bg-ink-900/40 hover:bg-ink-900/80 cursor-pointer transition-colors">
+            <label className="flex items-start gap-3 p-3.5 rounded-[12px] border border-[var(--line)] bg-[var(--card)] hover:bg-[var(--bg)] cursor-pointer transition-colors">
               <input
                 type="radio"
                 name="shippingMode"
                 value="custom"
                 checked={form.shippingMode === 'custom' || form.shippingMode === 'CUSTOM'}
                 onChange={() => setForm((f) => ({ ...f, shippingMode: 'custom' }))}
-                className="mt-1 h-4 w-4 accent-brand-500"
+                className="mt-1 h-4 w-4 accent-[var(--purple)]"
               />
               <div className="flex-1">
-                <span className="text-sm font-semibold text-white block">{t('shippingCustom')}</span>
+                <span className="text-xs font-bold text-[var(--ink)] block">{t('shippingCustom')}</span>
 
                 {(form.shippingMode === 'custom' || form.shippingMode === 'CUSTOM') && (
                   <div className="mt-3 max-w-xs">
@@ -391,15 +391,15 @@ export default function ProductForm() {
           </div>
         </Card>
 
-        {/* 6. الظهور والترويج */}
+        {/* 6. Visibility and Promotion */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-purple-600/20 text-purple-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <Eye className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">{t('secVisibility')}</h2>
-              <p className="text-xs text-[#8b80a8]">{t('secVisibilityDesc')}</p>
+              <h2 className="text-sm font-bold text-[var(--ink)]">{t('secVisibility')}</h2>
+              <p className="text-xs text-[var(--ink-soft)]">{t('secVisibilityDesc')}</p>
             </div>
           </div>
 
@@ -411,21 +411,21 @@ export default function ProductForm() {
             </Select>
 
             <div className="flex items-center gap-6 pt-6">
-              <label className="flex items-center gap-2 text-xs font-semibold text-[#e3dcf0] cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-semibold text-[var(--ink)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.isNew}
                   onChange={set('isNew')}
-                  className="h-4 w-4 rounded border-line bg-surface-800 text-brand-600 accent-brand-600"
+                  className="h-4 w-4 rounded-[4px] border-[var(--line)] bg-[var(--card)] text-[var(--purple)] accent-[var(--purple)]"
                 />
                 {t('badgeNew')}
               </label>
-              <label className="flex items-center gap-2 text-xs font-semibold text-[#e3dcf0] cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-semibold text-[var(--ink)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.isPopular}
                   onChange={set('isPopular')}
-                  className="h-4 w-4 rounded border-line bg-surface-800 text-brand-600 accent-brand-600"
+                  className="h-4 w-4 rounded-[4px] border-[var(--line)] bg-[var(--card)] text-[var(--purple)] accent-[var(--purple)]"
                 />
                 {t('badgePopular')}
               </label>

@@ -20,6 +20,7 @@ import Favorites from './pages/Favorites'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import LibraryEntry from './pages/LibraryEntry'
+import NotFound from './pages/NotFound'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -62,6 +63,7 @@ export default function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/account" element={<TrackOrder />} />
               <Route path="/library" element={<LibraryEntry />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
           <CartDrawer />

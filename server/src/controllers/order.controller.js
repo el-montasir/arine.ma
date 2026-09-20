@@ -55,7 +55,12 @@ export async function getOrdersHandler(req, res, next) {
 // POST /api/orders
 export async function createOrderHandler(req, res, next) {
   try {
-    const order = await createOrder(req.validated)
+    const inputWithContext = {
+      ...req.validated,
+      _clientIp: req.ip || req.headers?.['x-forwarded-for'] || req.socket?.remoteAddress || null,
+      _userAgent: req.headers?.['user-agent'] || null,
+    }
+    const order = await createOrder(inputWithContext)
     return res.status(201).json({
       success: true,
       order: { orderNumber: order.orderNumber, total: order.total },

@@ -13,21 +13,23 @@ import {
   Settings,
   BookMarked,
   X,
-  ChevronRight,
-  ChevronLeft,
   UserCog,
   History,
   ShieldCheck,
+  Activity,
+  Target,
+  Database,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export function SidebarContent({ onNavigate }) {
-  const { t, isRTL } = useLanguage()
+  const { t } = useLanguage()
   const { can, isOwner } = useAuth()
 
   const ALL_SECTIONS = [
     {
+      title: t('navMain') || 'Main',
       items: [
         {
           to: '/dashboard',
@@ -39,7 +41,7 @@ export function SidebarContent({ onNavigate }) {
       ],
     },
     {
-      title: t('navCatalog'),
+      title: t('navCatalog') || 'Catalog',
       items: [
         {
           to: '/products',
@@ -62,7 +64,7 @@ export function SidebarContent({ onNavigate }) {
       ],
     },
     {
-      title: t('navSales'),
+      title: t('navSales') || 'Sales',
       items: [
         {
           to: '/orders',
@@ -85,7 +87,49 @@ export function SidebarContent({ onNavigate }) {
       ],
     },
     {
-      title: t('navMarketing'),
+      title: t('navMarketing') || 'Marketing & Meta Ads',
+      items: [
+        {
+          to: '/marketing',
+          label: t('navMarketingOverview') || 'Marketing Overview',
+          icon: LayoutDashboard,
+          end: true,
+          permission: 'MARKETING_VIEW',
+        },
+        {
+          to: '/marketing/campaigns',
+          label: t('navMarketingCampaigns') || 'Meta Campaigns',
+          icon: Megaphone,
+          permission: 'MARKETING_VIEW',
+        },
+        {
+          to: '/marketing/tracking',
+          label: t('navMarketingTracking') || 'Tracking & CAPI',
+          icon: Activity,
+          permission: 'MARKETING_VIEW',
+        },
+        {
+          to: '/marketing/attribution',
+          label: t('navMarketingAttribution') || 'Attribution',
+          icon: Target,
+          permission: 'MARKETING_VIEW',
+        },
+        {
+          to: '/marketing/catalog',
+          label: t('navMarketingCatalog') || 'Product Catalog',
+          icon: Database,
+          permission: 'MARKETING_VIEW',
+        },
+        {
+          to: '/marketing/settings',
+          label: t('navMarketingSettings') || 'Meta Settings',
+          icon: ShieldCheck,
+          permission: 'MARKETING_VIEW',
+        },
+      ],
+    },
+    {
+      title: t('navStoreSettings') || 'Storefront',
       items: [
         {
           to: '/banners',
@@ -102,7 +146,7 @@ export function SidebarContent({ onNavigate }) {
       ],
     },
     {
-      title: t('teamTitle') ? t('navAdminTeam') : 'Admin & Security',
+      title: t('navAdminTeam') || 'Admin',
       items: [
         {
           to: '/admin-team',
@@ -120,13 +164,12 @@ export function SidebarContent({ onNavigate }) {
           to: '/security',
           label: t('navSecurity'),
           icon: ShieldCheck,
-          // All admins can access their own security settings
           permission: null,
         },
       ],
     },
     {
-      title: t('navSystem'),
+      title: t('navSystem') || 'System',
       items: [
         {
           to: '/shipping-settings',
@@ -144,7 +187,6 @@ export function SidebarContent({ onNavigate }) {
     },
   ]
 
-  // Filter sections and items based on permissions
   const visibleSections = ALL_SECTIONS.map((section) => {
     const visibleItems = section.items.filter((item) => {
       if (isOwner) return true
@@ -155,11 +197,11 @@ export function SidebarContent({ onNavigate }) {
   }).filter((section) => section.items.length > 0)
 
   return (
-    <nav className="flex flex-1 flex-col gap-4 p-3.5 overflow-y-auto" aria-label="Navigation Menu">
+    <nav className="flex flex-1 flex-col gap-3.5 px-3.5 py-2 overflow-y-auto" aria-label="Navigation Menu">
       {visibleSections.map((section, idx) => (
-        <div key={idx} className="space-y-1">
+        <div key={idx} className="space-y-0.5">
           {section.title && (
-            <p className="px-3 py-1 text-[11px] font-semibold text-text-subtle uppercase tracking-wider">
+            <p className="px-2.5 pb-1.5 pt-2 text-[10.5px] font-bold text-[var(--ink-soft)] uppercase tracking-[0.6px]">
               {section.title}
             </p>
           )}
@@ -171,22 +213,15 @@ export function SidebarContent({ onNavigate }) {
                 end={end}
                 onClick={onNavigate}
                 className={({ isActive }) =>
-                  `group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-colors ${
+                  `flex items-center gap-2.5 px-2.5 py-2 rounded-[9px] text-[13.5px] font-medium transition-all duration-150 ${
                     isActive
-                      ? 'bg-brand-50 text-brand-700 font-semibold border border-brand-200/80 dark:bg-brand-600/15 dark:text-brand-400 dark:border-brand-500/30'
-                      : 'text-text-muted hover:bg-surface-800 hover:text-text-main border border-transparent'
+                      ? 'bg-[var(--purple)] text-white font-semibold shadow-[0_6px_14px_-4px_rgba(124,58,237,0.45)]'
+                      : 'text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)]'
                   }`
                 }
               >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" aria-hidden="true" />
-                  <span>{label}</span>
-                </div>
-                {isRTL ? (
-                  <ChevronLeft className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-70" />
-                ) : (
-                  <ChevronRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-70" />
-                )}
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="truncate">{label}</span>
               </NavLink>
             ))}
           </div>
@@ -197,31 +232,23 @@ export function SidebarContent({ onNavigate }) {
 }
 
 export default function Sidebar({ open, onClose }) {
-  const { t } = useLanguage()
-
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 shrink-0 border-e border-line bg-surface-900 lg:flex lg:flex-col">
+      <aside className="hidden w-[246px] shrink-0 border-inline-end border-[var(--line)] bg-[var(--card)] lg:flex lg:flex-col sticky top-0 h-screen overflow-y-auto">
         <Brand />
         <SidebarContent />
-        <div className="mt-auto p-3.5 border-t border-line">
-          <div className="rounded-xl border border-line bg-surface-800 p-3 text-[11px] leading-relaxed text-text-muted">
-            <p className="font-semibold text-text-main mb-0.5">⚡ {t('appName')} v2.5</p>
-            <p className="text-[10px] text-text-subtle">{t('appTagline')}</p>
-          </div>
-        </div>
       </aside>
 
       {/* Mobile drawer */}
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-          <aside className="absolute inset-y-0 start-0 flex w-72 flex-col bg-surface-900 shadow-xl border-e border-line">
+          <aside className="absolute inset-y-0 start-0 flex w-[260px] flex-col bg-[var(--card)] shadow-2xl border-inline-end border-[var(--line)]">
             <button
               onClick={onClose}
-              aria-label={t('close')}
-              className="absolute end-3.5 top-4 rounded-xl border border-line bg-surface-800 p-2 text-text-muted hover:text-text-main"
+              aria-label="Close"
+              className="absolute end-3.5 top-4 rounded-[9px] border border-[var(--line)] bg-[var(--card)] p-1.5 text-[var(--ink-soft)] hover:text-[var(--ink)]"
             >
               <X className="h-4 w-4" />
             </button>
@@ -238,13 +265,17 @@ function Brand() {
   const { t } = useLanguage()
 
   return (
-    <div className="flex items-center gap-3 border-b border-line px-5 py-4.5 bg-surface-900">
-      <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-600 text-white shadow-sm">
-        <BookMarked className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div>
-        <p className="text-sm font-bold leading-tight text-text-main">{t('appName')}</p>
-        <p className="text-[11px] font-medium leading-tight text-text-muted mt-0.5">{t('adminPanel')}</p>
+    <div className="flex items-center gap-2.5 px-4 py-4.5 mb-1 bg-[var(--card)]">
+      <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] flex items-center justify-center text-white shrink-0 shadow-sm">
+        <BookMarked className="h-4.5 w-4.5" aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-base font-extrabold text-[var(--ink)] leading-tight tracking-tight">
+          {t('appName')}
+        </div>
+        <div className="text-[10.5px] text-[var(--ink-soft)] font-medium leading-tight mt-0.5">
+          {t('adminPanel')}
+        </div>
       </div>
     </div>
   )

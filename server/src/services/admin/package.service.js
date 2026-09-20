@@ -18,6 +18,19 @@ const INCLUDE = {
   },
 }
 
+export function calculatePackageDiscount(originalPrice, sellingPrice) {
+  if (originalPrice == null || sellingPrice == null) return 0
+  const original = Number(originalPrice)
+  const selling = Number(sellingPrice)
+
+  if (!Number.isFinite(original) || original <= 0) return 0
+  if (!Number.isFinite(selling) || selling < 0) return 0
+  if (selling >= original) return 0
+
+  const discount = Math.round(((original - selling) / original) * 100)
+  return Math.max(0, Math.min(100, discount))
+}
+
 export function serializeAdminPackage(pkg) {
   const images = (pkg.images || []).map((img) => ({
     id: img.id,
@@ -59,9 +72,11 @@ export function serializeAdminPackage(pkg) {
     }
   })
 
-  const sumBooksPrice = books.reduce((acc, b) => acc + (b.price || 0), 0)
+  const sumBooksPrice = books.reduce((acc, b) => acc + (Number(b.price) || 0), 0)
   const costPrice = pkg.costPrice ?? null
   const profitPerUnit = costPrice != null ? pkg.price - costPrice : null
+  const effectiveOldPrice = pkg.oldPrice ?? (sumBooksPrice > pkg.price ? sumBooksPrice : null)
+  const discount = calculatePackageDiscount(effectiveOldPrice, pkg.price)
 
   return {
     id: pkg.id,
@@ -70,8 +85,8 @@ export function serializeAdminPackage(pkg) {
     price: pkg.price,
     costPrice,
     profitPerUnit,
-    oldPrice: pkg.oldPrice ?? (pkg.discount > 0 && sumBooksPrice > pkg.price ? sumBooksPrice : null),
-    discount: pkg.discount,
+    oldPrice: effectiveOldPrice,
+    discount,
     image: primaryImage,
     images,
     availability: pkg.availability,
@@ -120,7 +135,7 @@ export async function createPackage(inputData) {
   if (!data.title || typeof data.title !== 'string' || !data.title.trim()) {
     throw ApiError.badRequest('عنوان الباقة مطلوب')
   }
-  if (typeof data.price !== 'number' || data.price < 0) {
+  if (typeof data.price !== 'number' || Number.isNaN(data.price) || data.price < 0) {
     throw ApiError.badRequest('سعر الباقة غير صحيح')
   }
 
@@ -132,15 +147,28 @@ export async function createPackage(inputData) {
     selectedBookIds = rawItems.map((item) => Number(item.productId || item.id)).filter(Boolean)
   }
 
-  // Validate existing books
+  // Validate existing books and compute total retail value
+  let sumBooksPrice = 0
   if (selectedBookIds.length > 0) {
     const existingBooks = await prisma.product.findMany({
       where: { id: { in: selectedBookIds } },
-      select: { id: true },
+      select: { id: true, price: true },
     })
-    const existingIds = new Set(existingBooks.map((b) => b.id))
-    selectedBookIds = selectedBookIds.filter((id) => existingIds.has(id))
+    const booksMap = new Map(existingBooks.map((b) => [b.id, b]))
+    selectedBookIds = selectedBookIds.filter((id) => booksMap.has(id))
+    sumBooksPrice = selectedBookIds.reduce((sum, id) => sum + (Number(booksMap.get(id)?.price) || 0), 0)
   }
+
+  const sellingPrice = Math.round(data.price)
+  const effectiveOldPrice =
+    data.oldPrice != null && Number(data.oldPrice) > 0
+      ? Math.round(Number(data.oldPrice))
+      : sumBooksPrice > 0
+      ? sumBooksPrice
+      : null
+
+  // Calculate discount automatically from original price and selling price
+  const discount = calculatePackageDiscount(effectiveOldPrice, sellingPrice)
 
   // Normalize images to standard array of objects
   let imagesList = []
@@ -172,10 +200,10 @@ export async function createPackage(inputData) {
     data: {
       title: data.title.trim(),
       description: data.description?.trim() || null,
-      price: Math.round(data.price),
+      price: sellingPrice,
       costPrice: data.costPrice != null ? Math.round(data.costPrice) : null,
-      oldPrice: data.oldPrice != null ? Math.round(data.oldPrice) : null,
-      discount: data.discount ? Math.max(0, Math.min(100, Math.round(data.discount))) : 0,
+      oldPrice: effectiveOldPrice,
+      discount,
       image: primaryImageUrl,
       availability: data.availability || 'in-stock',
       isNew: Boolean(data.isNew),
@@ -214,22 +242,14 @@ export async function updatePackage(id, inputData) {
 
   const { images: rawImages, bookIds, items: rawItems, ...data } = inputData
 
-  const updateData = {}
-  if (data.title !== undefined) updateData.title = data.title.trim()
-  if (data.description !== undefined) updateData.description = data.description?.trim() || null
-  if (data.price !== undefined) updateData.price = Math.round(data.price)
-  if (data.costPrice !== undefined) updateData.costPrice = data.costPrice != null ? Math.round(data.costPrice) : null
-  if (data.oldPrice !== undefined) updateData.oldPrice = data.oldPrice != null ? Math.round(data.oldPrice) : null
-  if (data.discount !== undefined) updateData.discount = Math.max(0, Math.min(100, Math.round(data.discount || 0)))
-  if (data.availability !== undefined) updateData.availability = data.availability
-  if (data.isNew !== undefined) updateData.isNew = Boolean(data.isNew)
-  if (data.isPopular !== undefined) updateData.isPopular = Boolean(data.isPopular)
-  if (data.shippingMode !== undefined) updateData.shippingMode = data.shippingMode || null
-  if (data.customShipping !== undefined) updateData.customShipping = data.customShipping != null ? Math.round(data.customShipping) : null
-
   // Process book associations if provided
   let hasBookChanges = false
   let selectedBookIds = []
+  let sumBooksPrice = (existing.items || []).reduce(
+    (acc, item) => acc + (Number(item.product?.price) || 0),
+    0
+  )
+
   if (Array.isArray(bookIds)) {
     hasBookChanges = true
     selectedBookIds = bookIds.map(Number).filter(Boolean)
@@ -242,10 +262,52 @@ export async function updatePackage(id, inputData) {
     // Validate
     const validBooks = await prisma.product.findMany({
       where: { id: { in: selectedBookIds } },
-      select: { id: true },
+      select: { id: true, price: true },
     })
-    const validSet = new Set(validBooks.map((b) => b.id))
-    selectedBookIds = selectedBookIds.filter((bId) => validSet.has(bId))
+    const booksMap = new Map(validBooks.map((b) => [b.id, b]))
+    selectedBookIds = selectedBookIds.filter((bId) => booksMap.has(bId))
+    sumBooksPrice = selectedBookIds.reduce((sum, id) => sum + (Number(booksMap.get(id)?.price) || 0), 0)
+  }
+
+  const sellingPrice = data.price !== undefined ? Math.round(Number(data.price)) : existing.price
+  if (data.price !== undefined && (Number.isNaN(sellingPrice) || sellingPrice < 0)) {
+    throw ApiError.badRequest('سعر الباقة غير صحيح')
+  }
+
+  let effectiveOldPrice
+  if (data.oldPrice !== undefined) {
+    effectiveOldPrice =
+      data.oldPrice != null && Number(data.oldPrice) > 0
+        ? Math.round(Number(data.oldPrice))
+        : sumBooksPrice > 0
+        ? sumBooksPrice
+        : null
+  } else if (hasBookChanges && !existing.oldPrice) {
+    effectiveOldPrice = sumBooksPrice > 0 ? sumBooksPrice : null
+  } else {
+    effectiveOldPrice = existing.oldPrice ?? (sumBooksPrice > 0 ? sumBooksPrice : null)
+  }
+
+  // Calculate discount automatically from original price and selling price
+  const calculatedDiscount = calculatePackageDiscount(effectiveOldPrice, sellingPrice)
+
+  const updateData = {
+    discount: calculatedDiscount,
+  }
+
+  if (data.title !== undefined) updateData.title = data.title.trim()
+  if (data.description !== undefined) updateData.description = data.description?.trim() || null
+  if (data.price !== undefined) updateData.price = sellingPrice
+  if (data.costPrice !== undefined) updateData.costPrice = data.costPrice != null ? Math.round(data.costPrice) : null
+  if (data.oldPrice !== undefined || effectiveOldPrice !== existing.oldPrice) {
+    updateData.oldPrice = effectiveOldPrice
+  }
+  if (data.availability !== undefined) updateData.availability = data.availability
+  if (data.isNew !== undefined) updateData.isNew = Boolean(data.isNew)
+  if (data.isPopular !== undefined) updateData.isPopular = Boolean(data.isPopular)
+  if (data.shippingMode !== undefined) updateData.shippingMode = data.shippingMode || null
+  if (data.customShipping !== undefined) {
+    updateData.customShipping = data.customShipping != null ? Math.round(data.customShipping) : null
   }
 
   // Process images if provided

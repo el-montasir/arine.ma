@@ -1,12 +1,37 @@
-export function StatusBadge({ kind, label }) {
-  return (
-    <span className={`status-pill status-${kind || 'neutral'}`}>
-      <span className="dot" aria-hidden="true" />
-      {label}
-    </span>
-  )
+export function StatusBadge({ kind = 'neutral', label }) {
+  const map = {
+    warn: 'pending',
+    pending: 'pending',
+    ok: 'delivered',
+    delivered: 'delivered',
+    brand: 'confirmed',
+    confirmed: 'confirmed',
+    info: 'shipping',
+    shipping: 'shipping',
+    danger: 'cancelled',
+    cancelled: 'cancelled',
+    neutral: 'neutral',
+  }
+  const badgeClass = map[kind] || kind || 'neutral'
+
+  return <span className={`badge ${badgeClass}`}>{label}</span>
 }
 
 export function Badge({ children, kind = 'neutral' }) {
-  return <span className={`status-pill status-${kind}`}>{children}</span>
+  const map = {
+    warn: 'pending',
+    pending: 'pending',
+    ok: 'delivered',
+    delivered: 'delivered',
+    brand: 'confirmed',
+    confirmed: 'confirmed',
+    info: 'shipping',
+    shipping: 'shipping',
+    danger: 'cancelled',
+    cancelled: 'cancelled',
+    neutral: 'neutral',
+  }
+  const badgeClass = map[kind] || kind || 'neutral'
+
+  return <span className={`badge ${badgeClass}`}>{children}</span>
 }

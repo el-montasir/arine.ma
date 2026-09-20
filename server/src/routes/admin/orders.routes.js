@@ -7,6 +7,7 @@ import {
   getOrders,
   getOrderById,
   patchOrderStatus,
+  deleteOrderHandler,
 } from '../../controllers/admin/order.controller.js'
 
 const router = Router()
@@ -18,6 +19,11 @@ router.patch(
   requirePermission(PERMISSIONS.ORDERS_STATUS_UPDATE),
   validate(updateOrderStatusSchema),
   patchOrderStatus
+)
+router.delete(
+  '/:id',
+  requirePermission(PERMISSIONS.ORDERS_DELETE),
+  deleteOrderHandler
 )
 
 export default router

@@ -15,6 +15,7 @@ import storeConfigRoutes from './store-config.routes.js'
 import uploadRoutes from './uploads.routes.js'
 import usersRoutes from './users.routes.js'
 import activityLogRoutes from './activity-log.routes.js'
+import marketingRoutes from './marketing.routes.js'
 
 const router = Router()
 
@@ -41,5 +42,6 @@ router.use('/users', usersRoutes)
 router.use('/admin-users', usersRoutes)
 router.use('/activity-logs', activityLogRoutes)
 router.use('/activity-log', activityLogRoutes)
+router.use('/marketing', marketingRoutes)
 
 export default router

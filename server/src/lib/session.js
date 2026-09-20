@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import session from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
 import pg from 'pg'
@@ -13,9 +14,14 @@ if (!SESSION_SECRET) {
 const PGStore = connectPgSimple(session)
 const { Pool } = pg
 
+const sessionPool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 })
+sessionPool.on('error', (err) => {
+  console.error('[SESSION_POOL_ERROR] Unexpected error on idle client:', err.message)
+})
+
 export const sessionMiddleware = session({
   store: new PGStore({
-    pool: new Pool({ connectionString: process.env.DATABASE_URL, max: 5 }),
+    pool: sessionPool,
     createTableIfMissing: true, // creates the "session" table on first use
   }),
   name: 'arine.admin.sid', // distinct from any future user-facing cookie

@@ -110,3 +110,19 @@ export async function updateOrderStatus(id, status) {
 
   return serializeAdminOrder(updated)
 }
+
+export async function deleteOrder(id) {
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: INCLUDE_ITEMS,
+  })
+  if (!order) {
+    throw new ApiError(404, 'NOT_FOUND', 'الطلب غير موجود')
+  }
+
+  await prisma.order.delete({
+    where: { id },
+  })
+
+  return order
+}

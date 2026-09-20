@@ -60,30 +60,30 @@ export default function Products() {
         const imgCount = Array.isArray(r.images) ? r.images.length : r.image ? 1 : 0
         return (
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative shrink-0">
               {r.image ? (
-                <img src={r.image} alt="" className="h-11 w-8 rounded object-cover border border-line" loading="lazy" />
+                <img src={r.image} alt="" className="h-11 w-8 rounded-[6px] object-cover border border-[var(--line)]" loading="lazy" />
               ) : (
-                <span className="grid h-11 w-8 place-items-center rounded bg-surface-800 text-[10px] text-[#6f6488]">—</span>
+                <span className="grid h-11 w-8 place-items-center rounded-[6px] bg-[var(--bg)] border border-[var(--line)] text-[10px] text-[var(--ink-soft)]">—</span>
               )}
               {imgCount > 1 && (
-                <span className="absolute -bottom-1 -start-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[9px] font-bold text-white shadow">
+                <span className="absolute -bottom-1 -start-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--purple)] text-[9px] font-bold text-white shadow">
                   {imgCount}
                 </span>
               )}
             </div>
             <div>
-              <p className="font-medium text-[#f2eefb]">{r.title}</p>
+              <p className="font-semibold text-[var(--ink)]">{r.title}</p>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className="text-xs text-[#8b80a8]">{r.author}</span>
+                <span className="text-xs text-[var(--ink-soft)]">{r.author}</span>
                 {r.shippingMode === 'free' && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] text-ok-400 bg-ok-950/60 px-1.5 py-0.2 rounded border border-ok-900/60">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--green)] bg-[var(--green-bg)] px-1.5 py-0.5 rounded-[6px] border border-[var(--green)]/20">
                     <Truck className="h-2.5 w-2.5" />
                     {t('freeShippingBadge')}
                   </span>
                 )}
                 {r.shippingMode === 'custom' && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] text-brand-400 bg-brand-950/60 px-1.5 py-0.2 rounded border border-brand-900/60">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--purple)] bg-[var(--purple-bg)] px-1.5 py-0.5 rounded-[6px] border border-[var(--purple)]/20">
                     <Truck className="h-2.5 w-2.5" />
                     {t('customShippingBadge')} ({formatMoney(r.customShipping, language)})
                   </span>
@@ -94,17 +94,17 @@ export default function Products() {
         )
       },
     },
-    { key: 'category', label: t('colCategory'), render: (r) => <span className="text-xs">{r.category}</span> },
-    { key: 'price', label: t('colPrice'), render: (r) => <span className="tabular-nums font-semibold text-white">{formatMoney(r.price, language)}</span> },
-    { key: 'costPrice', label: t('colCostPrice'), render: (r) => <span className="tabular-nums text-[#a79cc4]">{r.costPrice != null ? formatMoney(r.costPrice, language) : '—'}</span> },
+    { key: 'category', label: t('colCategory'), render: (r) => <span className="text-xs font-medium text-[var(--ink-soft)]">{r.category}</span> },
+    { key: 'price', label: t('colPrice'), render: (r) => <span className="tabular-nums font-bold text-[var(--ink)]">{formatMoney(r.price, language)}</span> },
+    { key: 'costPrice', label: t('colCostPrice'), render: (r) => <span className="tabular-nums text-xs text-[var(--ink-soft)]">{r.costPrice != null ? formatMoney(r.costPrice, language) : '—'}</span> },
     {
       key: 'profitPerUnit',
       label: t('colProfit'),
       render: (r) =>
         r.profitPerUnit == null ? (
-          <span className="text-xs text-[#6f6488]">—</span>
+          <span className="text-xs text-[var(--ink-soft)]">—</span>
         ) : (
-          <span className={`tabular-nums font-medium ${r.profitPerUnit < 0 ? 'text-danger-400' : 'text-ok-400'}`}>{formatMoney(r.profitPerUnit, language)}</span>
+          <span className={`tabular-nums font-bold text-xs ${r.profitPerUnit < 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>{formatMoney(r.profitPerUnit, language)}</span>
         ),
     },
     {
@@ -126,7 +126,7 @@ export default function Products() {
               navigate(`/products/${r.id}/edit`)
             }}
             aria-label={t('edit')}
-            className="rounded-md p-1.5 text-[#a79cc4] hover:bg-surface-700 hover:text-white"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)] transition-colors cursor-pointer"
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -137,7 +137,7 @@ export default function Products() {
               setToDelete(r)
             }}
             aria-label={t('delete')}
-            className="rounded-md p-1.5 text-[#a79cc4] hover:bg-danger-400/15 hover:text-danger-400"
+            className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--red-bg)] hover:text-[var(--red)] transition-colors cursor-pointer"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -161,21 +161,21 @@ export default function Products() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative">
-          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-gray-400 dark:text-[#6f6488]" aria-hidden="true" />
+          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-[var(--ink-soft)]" aria-hidden="true" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchProductsPlaceholder')}
             aria-label={t('search')}
-            className="w-60 rounded-lg border border-line bg-white dark:bg-ink-900 py-2 pe-3 ps-9 text-sm text-gray-900 dark:text-[#f2eefb] placeholder:text-gray-400 dark:placeholder:text-[#6f6488] focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+            className="w-60 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
           />
         </div>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           aria-label={t('filterByCategory')}
-          className="rounded-lg border border-line bg-white dark:bg-ink-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+          className="rounded-[10px] border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
         >
           <option value="">{t('filterByCategory')}</option>
           {(categories || []).map((c) => (
@@ -186,7 +186,7 @@ export default function Products() {
           value={availability}
           onChange={(e) => setAvailability(e.target.value)}
           aria-label={t('filterByAvailability')}
-          className="rounded-lg border border-line bg-white dark:bg-ink-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:focus:ring-brand-400"
+          className="rounded-[10px] border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
         >
           <option value="">{t('filterByAvailability')}</option>
           {AVAILABILITY_KEYS.map((value) => (
@@ -208,8 +208,8 @@ export default function Products() {
       </Card>
 
       <Modal open={Boolean(toDelete)} onClose={() => setToDelete(null)} title={t('deleteBookTitle')}>
-        <p className="text-sm text-[#d9d1e9]">
-          {t('deleteBookConfirm')} <strong>{toDelete?.title}</strong>? {t('deleteBookWarning')}
+        <p className="text-xs text-[var(--ink-soft)]">
+          {t('deleteBookConfirm')} <strong className="text-[var(--ink)] font-semibold">{toDelete?.title}</strong>? {t('deleteBookWarning')}
         </p>
         {deleteError ? <div className="mt-3"><ErrorBanner message={deleteError} /></div> : null}
         <div className="mt-5 flex justify-end gap-2">

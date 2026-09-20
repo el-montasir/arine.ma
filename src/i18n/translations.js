@@ -156,6 +156,9 @@ export const translations = {
     statDeliveryLabel: 'توصيل سريع',
     statCustomersLabel: 'عملاء راضون',
     announcementText: 'توصيل سريع لجميع المدن المغربية • الدفع عند الاستلام',
+    pageNotFound: 'الصفحة غير موجودة',
+    pageNotFoundDesc: 'تعذر العثور على الصفحة المطلوبة، ربما تم نقلها أو حذفها.',
+    backToHome: 'العودة للرئيسية',
   },
 
   fr: {
@@ -315,6 +318,9 @@ export const translations = {
     statDeliveryLabel: 'Livraison rapide',
     statCustomersLabel: 'Clients satisfaits',
     announcementText: 'Livraison rapide partout au Maroc • Paiement à la livraison',
+    pageNotFound: 'Page introuvable',
+    pageNotFoundDesc: 'Impossible de trouver la page demandée. Elle a peut-être été déplacée ou supprimée.',
+    backToHome: 'Retour à l\'accueil',
   },
 
   en: {
@@ -474,5 +480,8 @@ export const translations = {
     statDeliveryLabel: 'Fast Delivery',
     statCustomersLabel: 'Happy Customers',
     announcementText: 'Express delivery across Morocco • Cash on Delivery',
+    pageNotFound: 'Page Not Found',
+    pageNotFoundDesc: 'The page you are looking for does not exist or has been moved.',
+    backToHome: 'Back to Home',
   },
 }

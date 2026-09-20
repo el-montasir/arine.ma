@@ -188,7 +188,7 @@ export default function StoreSettings() {
       />
 
       {successMsg && (
-        <div className="flex items-center gap-2 rounded-xl border border-ok-900/60 bg-ok-950/60 p-3 text-xs text-ok-400">
+        <div className="flex items-center gap-2 rounded-[10px] border border-[var(--green)]/30 bg-[var(--green-bg)] p-3 text-xs font-semibold text-[var(--green)]">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span>{successMsg}</span>
         </div>
@@ -199,23 +199,23 @@ export default function StoreSettings() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 1. Brand Identity & Logo */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-purple-600/20 text-purple-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <ImageIcon className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-bold text-[var(--ink)]">
                 {t('secBranding')}
               </h2>
-              <p className="text-xs text-[#8b80a8]">
+              <p className="text-xs text-[var(--ink-soft)]">
                 {t('secBrandingDesc')}
               </p>
             </div>
           </div>
 
           {logoError && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-danger-950/80 border border-danger-800/80 text-danger-300 text-xs">
-              <AlertCircle className="h-4 w-4 shrink-0 text-danger-400" />
+            <div className="flex items-center gap-2 p-3 rounded-[10px] bg-[var(--red-bg)] border border-[var(--red)]/20 text-[var(--red)] text-xs font-medium">
+              <AlertCircle className="h-4 w-4 shrink-0 text-[var(--red)]" />
               <span>{logoError}</span>
             </div>
           )}
@@ -233,16 +233,16 @@ export default function StoreSettings() {
             {/* Live Logo Preview Box */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Eye className="h-3.5 w-3.5 text-brand-400" />
+                <span className="text-xs font-bold text-[var(--ink)] flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-[var(--purple)]" />
                   {t('logoPreviewTitle')}
                 </span>
                 {form.storeLogo ? (
-                  <span className="text-[11px] font-semibold text-ok-400 bg-ok-950/60 border border-ok-900/60 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[var(--green)] bg-[var(--green-bg)] border border-[var(--green)]/20 px-2 py-0.5 rounded-full">
                     {t('currentLogo')}
                   </span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-[#8b80a8] bg-surface-800 border border-line px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[var(--ink-soft)] bg-[var(--bg)] border border-[var(--line)] px-2 py-0.5 rounded-full">
                     {t('noLogoUploaded')}
                   </span>
                 )}
@@ -251,7 +251,7 @@ export default function StoreSettings() {
               {/* Dual Preview: Light Background (Navbar) & Dark Background (Footer) */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Light Preview (Navbar style) */}
-                <div className="rounded-xl border border-line bg-white p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
+                <div className="rounded-[12px] border border-[var(--line)] bg-white p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
                     {t('previewHeader')}
                   </span>
@@ -266,11 +266,11 @@ export default function StoreSettings() {
                     />
                   ) : (
                     <div className="flex items-center gap-2 mt-3">
-                      <div className="bg-brand-700 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
+                      <div className="bg-[#7c3aed] w-8 h-8 rounded-[8px] flex items-center justify-center shadow-sm">
                         <BookOpen className="w-4 h-4 text-white" strokeWidth={2} />
                       </div>
                       <div className="leading-tight">
-                        <div className="text-[0.85rem] font-bold text-brand-800">{form.storeName || t('defaultStoreName')}</div>
+                        <div className="text-[0.85rem] font-bold text-[#5b21b6]">{form.storeName || t('defaultStoreName')}</div>
                         <div className="text-[0.55rem] text-gray-700">{t('defaultStoreTagline')}</div>
                       </div>
                     </div>
@@ -278,7 +278,7 @@ export default function StoreSettings() {
                 </div>
 
                 {/* Dark Preview (Footer style) */}
-                <div className="rounded-xl border border-line bg-[#0F0D15] p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
+                <div className="rounded-[12px] border border-[var(--line)] bg-[#0F0D15] p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-400 uppercase tracking-wider">
                     {t('previewFooter')}
                   </span>
@@ -293,7 +293,7 @@ export default function StoreSettings() {
                     />
                   ) : (
                     <div className="flex items-center gap-2 mt-3">
-                      <div className="bg-brand-700 w-8 h-8 rounded-lg flex items-center justify-center">
+                      <div className="bg-[#7c3aed] w-8 h-8 rounded-[8px] flex items-center justify-center">
                         <BookOpen className="w-4 h-4 text-white" />
                       </div>
                       <div className="leading-tight">
@@ -306,19 +306,19 @@ export default function StoreSettings() {
               </div>
 
               {form.storeLogo && (
-                <p dir="ltr" className="text-[10px] font-mono text-[#8b80a8] truncate px-1 select-all" title={form.storeLogo}>
+                <p dir="ltr" className="text-[10px] font-mono text-[var(--ink-soft)] truncate px-1 select-all" title={form.storeLogo}>
                   {form.storeLogo}
                 </p>
               )}
             </div>
 
             {/* Logo Upload & Management Actions */}
-            <div className="flex flex-col justify-center space-y-3.5 bg-ink-950/40 p-4 rounded-xl border border-line">
+            <div className="flex flex-col justify-center space-y-3.5 bg-[var(--bg)] p-4 rounded-[12px] border border-[var(--line)]">
               <div>
-                <h4 className="text-xs font-bold text-white mb-1">
+                <h4 className="text-xs font-bold text-[var(--ink)] mb-1">
                   {t('brandLogoLabel')}
                 </h4>
-                <p className="text-[11px] text-[#8b80a8] leading-relaxed">
+                <p className="text-[11px] text-[var(--ink-soft)] leading-relaxed">
                   {t('logoUploadHint')}
                 </p>
               </div>
@@ -363,15 +363,15 @@ export default function StoreSettings() {
 
         {/* 2. Store Identity & Contact Information */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <Store className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-bold text-[var(--ink)]">
                 {t('secStoreIdentity')}
               </h2>
-              <p className="text-xs text-[#8b80a8]">
+              <p className="text-xs text-[var(--ink-soft)]">
                 {t('secStoreIdentityDesc')}
               </p>
             </div>
@@ -428,15 +428,15 @@ export default function StoreSettings() {
 
         {/* 3. Hero Section */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-purple-600/20 text-purple-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <Sparkles className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-bold text-[var(--ink)]">
                 {t('secHeroConfig')}
               </h2>
-              <p className="text-xs text-[#8b80a8]">
+              <p className="text-xs text-[var(--ink-soft)]">
                 {t('secHeroConfigDesc')}
               </p>
             </div>
@@ -494,15 +494,15 @@ export default function StoreSettings() {
 
         {/* 4. Homepage Featured Book */}
         <Card className="space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-line pb-3">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-600/20 text-amber-400">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--orange-bg)] text-[var(--orange)]">
               <BookOpen className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-bold text-[var(--ink)]">
                 {t('secFeaturedBook')}
               </h2>
-              <p className="text-xs text-[#8b80a8]">
+              <p className="text-xs text-[var(--ink-soft)]">
                 {t('secFeaturedBookDesc')}
               </p>
             </div>
@@ -521,7 +521,7 @@ export default function StoreSettings() {
                 </option>
               ))}
             </Select>
-            <p className="text-[11px] text-[#8b80a8] mt-1.5">
+            <p className="text-[11px] text-[var(--ink-soft)] mt-1.5">
               {t('featuredBookSectionDesc')}
             </p>
           </div>

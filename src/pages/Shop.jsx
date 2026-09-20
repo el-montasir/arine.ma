@@ -80,17 +80,16 @@ export default function Shop() {
               onClick={() => setFilter('category', '')}
               style={
                 !category
-                  ? { backgroundColor: '#6366f1', color: '#ffffff', borderColor: '#6366f1' }
+                  ? { backgroundColor: '#6366f1', borderColor: '#6366f1', color: '#ffffff' }
                   : { color: '#6366f1', borderColor: '#6366f1', backgroundColor: 'transparent' }
               }
-              className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+              className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
                 !category ? 'shadow-sm' : ''
               }`}
             >
               {t('all')}
             </button>
             {categories.map((cat) => {
-              const color = cat.color || '#6366f1'
               const isSelected = category === cat.slug
               return (
                 <button
@@ -98,10 +97,10 @@ export default function Shop() {
                   onClick={() => setFilter('category', cat.slug)}
                   style={
                     isSelected
-                      ? { backgroundColor: color, color: '#ffffff', borderColor: color }
-                      : { color: color, borderColor: color, backgroundColor: 'transparent' }
+                      ? { backgroundColor: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', color: '#ffffff' }
+                      : { color: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', backgroundColor: 'transparent' }
                   }
-                  className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+                  className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
                     isSelected ? 'shadow-sm' : ''
                   }`}
                 >
@@ -155,17 +154,16 @@ export default function Shop() {
               onClick={() => setFilter('category', '')}
               style={
                 !category
-                  ? { backgroundColor: '#6366f1', color: '#ffffff', borderColor: '#6366f1' }
+                  ? { backgroundColor: '#6366f1', borderColor: '#6366f1', color: '#ffffff' }
                   : { color: '#6366f1', borderColor: '#6366f1', backgroundColor: 'transparent' }
               }
-              className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+              className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
                 !category ? 'shadow-sm' : ''
               }`}
             >
               {t('all')}
             </button>
             {categories.map((cat) => {
-              const color = cat.color || '#6366f1'
               const isSelected = category === cat.slug
               return (
                 <button
@@ -173,10 +171,10 @@ export default function Shop() {
                   onClick={() => setFilter('category', cat.slug)}
                   style={
                     isSelected
-                      ? { backgroundColor: color, color: '#ffffff', borderColor: color }
-                      : { color: color, borderColor: color, backgroundColor: 'transparent' }
+                      ? { backgroundColor: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', color: '#ffffff' }
+                      : { color: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', backgroundColor: 'transparent' }
                   }
-                  className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-all duration-200 hover:opacity-90 ${
+                  className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
                     isSelected ? 'shadow-sm' : ''
                   }`}
                 >

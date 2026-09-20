@@ -42,15 +42,29 @@ export function serializePublicPackage(pkg) {
     }
   })
 
-  const sumBooksPrice = books.reduce((acc, b) => acc + (b.price || 0), 0)
+  const sumBooksPrice = books.reduce((acc, b) => acc + (Number(b.price) || 0), 0)
+  const effectiveOldPrice = pkg.oldPrice ?? (sumBooksPrice > pkg.price ? sumBooksPrice : null)
+  let discount = 0
+  if (
+    effectiveOldPrice &&
+    Number.isFinite(effectiveOldPrice) &&
+    effectiveOldPrice > pkg.price &&
+    Number.isFinite(pkg.price) &&
+    pkg.price >= 0
+  ) {
+    discount = Math.max(
+      0,
+      Math.min(100, Math.round(((effectiveOldPrice - pkg.price) / effectiveOldPrice) * 100))
+    )
+  }
 
   return {
     id: pkg.id,
     title: pkg.title,
     description: pkg.description,
     price: pkg.price,
-    oldPrice: pkg.oldPrice ?? (pkg.discount > 0 && sumBooksPrice > pkg.price ? sumBooksPrice : null),
-    discount: pkg.discount,
+    oldPrice: effectiveOldPrice,
+    discount,
     image: primaryImage,
     images,
     availability: pkg.availability,

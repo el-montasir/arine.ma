@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+import api from '../utils/api'
 
 export default function usePackage(id) {
   const [pkg, setPkg] = useState(null)
@@ -15,11 +14,7 @@ export default function usePackage(id) {
     }
 
     setLoading(true)
-    fetch(`${API_BASE}/packages/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch package')
-        return res.json()
-      })
+    api.get(`/packages/${id}`)
       .then((json) => {
         setPkg(json.data || null)
         setError(null)

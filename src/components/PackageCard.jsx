@@ -31,9 +31,9 @@ export default function PackageCard({ pkg }) {
 
         {/* Badges */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-          {pkg.discount > 0 && (
+          {Number.isFinite(pkg.discount) && pkg.discount > 0 && pkg.discount <= 100 && (
             <span className="bg-brand-700 text-white text-[0.72rem] font-bold px-2.5 py-0.5 rounded-lg shadow-sm">
-              {t('saveDiscount', { percent: pkg.discount })}
+              {t('saveDiscount', { percent: Math.round(pkg.discount) })}
             </span>
           )}
           {pkg.isNew && (
@@ -100,7 +100,7 @@ export default function PackageCard({ pkg }) {
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-baseline gap-2">
               <span className="text-brand-700 font-extrabold text-xl">{formatPrice(pkg.price)}</span>
-              {pkg.oldPrice && (
+              {pkg.oldPrice && pkg.oldPrice > pkg.price && (
                 <span className="text-muted/60 text-xs line-through">{formatPrice(pkg.oldPrice)}</span>
               )}
             </div>

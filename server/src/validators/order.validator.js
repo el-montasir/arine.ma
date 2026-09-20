@@ -49,6 +49,29 @@ export const createOrderSchema = z
       .max(50, 'عدد كبير جداً من العناصر')
       .optional()
       .default([]),
+    // Optional marketing attribution context
+    attribution: z
+      .object({
+        utmSource: z.string().trim().max(100).optional().nullable(),
+        utmMedium: z.string().trim().max(100).optional().nullable(),
+        utmCampaign: z.string().trim().max(150).optional().nullable(),
+        utmContent: z.string().trim().max(150).optional().nullable(),
+        utmTerm: z.string().trim().max(150).optional().nullable(),
+        fbclid: z.string().trim().max(255).optional().nullable(),
+        fbp: z.string().trim().max(100).optional().nullable(),
+        fbc: z.string().trim().max(100).optional().nullable(),
+        metaCampaignId: z.string().trim().max(100).optional().nullable(),
+        metaCampaignName: z.string().trim().max(150).optional().nullable(),
+        firstTouch: z.any().optional().nullable(),
+        lastTouch: z.any().optional().nullable(),
+        landingPage: z.string().trim().max(500).optional().nullable(),
+        referrer: z.string().trim().max(500).optional().nullable(),
+        deviceType: z.string().trim().max(50).optional().nullable(),
+      })
+      .optional()
+      .nullable(),
+    // Client generated event ID for Purchase deduplication (optional)
+    eventId: z.string().trim().max(100).optional().nullable(),
   })
   .refine(
     (data) => (data.items && data.items.length > 0) || (data.packages && data.packages.length > 0),

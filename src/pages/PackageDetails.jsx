@@ -152,12 +152,12 @@ export default function PackageDetails() {
           {/* Pricing */}
           <div className="flex items-baseline gap-3 mt-6 flex-wrap">
             <span className="text-brand-700 font-extrabold text-3xl lg:text-4xl">{formatPrice(pkg.price)}</span>
-            {pkg.oldPrice && (
+            {pkg.oldPrice && pkg.oldPrice > pkg.price && (
               <span className="text-muted/60 text-xl line-through">{formatPrice(pkg.oldPrice)}</span>
             )}
-            {pkg.discount > 0 && (
+            {Number.isFinite(pkg.discount) && pkg.discount > 0 && pkg.discount <= 100 && (
               <span className="px-3 py-1 bg-brand-700 text-white text-xs font-bold rounded-lg shadow-sm">
-                {t('saveDiscount', { percent: pkg.discount })}
+                {t('saveDiscount', { percent: Math.round(pkg.discount) })}
               </span>
             )}
             {pkg.sumBooksPrice && pkg.sumBooksPrice > pkg.price && (

@@ -31,7 +31,7 @@ model Category {
   id        Int       @id @default(autoincrement())
   name      String
   slug      String    @unique
-  color     String    @default("#6366f1")
+  color     String?   @default("#6366f1")
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -67,6 +67,7 @@ model Product {
   orderItems   OrderItem[]
   images       ProductImage[]
   packageItems PackageItem[]
+  marketingEvents MarketingEvent[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -90,6 +91,7 @@ model Package {
   items        PackageItem[]
   images       PackageImage[]
   orderItems   PackageOrderItem[]
+  marketingEvents MarketingEvent[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -154,6 +156,8 @@ model Order {
   total         Int
   items         OrderItem[]
   packageItems  PackageOrderItem[]
+  marketingAttribution MarketingAttribution?
+  marketingEvents      MarketingEvent[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -288,4 +292,250 @@ model Session {
 
   @@index([expire], map: "IDX_session_expire")
   @@map("session")
+}
+
+// ---------------------------------------------------------
+// Marketing & Meta Ads Models
+// ---------------------------------------------------------
+
+enum MarketingEventStatus {
+  PENDING
+  SENT
+  FAILED
+  DUPLICATE
+  SKIPPED
+}
+
+enum CatalogSyncStatus {
+  SYNCED
+  PENDING
+  FAILED
+  OUT_OF_SYNC
+}
+
+enum SyncJobStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PARTIAL_SUCCESS
+}
+
+model MarketingSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("marketing_settings")
+}
+
+model MarketingConnection {
+  id             Int       @id @default(autoincrement())
+  platform       String    @unique @default("meta")
+  status         String    @default("NOT_CONFIGURED") // NOT_CONFIGURED, CONNECTED, EXPIRED, INVALID, ERROR
+  accountName    String?
+  accountId      String?
+  pixelId        String?
+  catalogId      String?
+  tokenScope     String?
+  tokenExpiresAt DateTime?
+  lastCheckedAt  DateTime?
+  lastSyncAt     DateTime?
+  errorMessage   String?
+  details        Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("marketing_connections")
+}
+
+model MarketingEvent {
+  id             Int                  @id @default(autoincrement())
+  eventId        String               @unique
+  eventName      String
+  eventTime      DateTime             @default(now())
+  source         String               @default("SERVER") // SERVER (CAPI), CLIENT (Pixel), SYSTEM
+  actionSource   String               @default("website")
+  eventSourceUrl String?
+  status         MarketingEventStatus @default(PENDING)
+
+  // Associated IDs
+  orderId        Int?
+  productId      Int?
+  packageId      Int?
+
+  // Financial & custom data
+  value          Float?
+  currency       String               @default("MAD")
+  userData       Json?
+  customData     Json?
+
+  // Delivery / CAPI diagnostics
+  retryCount     Int                  @default(0)
+  maxRetries     Int                  @default(3)
+  nextRetryAt    DateTime?
+  fbtraceId      String?
+  responseBody   Json?
+  errorMessage   String?
+
+  // Attribution relation
+  attributionId  Int?
+  attribution    MarketingAttribution? @relation(fields: [attributionId], references: [id], onDelete: SetNull)
+  order          Order?                @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  product        Product?              @relation(fields: [productId], references: [id], onDelete: SetNull)
+  package        Package?              @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([eventName])
+  @@index([status])
+  @@index([eventTime])
+  @@index([orderId])
+  @@index([attributionId])
+  @@map("marketing_events")
+}
+
+model MarketingAttribution {
+  id                  Int       @id @default(autoincrement())
+  orderId             Int?      @unique
+
+  // UTM tracking
+  utmSource           String?
+  utmMedium           String?
+  utmCampaign         String?
+  utmContent          String?
+  utmTerm             String?
+
+  // Meta click identifier
+  fbclid              String?
+  fbp                 String?
+  fbc                 String?
+
+  // Meta Campaign references
+  metaCampaignId      String?
+  metaCampaignName    String?
+  metaAdSetId         String?
+  metaAdSetName       String?
+  metaAdId            String?
+  metaAdName          String?
+
+  // Multi-touch model
+  firstTouchSource    String?
+  firstTouchMedium    String?
+  firstTouchCampaign  String?
+  firstTouchTimestamp DateTime?
+
+  lastTouchSource     String?
+  lastTouchMedium     String?
+  lastTouchCampaign   String?
+  lastTouchTimestamp  DateTime?
+
+  // Session context
+  landingPage         String?
+  referrer            String?
+  deviceType          String?
+  ipAddress           String?
+  userAgent           String?
+
+  order               Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  events              MarketingEvent[]
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([utmSource])
+  @@index([utmMedium])
+  @@index([utmCampaign])
+  @@index([metaCampaignId])
+  @@index([fbclid])
+  @@index([createdAt])
+  @@map("marketing_attributions")
+}
+
+model MarketingCatalogItem {
+  id             Int               @id @default(autoincrement())
+  itemId         String            @unique // "book-1", "pkg-2"
+  itemType       String            // 'BOOK' | 'PACKAGE'
+  productId      Int?
+  packageId      Int?
+  externalMetaId String?
+
+  title          String
+  description    String?
+  price          Int
+  currency       String            @default("MAD")
+  availability   String            @default("in stock")
+  imageUrl       String?
+  linkUrl        String?
+  category       String?
+
+  syncStatus     CatalogSyncStatus @default(PENDING)
+  lastSyncedAt   DateTime?
+  errorMessage   String?
+  syncDetails    Json?
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([syncStatus])
+  @@index([itemType])
+  @@map("marketing_catalog_items")
+}
+
+model MarketingSyncJob {
+  id           Int           @id @default(autoincrement())
+  jobType      String        // 'CATALOG_SYNC', 'CAMPAIGN_SYNC', 'EVENT_RETRY', 'TEST_EVENT'
+  status       SyncJobStatus @default(PENDING)
+  totalItems   Int           @default(0)
+  syncedItems  Int           @default(0)
+  failedItems  Int           @default(0)
+  details      Json?
+  errorMessage String?
+  startedAt    DateTime      @default(now())
+  completedAt  DateTime?
+
+  @@index([jobType])
+  @@index([status])
+  @@index([startedAt])
+  @@map("marketing_sync_jobs")
+}
+
+model MarketingCampaignCache {
+  id                Int       @id @default(autoincrement())
+  externalId        String    @unique // Meta Campaign ID
+  name              String
+  objective         String?
+  status            String    // ACTIVE, PAUSED, ARCHIVED, etc.
+  effectiveStatus   String?
+  dailyBudget       Float?
+  lifetimeBudget    Float?
+  budgetRemaining   Float?
+  startTime         DateTime?
+  stopTime          DateTime?
+
+  // Insights snapshot
+  spend             Float     @default(0)
+  impressions       Int       @default(0)
+  reach             Int       @default(0)
+  clicks            Int       @default(0)
+  cpc               Float     @default(0)
+  cpm               Float     @default(0)
+  ctr               Float     @default(0)
+  conversions       Int       @default(0)
+  metaRevenue       Float     @default(0)
+
+  // Arine local attributed metrics
+  attributedOrders  Int       @default(0)
+  attributedRevenue Float     @default(0)
+  roas              Float     @default(0)
+  cpa               Float     @default(0)
+
+  lastSyncedAt      DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status])
+  @@index([externalId])
+  @@map("marketing_campaigns_cache")
 }
