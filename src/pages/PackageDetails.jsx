@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ShoppingCart, Minus, Plus, Package as PackageIcon, BookOpen, Truck, Shield, RotateCcw, ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react'
 import usePackage from '../hooks/usePackage'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice, formatBookCount, formatPackageContains } from '../utils/format'
+import { trackViewContent } from '../utils/tracking'
 import BookCover from '../components/BookCover'
 
 export default function PackageDetails() {
@@ -15,6 +16,12 @@ export default function PackageDetails() {
   const { t, language, isRTL } = useLanguage()
   const [qty, setQty] = useState(1)
   const [selectedImageIdx, setSelectedImageIdx] = useState(0)
+
+  useEffect(() => {
+    if (pkg && pkg.id) {
+      trackViewContent({ ...pkg, isPackage: true })
+    }
+  }, [pkg?.id])
 
   const imagesList = useMemo(() => {
     if (!pkg) return []

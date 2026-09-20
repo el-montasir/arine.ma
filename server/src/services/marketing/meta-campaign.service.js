@@ -185,7 +185,7 @@ export async function listCampaigns({
     ]
   }
 
-  const [total, campaigns] = await Promise.all([
+  const [total, rawCampaigns] = await Promise.all([
     prisma.marketingCampaignCache.count({ where }),
     prisma.marketingCampaignCache.findMany({
       where,
@@ -194,6 +194,11 @@ export async function listCampaigns({
       take: limitNum,
     }),
   ])
+
+  const campaigns = rawCampaigns.map((c) => ({
+    ...c,
+    metaCampaignId: c.externalId,
+  }))
 
   return {
     campaigns,
@@ -217,6 +222,17 @@ export async function updateMetaCampaignStatus(campaignId, status) {
     throw err
   }
 
+  // Resolve numeric ID to external Meta ID if needed
+  let resolvedExternalId = String(campaignId)
+  if (/^\d+$/.test(String(campaignId))) {
+    const cached = await prisma.marketingCampaignCache.findUnique({
+      where: { id: Number(campaignId) },
+    })
+    if (cached?.externalId) {
+      resolvedExternalId = cached.externalId
+    }
+  }
+
   const settings = await getMarketingSettingsInternal()
   if (!settings.accessToken) {
     const err = new Error('رمز وصول Meta غير مهيأ')
@@ -230,13 +246,18 @@ export async function updateMetaCampaignStatus(campaignId, status) {
   })
 
   // Call Meta Graph API POST /{campaign_id}
-  await client.post(`/${campaignId}`, {
+  await client.post(`/${resolvedExternalId}`, {
     status: targetStatus,
   })
 
   // Update local cache
   const updated = await prisma.marketingCampaignCache.updateMany({
-    where: { externalId: campaignId },
+    where: {
+      OR: [
+        { externalId: resolvedExternalId },
+        { id: /^\d+$/.test(String(campaignId)) ? Number(campaignId) : undefined },
+      ],
+    },
     data: {
       status: targetStatus,
       updatedAt: new Date(),
@@ -245,7 +266,7 @@ export async function updateMetaCampaignStatus(campaignId, status) {
 
   return {
     success: true,
-    campaignId,
+    campaignId: resolvedExternalId,
     status: targetStatus,
     updated,
   }

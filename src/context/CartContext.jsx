@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import api from '../utils/api'
+import { trackAddToCart } from '../utils/tracking'
 
 const CartContext = createContext(null)
 
@@ -94,6 +95,7 @@ export function CartProvider({ children }) {
     })
     setIsCartOpen(true)
     showToast(`تمت إضافة «${book.title}» إلى السلة`)
+    trackAddToCart(book, qty)
   }
 
   const addPackageToCart = (pkg, qty = 1) => {
@@ -121,6 +123,7 @@ export function CartProvider({ children }) {
     })
     setIsCartOpen(true)
     showToast(`تمت إضافة الباقة «${pkg.title}» إلى السلة`)
+    trackAddToCart({ ...pkg, isPackage: true }, qty)
   }
 
   const updateQuantity = (keyOrId, qty) => {

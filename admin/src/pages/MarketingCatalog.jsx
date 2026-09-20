@@ -251,12 +251,14 @@ export default function MarketingCatalog() {
               label: t('colCatalogItem') || 'Item',
               render: (row) => {
                 const item = row.product || row.package || {}
-                const title = item.titleAr || item.titleFr || item.titleEn || item.name || 'Untitled'
+                const title = row.title || item.titleAr || item.titleFr || item.titleEn || item.name || item.title || 'Untitled'
+                const image = row.imageUrl || item.coverImage || item.image
+                const sku = row.itemId || row.metaItemId || item.sku || row.id
                 return (
                   <div className="flex items-center gap-3 py-1">
-                    {item.coverImage ? (
+                    {image ? (
                       <img
-                        src={item.coverImage}
+                        src={image}
                         alt={title}
                         className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)] bg-[var(--bg)]"
                       />
@@ -268,7 +270,7 @@ export default function MarketingCatalog() {
                     <div>
                       <div className="font-bold text-xs text-[var(--ink)]">{title}</div>
                       <div className="text-[10.5px] font-mono text-[var(--ink-soft)]">
-                        SKU: {row.metaItemId}
+                        SKU: {sku}
                       </div>
                     </div>
                   </div>
@@ -289,12 +291,14 @@ export default function MarketingCatalog() {
               label: t('price') || 'Price',
               render: (row) => {
                 const item = row.product || row.package || {}
+                const price = typeof row.price === 'number' ? row.price : (item.price ?? 0)
+                const comparePrice = row.compareAtPrice || item.compareAtPrice
                 return (
                   <div className="text-xs">
-                    <span className="font-bold text-[var(--ink)]">{formatMoney(item.price, language)}</span>
-                    {item.compareAtPrice && item.compareAtPrice > item.price && (
+                    <span className="font-bold text-[var(--ink)]">{formatMoney(price, language)}</span>
+                    {comparePrice && comparePrice > price && (
                       <span className="text-[10px] text-[var(--ink-soft)] line-through block">
-                        {formatMoney(item.compareAtPrice, language)}
+                        {formatMoney(comparePrice, language)}
                       </span>
                     )}
                   </div>

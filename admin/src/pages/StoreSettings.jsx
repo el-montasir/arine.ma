@@ -12,6 +12,16 @@ import {
   Loader2,
   AlertCircle,
   Eye,
+  Plus,
+  MessageSquare,
+  Clock,
+  Share2,
+  MapPin,
+  Megaphone,
+  Phone,
+  Mail,
+  Star,
+  Tag,
 } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
@@ -38,8 +48,20 @@ export default function StoreSettings() {
     storeLogo: '',
     phone: '',
     email: '',
-    whatsapp: '',
+    whatsapp1Name: '',
+    whatsapp1Number: '',
+    whatsapp2Name: '',
+    whatsapp2Number: '',
+    customerServiceDesc: '',
     address: '',
+    googleMapsUrl: '',
+    workingDays: '',
+    openingTime: '',
+    closingTime: '',
+    businessHours: '',
+    instagram: '',
+    tiktok: '',
+    announcement: '',
     heroTitle: '',
     heroSubtitle: '',
     heroBadge: '',
@@ -57,14 +79,31 @@ export default function StoreSettings() {
 
   useEffect(() => {
     if (configData) {
+      const contacts = Array.isArray(configData.store?.whatsappContacts) ? configData.store.whatsappContacts : []
+      const c1 = contacts[0] || {}
+      const c2 = contacts[1] || {}
+      const fallbackWa = configData.store?.whatsapp || '0665128821'
+
       setForm({
         storeName: configData.store?.name || '',
         storeDescription: configData.store?.description || '',
         storeLogo: configData.store?.logo || '',
         phone: configData.store?.phone || '',
         email: configData.store?.email || '',
-        whatsapp: configData.store?.whatsapp || '',
+        whatsapp1Name: c1.label || 'خدمة العملاء',
+        whatsapp1Number: c1.number || fallbackWa,
+        whatsapp2Name: c2.label || 'خط المساعدة والطلب',
+        whatsapp2Number: c2.number || fallbackWa,
+        customerServiceDesc: configData.store?.customerServiceDesc || '',
         address: configData.store?.address || '',
+        googleMapsUrl: configData.store?.googleMapsUrl || '',
+        workingDays: configData.store?.workingDays || '',
+        openingTime: configData.store?.openingTime || '',
+        closingTime: configData.store?.closingTime || '',
+        businessHours: configData.store?.businessHours || '',
+        instagram: configData.store?.instagram || '',
+        tiktok: configData.store?.tiktok || '',
+        announcement: configData.store?.announcement || '',
         heroTitle: configData.hero?.title || '',
         heroSubtitle: configData.hero?.subtitle || '',
         heroBadge: configData.hero?.badge || '',
@@ -134,6 +173,33 @@ export default function StoreSettings() {
     setErrorMsg('')
     setSuccessMsg('')
 
+    // Clean and normalize WhatsApp contacts (Exactly 2 numbers)
+    const cleanContacts = [
+      {
+        id: '1',
+        label: form.whatsapp1Name.trim() || 'خدمة العملاء',
+        number: form.whatsapp1Number.trim(),
+      },
+      {
+        id: '2',
+        label: form.whatsapp2Name.trim() || 'خط المساعدة والطلب',
+        number: form.whatsapp2Number.trim(),
+      },
+    ]
+
+    const primaryWa = cleanContacts[0].number || cleanContacts[1].number || ''
+    const cleanNumbers = cleanContacts.map((c) => c.number).filter(Boolean)
+
+    // Validate and sanitize URLs if provided
+    const validateUrl = (url) => {
+      if (!url || !url.trim()) return ''
+      const trimmed = url.trim()
+      if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+        return `https://${trimmed}`
+      }
+      return trimmed
+    }
+
     const payload = {
       store: {
         name: form.storeName.trim(),
@@ -141,8 +207,23 @@ export default function StoreSettings() {
         logo: form.storeLogo ? form.storeLogo.trim() : '',
         phone: form.phone.trim(),
         email: form.email.trim(),
-        whatsapp: form.whatsapp.trim(),
+        whatsapp: primaryWa,
+        whatsappNumbers: cleanNumbers,
+        whatsappContacts: cleanContacts,
+        whatsapp1Name: cleanContacts[0].label,
+        whatsapp1Number: cleanContacts[0].number,
+        whatsapp2Name: cleanContacts[1].label,
+        whatsapp2Number: cleanContacts[1].number,
+        customerServiceDesc: form.customerServiceDesc.trim(),
         address: form.address.trim(),
+        googleMapsUrl: validateUrl(form.googleMapsUrl),
+        workingDays: form.workingDays.trim(),
+        openingTime: form.openingTime.trim(),
+        closingTime: form.closingTime.trim(),
+        businessHours: form.businessHours.trim(),
+        instagram: validateUrl(form.instagram),
+        tiktok: validateUrl(form.tiktok),
+        announcement: form.announcement.trim(),
       },
       hero: {
         title: form.heroTitle.trim(),
@@ -250,7 +331,7 @@ export default function StoreSettings() {
 
               {/* Dual Preview: Light Background (Navbar) & Dark Background (Footer) */}
               <div className="grid grid-cols-2 gap-3">
-                {/* Light Preview (Navbar style) */}
+                {/* Light Preview */}
                 <div className="rounded-[12px] border border-[var(--line)] bg-white p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
                     {t('previewHeader')}
@@ -277,7 +358,7 @@ export default function StoreSettings() {
                   )}
                 </div>
 
-                {/* Dark Preview (Footer style) */}
+                {/* Dark Preview */}
                 <div className="rounded-[12px] border border-[var(--line)] bg-[#0F0D15] p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-400 uppercase tracking-wider">
                     {t('previewFooter')}
@@ -312,7 +393,7 @@ export default function StoreSettings() {
               )}
             </div>
 
-            {/* Logo Upload & Management Actions */}
+            {/* Actions */}
             <div className="flex flex-col justify-center space-y-3.5 bg-[var(--bg)] p-4 rounded-[12px] border border-[var(--line)]">
               <div>
                 <h4 className="text-xs font-bold text-[var(--ink)] mb-1">
@@ -361,7 +442,7 @@ export default function StoreSettings() {
           </div>
         </Card>
 
-        {/* 2. Store Identity & Contact Information */}
+        {/* 2. Store Identity */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
             <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
@@ -385,48 +466,261 @@ export default function StoreSettings() {
               placeholder={t('defaultStoreName')}
               required
             />
+            <div className="sm:col-span-2">
+              <Textarea
+                label={t('storeDescField')}
+                rows={2}
+                value={form.storeDescription}
+                onChange={set('storeDescription')}
+                placeholder={t('storeDescPlaceholder')}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* 3. Contact Details & Customer Support */}
+        <Card className="space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
+              <Phone className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--ink)]">
+                {t('contactInfoTitle') || 'معلومات التواصل وخدمة العملاء'}
+              </h2>
+              <p className="text-xs text-[var(--ink-soft)]">
+                {t('contactInfoDesc') || 'أرقام الهواتف، البريد الإلكتروني، وقنوات الدعم المباشر'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
-              label={t('storeAddressField')}
-              value={form.address}
-              onChange={set('address')}
-              placeholder={t('storeAddressPlaceholder')}
-            />
-            <Input
-              label={t('storePhoneField')}
+              label={t('storePhoneField') || 'رقم الهاتف'}
               dir="ltr"
               value={form.phone}
               onChange={set('phone')}
-              placeholder="+212 600-000000"
+              placeholder="0665128821"
             />
             <Input
-              label={t('storeWhatsappField')}
+              label={t('storeEmailField') || 'البريد الإلكتروني الرسمي'}
+              type="email"
               dir="ltr"
-              value={form.whatsapp}
-              onChange={set('whatsapp')}
-              placeholder="+212 600-000000"
+              value={form.email}
+              onChange={set('email')}
+              placeholder="arine.ma00@gmail.com"
             />
             <div className="sm:col-span-2">
               <Input
-                label={t('storeEmailField')}
-                type="email"
-                dir="ltr"
-                value={form.email}
-                onChange={set('email')}
-                placeholder="contact@arine.ma"
+                label={t('customerServiceDescField') || 'وصف خدمة العملاء'}
+                value={form.customerServiceDesc}
+                onChange={set('customerServiceDesc')}
+                placeholder={t('customerServiceDescPlaceholder') || 'نحن هنا لمساعدتك في اختيار الكتب المناسبة والإجابة عن جميع استفساراتك.'}
               />
             </div>
           </div>
 
-          <Textarea
-            label={t('storeDescField')}
-            value={form.storeDescription}
-            onChange={set('storeDescription')}
-            rows={3}
-            placeholder={t('storeDescPlaceholder')}
-          />
+          {/* WhatsApp Settings (Exactly 2 Numbers) */}
+          <div className="pt-3 border-t border-[var(--line)] space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-[var(--green)]/10 text-[var(--green)]">
+                <MessageSquare className="h-4 w-4" />
+              </span>
+              <h3 className="text-xs font-bold text-[var(--ink)]">
+                {t('whatsapp') || 'واتساب (WhatsApp)'}
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* WhatsApp 1 Card */}
+              <div className="p-4 rounded-[12px] border border-[var(--line)] bg-[var(--bg)]/40 space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-[var(--line)]">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--green)] text-white text-[10px] font-bold">
+                    1
+                  </span>
+                  <span className="text-xs font-bold text-[var(--ink)]">WhatsApp 1</span>
+                </div>
+                <Input
+                  label="اسم الرقم:"
+                  value={form.whatsapp1Name}
+                  onChange={set('whatsapp1Name')}
+                  placeholder="خدمة العملاء"
+                />
+                <Input
+                  label="رقم الواتساب:"
+                  dir="ltr"
+                  value={form.whatsapp1Number}
+                  onChange={set('whatsapp1Number')}
+                  placeholder="0665128821"
+                />
+              </div>
+
+              {/* WhatsApp 2 Card */}
+              <div className="p-4 rounded-[12px] border border-[var(--line)] bg-[var(--bg)]/40 space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-[var(--line)]">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--purple)] text-white text-[10px] font-bold">
+                    2
+                  </span>
+                  <span className="text-xs font-bold text-[var(--ink)]">WhatsApp 2</span>
+                </div>
+                <Input
+                  label="اسم الرقم:"
+                  value={form.whatsapp2Name}
+                  onChange={set('whatsapp2Name')}
+                  placeholder="خط المساعدة والطلب"
+                />
+                <Input
+                  label="رقم الواتساب:"
+                  dir="ltr"
+                  value={form.whatsapp2Number}
+                  onChange={set('whatsapp2Number')}
+                  placeholder="0665128821"
+                />
+              </div>
+            </div>
+          </div>
         </Card>
 
-        {/* 3. Hero Section */}
+        {/* 4. Location & Map */}
+        <Card className="space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
+              <MapPin className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--ink)]">
+                {t('secLocation') || 'الموقع الجغرافي والخرائط'}
+              </h2>
+              <p className="text-xs text-[var(--ink-soft)]">
+                {t('secLocationDesc') || 'العنوان الدقيق ورابط خرائط جوجل لتسهيل وصول العملاء'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label={t('storeAddressField') || 'العنوان الكامل / المقر'}
+              value={form.address}
+              onChange={set('address')}
+              placeholder="Morocco, Fes, Route Narjis"
+            />
+            <Input
+              label={t('googleMapsUrlField') || 'رابط خرائط جوجل (Google Maps URL)'}
+              dir="ltr"
+              value={form.googleMapsUrl}
+              onChange={set('googleMapsUrl')}
+              placeholder="https://maps.google.com/?q=..."
+            />
+          </div>
+        </Card>
+
+        {/* 5. Working Hours */}
+        <Card className="space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
+              <Clock className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--ink)]">
+                {t('secWorkingHours') || 'أوقات وساعات العمل'}
+              </h2>
+              <p className="text-xs text-[var(--ink-soft)]">
+                {t('secWorkingHoursDesc') || 'تحديد أيام وأوقات الدوام لخدمة العملاء'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Input
+              label={t('workingDaysField') || 'أيام العمل'}
+              value={form.workingDays}
+              onChange={set('workingDays')}
+              placeholder="السبت - الخميس"
+            />
+            <Input
+              label={t('openingTimeField') || 'وقت الفتح'}
+              value={form.openingTime}
+              onChange={set('openingTime')}
+              placeholder="09:00"
+            />
+            <Input
+              label={t('closingTimeField') || 'وقت الإغلاق'}
+              value={form.closingTime}
+              onChange={set('closingTime')}
+              placeholder="20:00"
+            />
+            <div className="sm:col-span-3">
+              <Input
+                label={t('businessHoursField') || 'نص ساعات العمل المخصص (اختياري للتجاوز)'}
+                value={form.businessHours}
+                onChange={set('businessHours')}
+                placeholder="السبت - الخميس: 9:00 ص - 8:00 م"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* 6. Social Media */}
+        <Card className="space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
+              <Share2 className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--ink)]">
+                {t('secSocial') || 'وسائل التواصل الاجتماعي'}
+              </h2>
+              <p className="text-xs text-[var(--ink-soft)]">
+                {t('secSocialDesc') || 'روابط الحسابات الرسمية على شبكات التواصل الاجتماعي'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label={t('instagramField') || 'رابط حساب إنستغرام (Instagram)'}
+              dir="ltr"
+              value={form.instagram}
+              onChange={set('instagram')}
+              placeholder="https://instagram.com/arine_bookstore"
+            />
+            <Input
+              label={t('tiktokField') || 'رابط حساب تيك توك (TikTok)'}
+              dir="ltr"
+              value={form.tiktok}
+              onChange={set('tiktok')}
+              placeholder="https://tiktok.com/@arine_bookstore"
+            />
+          </div>
+        </Card>
+
+        {/* 7. Announcement Bar */}
+        <Card className="space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
+              <Megaphone className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--ink)]">
+                {t('secAnnouncement') || 'الشريط الإعلاني الترويجي'}
+              </h2>
+              <p className="text-xs text-[var(--ink-soft)]">
+                {t('secAnnouncementDesc') || 'النص الذي يظهر في الشريط العلوي أعلى كل صفحات المتجر'}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Input
+              label={t('announcementField') || 'نص الشريط الإعلاني (اتركه فارغاً لإخفاء الشريط)'}
+              value={form.announcement}
+              onChange={set('announcement')}
+              placeholder="توصيل سريع لجميع المدن المغربية • الدفع عند الاستلام"
+            />
+          </div>
+        </Card>
+
+        {/* 8. Homepage Hero Promotional Texts & Stats */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
             <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
@@ -442,60 +736,52 @@ export default function StoreSettings() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Input
+                label={t('heroBadgeField')}
+                value={form.heroBadge}
+                onChange={set('heroBadge')}
+                placeholder="مكتبة أرين للكتب الشرعية"
+              />
+            </div>
             <Input
-              label={t('heroBadgeField')}
-              value={form.heroBadge}
-              onChange={set('heroBadge')}
-              placeholder={t('defaultStoreName')}
-            />
-
-            <Input
-              label={`${t('heroTitleField')} *`}
+              label={t('heroTitleField')}
               value={form.heroTitle}
               onChange={set('heroTitle')}
               placeholder={t('heroTitlePlaceholder')}
-              required
             />
-
-            <Textarea
+            <Input
               label={t('heroSubtitleField')}
               value={form.heroSubtitle}
               onChange={set('heroSubtitle')}
-              rows={2}
               placeholder={t('heroSubtitlePlaceholder')}
             />
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-              <Input
-                label={t('heroStatBooksField')}
-                dir="ltr"
-                value={form.heroStatBooks}
-                onChange={set('heroStatBooks')}
-                placeholder="+2000"
-              />
-              <Input
-                label={t('heroStatDeliveryField')}
-                dir="ltr"
-                value={form.heroStatDelivery}
-                onChange={set('heroStatDelivery')}
-                placeholder="24/48h"
-              />
-              <Input
-                label={t('heroStatCustomersField')}
-                dir="ltr"
-                value={form.heroStatCustomers}
-                onChange={set('heroStatCustomers')}
-                placeholder="+5000"
-              />
-            </div>
+            <Input
+              label={t('heroStatBooksField')}
+              value={form.heroStatBooks}
+              onChange={set('heroStatBooks')}
+              placeholder="+2000"
+            />
+            <Input
+              label={t('heroStatDeliveryField')}
+              value={form.heroStatDelivery}
+              onChange={set('heroStatDelivery')}
+              placeholder="24/48h"
+            />
+            <Input
+              label={t('heroStatCustomersField')}
+              value={form.heroStatCustomers}
+              onChange={set('heroStatCustomers')}
+              placeholder="+5000"
+            />
           </div>
         </Card>
 
-        {/* 4. Homepage Featured Book */}
+        {/* 9. Homepage Featured Book */}
         <Card className="space-y-5">
           <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3.5">
-            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--orange-bg)] text-[var(--orange)]">
+            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--purple-bg)] text-[var(--purple)]">
               <BookOpen className="h-4 w-4" />
             </span>
             <div>
@@ -508,30 +794,40 @@ export default function StoreSettings() {
             </div>
           </div>
 
-          <div className="max-w-md">
-            <Select
-              label={t('selectFeaturedBook')}
-              value={form.featuredBookId}
-              onChange={set('featuredBookId')}
-            >
-              <option value="">{t('selectFeaturedBookPlaceholder')}</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  #{p.id} - {p.title} ({p.author})
-                </option>
-              ))}
-            </Select>
-            <p className="text-[11px] text-[var(--ink-soft)] mt-1.5">
-              {t('featuredBookSectionDesc')}
-            </p>
-          </div>
+          <Select
+            label={t('secFeaturedBook')}
+            value={form.featuredBookId}
+            onChange={set('featuredBookId')}
+          >
+            <option value="">{t('selectFeaturedBookPlaceholder')}</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title} — {p.author} ({p.price} {t('currency')})
+              </option>
+            ))}
+          </Select>
         </Card>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="submit" variant="primary" disabled={busy || uploadingLogo}>
-            <Save className="h-4 w-4" aria-hidden="true" />
-            {busy ? t('saving') : t('saveChanges')}
+        {/* Submit Button */}
+        <div className="flex justify-end pt-2">
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={busy}
+            className="min-w-[180px]"
+          >
+            {busy ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('saving')}</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                <span>{t('saveChanges')}</span>
+              </>
+            )}
           </Button>
         </div>
       </form>

@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CheckCircle2, User, MapPin, CreditCard, ArrowLeft, ArrowRight, Package, Truck } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { trackPurchase } from '../utils/tracking'
 
 export default function OrderSuccess() {
   const { state } = useLocation()
@@ -19,6 +21,30 @@ export default function OrderSuccess() {
       order = null
     }
   }
+
+  useEffect(() => {
+    if (order && order.orderNumber) {
+      const trackedKey = `arine_tracked_order_${order.orderNumber}`
+      try {
+        if (!sessionStorage.getItem(trackedKey)) {
+          trackPurchase({
+            orderNumber: order.orderNumber,
+            total: order.total,
+            items: order.items || [],
+            eventId: order.eventId || order.orderNumber,
+          })
+          sessionStorage.setItem(trackedKey, '1')
+        }
+      } catch {
+        trackPurchase({
+          orderNumber: order.orderNumber,
+          total: order.total,
+          items: order.items || [],
+          eventId: order.eventId || order.orderNumber,
+        })
+      }
+    }
+  }, [order?.orderNumber])
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 

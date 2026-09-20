@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 import books from '../data/books'
 import api from '../utils/api'
+import { trackViewContent } from '../utils/tracking'
 
 export default function BookDetails() {
   const { id } = useParams()
@@ -52,6 +53,12 @@ export default function BookDetails() {
   // CRITICAL: API data takes absolute priority when loaded successfully.
   // Only use local book during loading or when API genuinely failed.
   const book = apiBook || (loading || apiError ? localBook : null)
+
+  useEffect(() => {
+    if (book && book.id) {
+      trackViewContent(book)
+    }
+  }, [book?.id])
 
   const imagesList = useMemo(() => {
     if (!book) return []

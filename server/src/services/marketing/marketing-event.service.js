@@ -261,6 +261,8 @@ export async function sendTestEvent({
 export async function getTrackingHealth() {
   const settings = await getMarketingSettingsInternal()
   const conn = await getOrCreateConnection()
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const [
     totalEvents,
@@ -269,7 +271,10 @@ export async function getTrackingHealth() {
     pendingEvents,
     lastSuccessEvent,
     lastFailedEvent,
-    recentEventsCount,
+    totalEvents24h,
+    succeededEvents24h,
+    failedEvents24h,
+    totalEvents7d,
   ] = await Promise.all([
     prisma.marketingEvent.count(),
     prisma.marketingEvent.count({ where: { status: 'SENT' } }),
@@ -284,13 +289,21 @@ export async function getTrackingHealth() {
       orderBy: { eventTime: 'desc' },
     }),
     prisma.marketingEvent.count({
-      where: {
-        eventTime: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-      },
+      where: { eventTime: { gte: since24h } },
+    }),
+    prisma.marketingEvent.count({
+      where: { status: 'SENT', eventTime: { gte: since24h } },
+    }),
+    prisma.marketingEvent.count({
+      where: { status: 'FAILED', eventTime: { gte: since24h } },
+    }),
+    prisma.marketingEvent.count({
+      where: { eventTime: { gte: since7d } },
     }),
   ])
 
   // Pixel status
+  const pixelConfigured = Boolean(settings.pixelId && settings.pixelEnabled)
   const pixelStatus = !settings.pixelId
     ? 'NOT_CONFIGURED'
     : !settings.pixelEnabled
@@ -300,6 +313,7 @@ export async function getTrackingHealth() {
     : 'CONFIGURED'
 
   // CAPI status
+  const capiConfigured = Boolean(settings.pixelId && settings.capiEnabled && (settings.capiToken || settings.accessToken))
   const capiStatus = !settings.pixelId || (!settings.capiToken && !settings.accessToken)
     ? 'NOT_CONFIGURED'
     : !settings.capiEnabled
@@ -323,9 +337,18 @@ export async function getTrackingHealth() {
     eventsHealth = 'WARNING'
   }
 
-  const deliveryRate = totalEvents > 0 ? Number(((sentEvents / (sentEvents + failedEvents || 1)) * 100).toFixed(1)) : 100
+  const deliveryRate = (sentEvents + failedEvents) > 0
+    ? Number(((sentEvents / (sentEvents + failedEvents)) * 100).toFixed(1))
+    : 100
 
   return {
+    pixelConfigured,
+    capiConfigured,
+    eventDeliveryRate: deliveryRate,
+    totalEvents24h,
+    succeededEvents24h,
+    failedEvents24h,
+    totalEvents7d,
     pixel: {
       status: pixelStatus,
       pixelId: settings.pixelId || null,
@@ -346,7 +369,11 @@ export async function getTrackingHealth() {
       sentEvents,
       failedEvents,
       pendingEvents,
-      recentEvents24h: recentEventsCount,
+      recentEvents24h: totalEvents24h,
+      totalEvents24h,
+      succeededEvents24h,
+      failedEvents24h,
+      totalEvents7d,
       deliveryRate,
     },
     lastSuccess: lastSuccessEvent ? {

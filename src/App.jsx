@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
 import { CartProvider } from './context/CartContext'
+import { initMetaPixel, trackPageView, captureAttribution } from './utils/tracking'
 import AnnouncementBar from './components/AnnouncementBar'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -22,11 +23,13 @@ import Contact from './pages/Contact'
 import LibraryEntry from './pages/LibraryEntry'
 import NotFound from './pages/NotFound'
 
-function ScrollToTop() {
-  const { pathname } = useLocation()
+function RouteTracker() {
+  const { pathname, search } = useLocation()
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [pathname])
+    captureAttribution()
+    trackPageView()
+  }, [pathname, search])
   return null
 }
 
@@ -42,11 +45,15 @@ function Layout({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    initMetaPixel()
+  }, [])
+
   return (
     <BrowserRouter>
       <LanguageProvider>
         <CartProvider>
-          <ScrollToTop />
+          <RouteTracker />
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />

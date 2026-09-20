@@ -23,7 +23,7 @@ export class OrderError extends Error {
  * Supports both regular book items and package items in the same cart.
  */
 export async function createOrder(input) {
-  return prisma.$transaction(async (tx) => {
+  const order = await prisma.$transaction(async (tx) => {
     // 1. Fetch the products (books) that the frontend claims are in the cart.
     const bookIds = (input.items || []).map((i) => i.productId)
     const products = await tx.product.findMany({

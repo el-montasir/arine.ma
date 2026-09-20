@@ -204,20 +204,31 @@ export async function getAttributionOverview({
   const overallRoas = totalMetaSpend > 0 ? Number((totalAttributedRevenue / totalMetaSpend).toFixed(2)) : 0
   const overallCpa = totalAttributedOrders > 0 && totalMetaSpend > 0 ? Number((totalMetaSpend / totalAttributedOrders).toFixed(2)) : 0
 
+  const summary = {
+    totalOrders: orders.length,
+    totalRevenue: orders.reduce((sum, o) => sum + (o.total || 0), 0),
+    totalAttributedOrders,
+    attributedOrders: totalAttributedOrders,
+    totalAttributedRevenue,
+    attributedRevenue: totalAttributedRevenue,
+    directOrders,
+    directRevenue,
+    totalMetaSpend,
+    spend: totalMetaSpend,
+    ordersPercentage: orders.length > 0 ? Math.round((totalAttributedOrders / orders.length) * 100) : 0,
+    overallRoas,
+    blendedRoas: overallRoas,
+    overallCpa,
+    blendedCpa: overallCpa,
+  }
+
   return {
-    summary: {
-      totalOrders: orders.length,
-      totalRevenue: orders.reduce((sum, o) => sum + (o.total || 0), 0),
-      totalAttributedOrders,
-      totalAttributedRevenue,
-      directOrders,
-      directRevenue,
-      totalMetaSpend,
-      overallRoas,
-      overallCpa,
-    },
+    summary,
+    totals: summary,
     sources,
+    bySource: sources,
     campaigns,
+    byCampaign: campaigns,
   }
 }
 
@@ -263,7 +274,7 @@ export async function listAttributedOrders({
     }
   }
 
-  const [total, orders] = await Promise.all([
+  const [total, rawOrders] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({
       where,
@@ -285,6 +296,12 @@ export async function listAttributedOrders({
       },
     }),
   ])
+
+  const orders = rawOrders.map((o) => ({
+    ...o,
+    customerName: o.fullName,
+    customerPhone: o.phone,
+  }))
 
   return {
     orders,

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MapPin, CreditCard, ArrowRight, ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { trackInitiateCheckout, generateClientEventId, getAttributionData } from '../utils/tracking'
 import api from '../utils/api'
 
 const INITIAL_FORM = {
@@ -24,6 +25,12 @@ export default function Checkout() {
   const [fieldErrors, setFieldErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (items.length > 0) {
+      trackInitiateCheckout(items, total)
+    }
+  }, [])
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
@@ -80,6 +87,9 @@ export default function Checkout() {
         .filter((i) => i.isPackage)
         .map((i) => ({ packageId: i.packageId || Number(String(i.id).replace('pkg-', '')), quantity: i.quantity }))
 
+      const eventId = generateClientEventId('pur')
+      const attribution = getAttributionData()
+
       const res = await api.post('/orders', {
         fullName: form.fullName.trim(),
         phone: form.phone.trim(),
@@ -89,6 +99,8 @@ export default function Checkout() {
         paymentMethod: form.paymentMethod,
         items: bookItems,
         packages: packageItems,
+        attribution,
+        eventId,
       })
 
       // Success: the server confirmed the order.
@@ -99,6 +111,8 @@ export default function Checkout() {
         fullName: form.fullName.trim(),
         city: form.city.trim(),
         paymentMethod: form.paymentMethod,
+        items: items,
+        eventId: eventId,
       }
       try {
         sessionStorage.setItem('arine-last-order', JSON.stringify(receipt))
