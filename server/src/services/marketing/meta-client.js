@@ -37,6 +37,13 @@ export class MetaClient {
   }
 
   /**
+   * Alias for hashUserData
+   */
+  static hash(value) {
+    return this.hashUserData(value)
+  }
+
+  /**
    * Normalizes and hashes phone number (+212... format or digits only)
    */
   static hashPhone(phone) {

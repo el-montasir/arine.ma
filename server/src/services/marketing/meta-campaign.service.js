@@ -251,12 +251,14 @@ export async function updateMetaCampaignStatus(campaignId, status) {
   })
 
   // Update local cache
+  const orConditions = [{ externalId: resolvedExternalId }]
+  if (/^\d+$/.test(String(campaignId))) {
+    orConditions.push({ id: Number(campaignId) })
+  }
+
   const updated = await prisma.marketingCampaignCache.updateMany({
     where: {
-      OR: [
-        { externalId: resolvedExternalId },
-        { id: /^\d+$/.test(String(campaignId)) ? Number(campaignId) : undefined },
-      ],
+      OR: orConditions,
     },
     data: {
       status: targetStatus,

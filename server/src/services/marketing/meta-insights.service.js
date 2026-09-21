@@ -3,6 +3,18 @@ import { MetaClient } from './meta-client.js'
 import { getMarketingSettingsInternal } from './meta-auth.service.js'
 
 /**
+ * Format a Date object to YYYY-MM-DD string consistently
+ */
+function formatDateKey(d) {
+  if (!d) return ''
+  const date = new Date(d)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * Fetch Meta Marketing Insights and blend with Arine order attribution
  */
 export async function getMarketingInsights({
@@ -27,13 +39,18 @@ export async function getMarketingInsights({
   } else if (period === 'last_7d') {
     dateSince.setDate(dateSince.getDate() - 7)
     dateSince.setHours(0, 0, 0, 0)
+    dateUntil.setHours(23, 59, 59, 999)
   } else if (period === 'last_30d') {
     dateSince.setDate(dateSince.getDate() - 30)
     dateSince.setHours(0, 0, 0, 0)
+    dateUntil.setHours(23, 59, 59, 999)
   } else if (period === 'custom' && startDate) {
     dateSince = new Date(startDate)
+    dateSince.setHours(0, 0, 0, 0)
     if (endDate) {
       dateUntil = new Date(endDate)
+      dateUntil.setHours(23, 59, 59, 999)
+    } else {
       dateUntil.setHours(23, 59, 59, 999)
     }
   }
@@ -89,8 +106,8 @@ export async function getMarketingInsights({
     const adAccId = settings.adAccountId.startsWith('act_') ? settings.adAccountId : `act_${settings.adAccountId}`
 
     const timeRangeParam = {
-      since: dateSince.toISOString().slice(0, 10),
-      until: dateUntil.toISOString().slice(0, 10),
+      since: formatDateKey(dateSince),
+      until: formatDateKey(dateUntil),
     }
 
     try {
@@ -143,7 +160,7 @@ export async function getMarketingInsights({
   // Initialize date range buckets
   const curr = new Date(dateSince)
   while (curr <= dateUntil) {
-    const dStr = curr.toISOString().slice(0, 10)
+    const dStr = formatDateKey(curr)
     dateMap.set(dStr, {
       date: dStr,
       spend: 0,
@@ -170,7 +187,7 @@ export async function getMarketingInsights({
 
   // Fill orders and revenue
   for (const order of allOrders) {
-    const dStr = order.createdAt.toISOString().slice(0, 10)
+    const dStr = formatDateKey(order.createdAt)
     if (dateMap.has(dStr)) {
       const b = dateMap.get(dStr)
       b.orders++
@@ -179,7 +196,7 @@ export async function getMarketingInsights({
   }
 
   for (const attrOrder of attributedOrders) {
-    const dStr = attrOrder.createdAt.toISOString().slice(0, 10)
+    const dStr = formatDateKey(attrOrder.createdAt)
     if (dateMap.has(dStr)) {
       const b = dateMap.get(dStr)
       b.attributedOrders++
