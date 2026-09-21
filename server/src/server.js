@@ -2,7 +2,8 @@ import 'dotenv/config'
 import app from './app.js'
 
 const PORT = Number(process.env.PORT || 4000)
+const HOST = process.env.HOST || '0.0.0.0'
 
-app.listen(PORT, () => {
-  console.log(`✅ Arine API running on http://localhost:${PORT}/api`)
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Arine API running on port ${PORT} (bound to ${HOST})`)
 })
