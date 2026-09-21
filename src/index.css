@@ -1,26 +1,38 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
 
 @theme {
   --font-arabic: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', system-ui, sans-serif;
   --font-tajawal: 'Tajawal', 'IBM Plex Sans Arabic', sans-serif;
 
-  --color-brand-50: #F5F3FF;
-  --color-brand-100: #EDE9FE;
+  --color-brand-050: #F6EDF9;
+  --color-brand-50: #F6EDF9;
+  --color-brand-100: #EBDCF1;
   --color-brand-200: #DDD6FE;
   --color-brand-300: #C4B5FD;
   --color-brand-400: #A78BFA;
-  --color-brand-500: #8B5CF6;
-  --color-brand-600: #7C3AED;
-  --color-brand-700: #6D28D9;
-  --color-brand-800: #5B21B6;
-  --color-brand-900: #4C1D95;
+  --color-brand-500: #8F3AA1;
+  --color-brand-600: #7C2D8E;
+  --color-brand-700: #6B2178;
+  --color-brand-800: #57195F;
+  --color-brand-900: #3E1147;
 
+  --color-mint-050: #E8F7F1;
+  --color-mint-700: #0F6E51;
+  --color-gold: #B8862B;
+
+  --color-page: #FCFAFD;
   --color-surface: #FFFFFF;
-  --color-background: #FAF9F7;
-  --color-foreground: #18181B;
-  --color-muted: #71717A;
-  --color-border: #E4E4E7;
-  --color-border-light: #F4F4F5;
+  --color-surface-2: #F5F1F7;
+  --color-ink: #1C1220;
+  --color-ink-2: #4A3D50;
+  --color-muted: #7A6D80;
+  --color-line: #EFE8F2;
+
+  --color-background: #FCFAFD;
+  --color-foreground: #1C1220;
+  --color-border: #EFE8F2;
+  --color-border-light: #F5F1F7;
 }
 
 html {

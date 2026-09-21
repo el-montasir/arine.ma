@@ -40,10 +40,10 @@ export default function Checkout() {
   }
 
   const inputClass = (hasError) =>
-    `w-full px-4 py-3 bg-[#F3F4F6] border rounded-xl text-[0.88rem] text-foreground placeholder:text-muted/60 outline-none focus:bg-white transition-colors ${
+    `w-full px-4 py-3.5 bg-[#F5F1F7] border rounded-[14px] text-[0.88rem] text-[#1C1220] placeholder:text-[#7A6D80]/50 outline-none focus:bg-white focus:ring-2 focus:ring-[#EBDCF1] transition-all ${
       hasError
-        ? 'border-red-300 focus:border-red-400'
-        : 'border-border/60 focus:border-brand-400'
+        ? 'border-red-300 focus:border-red-500'
+        : 'border-[#EFE8F2] focus:border-[#8F3AA1]'
     }`
 
   function validate() {
@@ -131,8 +131,11 @@ export default function Checkout() {
   if (items.length === 0) {
     return (
       <div className="max-w-[1440px] mx-auto px-4 py-16 text-center">
-        <h2 className="text-xl font-bold text-foreground mb-2">{t('emptyCartTitle')}</h2>
-        <Link to="/shop" className="mt-4 inline-block px-6 py-3 bg-brand-700 text-white rounded-xl font-medium">
+        <h2 className="text-2xl font-tajawal font-extrabold text-[#1C1220] mb-2">{t('emptyCartTitle')}</h2>
+        <Link
+          to="/shop"
+          className="mt-4 inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 text-white font-bold rounded-[14px] shadow-md shadow-[#6B2178]/20 transition-all"
+        >
           {t('backToStore')}
         </Link>
       </div>
@@ -140,37 +143,37 @@ export default function Checkout() {
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-8">
-      <nav className="flex items-center gap-2 text-[0.82rem] text-muted mb-6">
-        <Link to="/cart" className="hover:text-brand-700 transition-colors">{t('cart')}</Link>
+    <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-8 sm:py-10">
+      <nav className="flex items-center gap-2 text-[0.82rem] text-[#7A6D80] mb-6">
+        <Link to="/cart" className="hover:text-[#6B2178] transition-colors">{t('cart')}</Link>
         <span>/</span>
-        <span className="text-foreground/70">{t('checkout')}</span>
+        <span className="text-[#1C1220] font-semibold">{t('checkout')}</span>
       </nav>
 
-      <h1 className="text-2xl font-bold text-foreground mb-8">{t('checkout')}</h1>
+      <h1 className="text-2xl sm:text-3xl font-tajawal font-extrabold text-[#1C1220] mb-8">{t('checkout')}</h1>
 
       {formError && (
         <div
           role="alert"
-          className="mb-6 flex items-center gap-2.5 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-[0.85rem] rounded-xl"
+          className="mb-6 flex items-center gap-2.5 px-4 py-3.5 bg-red-50 border border-red-200 text-red-700 text-[0.88rem] rounded-[14px]"
         >
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {formError}
+          <span>{formError}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
         {/* Form */}
-        <div className="flex-1 space-y-8">
+        <div className="flex-1 space-y-6 sm:space-y-8">
           {/* Customer info */}
-          <div className="bg-white border border-border/60 rounded-2xl p-6">
-            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <div className="w-7 h-7 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center text-[0.82rem] font-bold">1</div>
-              {t('contactInfo')}
+          <div className="bg-white border border-[#EFE8F2] rounded-[22px] p-6 sm:p-7 shadow-[0_1px_2px_rgba(62,17,71,.03),0_6px_18px_-10px_rgba(62,17,71,.08)]">
+            <h3 className="font-tajawal font-extrabold text-base sm:text-lg text-[#1C1220] mb-5 flex items-center gap-2.5 pb-3.5 border-b border-[#EFE8F2]">
+              <div className="w-7 h-7 bg-[#F6EDF9] text-[#6B2178] border border-[#EBDCF1] rounded-full flex items-center justify-center text-[0.82rem] font-bold shadow-2xs">1</div>
+              <span>{t('contactInfo')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[0.82rem] text-muted mb-1.5">{t('fullName')}</label>
+                <label className="block text-[0.82rem] text-[#4A3D50] font-semibold mb-1.5">{t('fullName')} *</label>
                 <input
                   type="text"
                   placeholder={t('fullNamePlaceholder')}
@@ -184,7 +187,7 @@ export default function Checkout() {
                 )}
               </div>
               <div>
-                <label className="block text-[0.82rem] text-muted mb-1.5">{t('phone')}</label>
+                <label className="block text-[0.82rem] text-[#4A3D50] font-semibold mb-1.5">{t('phone')} *</label>
                 <input
                   type="tel"
                   placeholder={t('phonePlaceholder')}
@@ -201,15 +204,15 @@ export default function Checkout() {
           </div>
 
           {/* Address */}
-          <div className="bg-white border border-border/60 rounded-2xl p-6">
-            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <div className="w-7 h-7 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center text-[0.82rem] font-bold">2</div>
-              <MapPin className="w-4 h-4" />
-              {t('deliveryAddress')}
+          <div className="bg-white border border-[#EFE8F2] rounded-[22px] p-6 sm:p-7 shadow-[0_1px_2px_rgba(62,17,71,.03),0_6px_18px_-10px_rgba(62,17,71,.08)]">
+            <h3 className="font-tajawal font-extrabold text-base sm:text-lg text-[#1C1220] mb-5 flex items-center gap-2.5 pb-3.5 border-b border-[#EFE8F2]">
+              <div className="w-7 h-7 bg-[#F6EDF9] text-[#6B2178] border border-[#EBDCF1] rounded-full flex items-center justify-center text-[0.82rem] font-bold shadow-2xs">2</div>
+              <MapPin className="w-4 h-4 text-[#6B2178]" />
+              <span>{t('deliveryAddress')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-[0.82rem] text-muted mb-1.5">{t('address')}</label>
+                <label className="block text-[0.82rem] text-[#4A3D50] font-semibold mb-1.5">{t('address')} *</label>
                 <input
                   type="text"
                   placeholder={t('addressPlaceholder')}
@@ -223,7 +226,7 @@ export default function Checkout() {
                 )}
               </div>
               <div>
-                <label className="block text-[0.82rem] text-muted mb-1.5">{t('city')}</label>
+                <label className="block text-[0.82rem] text-[#4A3D50] font-semibold mb-1.5">{t('city')} *</label>
                 <input
                   type="text"
                   placeholder={t('cityPlaceholder')}
@@ -237,7 +240,7 @@ export default function Checkout() {
                 )}
               </div>
               <div>
-                <label className="block text-[0.82rem] text-muted mb-1.5">{t('orderNotes')}</label>
+                <label className="block text-[0.82rem] text-[#4A3D50] font-semibold mb-1.5">{t('orderNotes')}</label>
                 <input
                   type="text"
                   placeholder={t('orderNotesPlaceholder')}
@@ -250,34 +253,34 @@ export default function Checkout() {
           </div>
 
           {/* Payment */}
-          <div className="bg-white border border-border/60 rounded-2xl p-6">
-            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <div className="w-7 h-7 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center text-[0.82rem] font-bold">3</div>
-              <CreditCard className="w-4 h-4" />
-              {t('paymentMethod')}
+          <div className="bg-white border border-[#EFE8F2] rounded-[22px] p-6 sm:p-7 shadow-[0_1px_2px_rgba(62,17,71,.03),0_6px_18px_-10px_rgba(62,17,71,.08)]">
+            <h3 className="font-tajawal font-extrabold text-base sm:text-lg text-[#1C1220] mb-5 flex items-center gap-2.5 pb-3.5 border-b border-[#EFE8F2]">
+              <div className="w-7 h-7 bg-[#F6EDF9] text-[#6B2178] border border-[#EBDCF1] rounded-full flex items-center justify-center text-[0.82rem] font-bold shadow-2xs">3</div>
+              <CreditCard className="w-4 h-4 text-[#6B2178]" />
+              <span>{t('paymentMethod')}</span>
             </h3>
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-4 bg-brand-50 border-2 border-brand-200 rounded-xl cursor-pointer">
+              <label className="flex items-center gap-3.5 p-4 bg-[#F6EDF9] border-2 border-[#8F3AA1] rounded-[16px] cursor-pointer transition-all shadow-xs">
                 <input
                   type="radio"
                   name="payment"
                   value="CASH_ON_DELIVERY"
                   checked={form.paymentMethod === 'CASH_ON_DELIVERY'}
                   onChange={update('paymentMethod')}
-                  className="accent-brand-700"
+                  className="accent-[#6B2178] w-4 h-4"
                 />
                 <div>
-                  <div className="font-semibold text-foreground text-[0.88rem]">
+                  <div className="font-bold text-[#1C1220] text-[0.92rem]">
                     {t('cashOnDelivery')}
                   </div>
-                  <div className="text-[0.75rem] text-muted">{t('cashOnDeliveryDesc')}</div>
+                  <div className="text-[0.78rem] text-[#7A6D80]">{t('cashOnDeliveryDesc')}</div>
                 </div>
               </label>
-              <label className="flex items-center gap-3 p-4 bg-white border border-border rounded-xl cursor-not-allowed opacity-60">
-                <input type="radio" name="payment" disabled />
+              <label className="flex items-center gap-3.5 p-4 bg-[#F5F1F7] border border-[#EFE8F2] rounded-[16px] cursor-not-allowed opacity-60">
+                <input type="radio" name="payment" disabled className="w-4 h-4" />
                 <div>
-                  <div className="font-semibold text-foreground text-[0.88rem]">{t('creditCardSoon')}</div>
-                  <div className="text-[0.75rem] text-muted">{t('securePayment')}</div>
+                  <div className="font-bold text-[#1C1220] text-[0.92rem]">{t('creditCardSoon')}</div>
+                  <div className="text-[0.78rem] text-[#7A6D80]">{t('securePayment')}</div>
                 </div>
               </label>
             </div>
@@ -286,51 +289,51 @@ export default function Checkout() {
 
         {/* Order Summary */}
         <div className="lg:w-[360px]">
-          <div className="bg-white border border-border/60 rounded-2xl p-6 sticky top-28">
-            <h3 className="font-bold text-foreground mb-4">{t('orderSummary')}</h3>
+          <div className="bg-white border border-[#EFE8F2] rounded-[24px] p-6 lg:p-7 shadow-[0_1px_2px_rgba(62,17,71,.04),0_12px_32px_-12px_rgba(62,17,71,.12)] sticky top-28">
+            <h3 className="font-tajawal font-extrabold text-lg text-[#1C1220] mb-5 pb-3 border-b border-[#EFE8F2]">{t('orderSummary')}</h3>
 
-            <div className="space-y-3 mb-4">
+            <div className="space-y-3 mb-5 max-h-60 overflow-y-auto pr-1">
               {items.map((item) => (
-                <div key={item.key || item.id} className="flex justify-between text-[0.82rem]">
-                  <span className="text-foreground/70">{item.title} × {item.quantity}</span>
-                  <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+                <div key={item.key || item.id} className="flex justify-between items-start text-[0.84rem] gap-2">
+                  <span className="text-[#4A3D50] line-clamp-1">{item.title} × {item.quantity}</span>
+                  <span className="font-bold text-[#1C1220] shrink-0">{formatPrice(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-border pt-4 space-y-2 text-[0.88rem]">
-              <div className="flex justify-between">
-                <span className="text-muted">{t('subtotal')}</span>
-                <span>{formatPrice(subtotal)}</span>
+            <div className="border-t border-[#EFE8F2] pt-4 space-y-3 text-[0.88rem]">
+              <div className="flex justify-between items-center">
+                <span className="text-[#7A6D80] font-medium">{t('subtotal')}</span>
+                <span className="font-bold text-[#1C1220]">{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted">{t('shipping')}</span>
-                <span className={shipping === 0 ? 'text-emerald-600 font-medium' : ''}>
+              <div className="flex justify-between items-center">
+                <span className="text-[#7A6D80] font-medium">{t('shipping')}</span>
+                <span className={`font-bold ${shipping === 0 ? 'text-[#0F6E51]' : 'text-[#1C1220]'}`}>
                   {shipping === 0 ? t('free') : formatPrice(shipping)}
                 </span>
               </div>
               {shipping === 0 && (
-                <div className="text-[0.75rem] text-emerald-600">
+                <div className="text-[0.78rem] text-[#0F6E51] bg-[#E8F7F1] border border-[#0F6E51]/15 px-3 py-2 rounded-xl font-semibold">
                   {items.some((i) => i.shippingMode === 'free' || i.shippingMode === 'FREE')
                     ? t('freeShippingProductQualified')
                     : t('freeShippingQualified')}
                 </div>
               )}
-              <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
-                <span>{t('total')}</span>
-                <span className="text-brand-700">{formatPrice(total)}</span>
+              <div className="border-t border-[#EFE8F2] pt-4 flex justify-between items-baseline">
+                <span className="font-bold text-base text-[#1C1220]">{t('total')}</span>
+                <span className="font-tajawal font-extrabold text-2xl text-[#6B2178]">{formatPrice(total)}</span>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 bg-brand-700 hover:bg-brand-800 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[0.92rem] font-semibold rounded-xl text-center transition-colors mt-6 flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-base font-bold rounded-[16px] text-center transition-all shadow-lg shadow-[#6B2178]/25 active:scale-[0.99] mt-6 flex items-center justify-center gap-2 cursor-pointer"
             >
               {submitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t('processingOrder')}
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>{t('processingOrder')}</span>
                 </>
               ) : (
                 <>
@@ -340,7 +343,7 @@ export default function Checkout() {
               )}
             </button>
 
-            <p className="text-[0.72rem] text-muted text-center mt-3">
+            <p className="text-[0.75rem] text-[#7A6D80] text-center mt-3.5">
               {t('agreeTerms')}
             </p>
           </div>

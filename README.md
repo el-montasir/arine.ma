@@ -146,20 +146,37 @@ If the backend is unreachable the checkout shows an error, **keeps your cart and
 ## Project structure
 
 ```
+├── docs/                     # Project documentation, guides, architecture & audits
 ├── docker-compose.yml        # PostgreSQL
 ├── src/                      # React frontend
 │   ├── context/CartContext.jsx
 │   ├── hooks/useProducts.js  # API-backed products (local fallback)
 │   ├── pages/                # Shop, BookDetails, Checkout, OrderSuccess, …
+│   ├── styles/tokens.css     # Central design tokens
 │   └── utils/api.js          # fetch wrapper (VITE_API_URL)
+├── admin/                    # Admin Panel (React + Vite SPA)
+│   ├── src/pages/            # Dashboard, Orders, Products, Packages, Settings, …
+│   └── src/context/          # Admin Auth, Theme, Language context
 └── server/                   # Express + Prisma backend
     ├── prisma/schema.prisma  # models + enums
     ├── prisma/seed.js        # catalog seed
+    ├── scripts/              # Migration, verification and test scripts
     └── src/
         ├── app.js            # middleware, routes, error handling
-        ├── routes/           # products · categories · orders
+        ├── routes/           # products · categories · orders · admin
         ├── controllers/
-        ├── services/         # order pricing in a Prisma transaction
-        ├── middleware/       # validation + centralized errors
+        ├── services/         # order pricing, auth, shipping, RBAC
+        ├── middleware/       # validation, auth, rate-limiting & error handling
         └── utils/            # order-number, shipping rule, responses
 ```
+
+---
+
+## Documentation
+
+Comprehensive project documentation is available in the [`docs/`](./docs/README.md) directory:
+- [Admin Documentation](./docs/admin/)
+- [Architecture & Security](./docs/architecture/)
+- [Audit Reports](./docs/audits/)
+- [Design References](./docs/design-references/)
+- [Implementation Logs](./docs/logs/)
