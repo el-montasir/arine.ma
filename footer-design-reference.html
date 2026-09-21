@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>أرين — Footer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple:#8b2f9e; --purple-deep:#4c1660; --purple-light:#c25fd6;
+    --gold:#d3a95f;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:#faf8fc; font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif; }
+  .tajawal{ font-family:'Tajawal',sans-serif; }
+  .spacer{ height:60px; }
+
+  footer{
+    position:relative; background:#120a17; color:#cfc4da; overflow:hidden;
+    padding-top:64px;
+  }
+  /* soft glow accents */
+  footer::before{
+    content:""; position:absolute; top:-140px; right:-120px; width:420px; height:420px;
+    background:radial-gradient(circle, rgba(139,47,158,.35), transparent 70%); pointer-events:none;
+  }
+  footer::after{
+    content:""; position:absolute; bottom:-160px; left:-100px; width:380px; height:380px;
+    background:radial-gradient(circle, rgba(76,22,96,.4), transparent 70%); pointer-events:none;
+  }
+  .top-line{
+    height:2px; background:linear-gradient(90deg, transparent, var(--purple-light), var(--gold), var(--purple-light), transparent);
+  }
+
+  .f-wrap{ max-width:1280px; margin:0 auto; padding:0 40px; position:relative; z-index:1; }
+
+  /* Newsletter strip */
+  .newsletter{
+    display:flex; align-items:center; justify-content:space-between; gap:24px;
+    background:linear-gradient(120deg, rgba(139,47,158,.16), rgba(76,22,96,.28));
+    border:1px solid rgba(194,95,214,.25); border-radius:20px; padding:26px 32px;
+    margin-bottom:56px; flex-wrap:wrap;
+  }
+  .newsletter h3{ font-family:'Tajawal',sans-serif; font-weight:800; color:#fff; font-size:19px; margin:0 0 4px; }
+  .newsletter p{ margin:0; font-size:13px; color:#b6a9c4; }
+  .newsletter-form{ display:flex; gap:10px; flex:none; }
+  .newsletter-form input{
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius:11px;
+    padding:12px 16px; color:#fff; font-family:inherit; font-size:13px; width:230px; outline:none;
+  }
+  .newsletter-form input::placeholder{ color:#8d7f9c; }
+  .newsletter-form input:focus{ border-color:var(--purple-light); }
+  .newsletter-form button{
+    background:linear-gradient(120deg, var(--purple-light), var(--purple)); color:#fff; border:none;
+    border-radius:11px; padding:12px 20px; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap;
+  }
+
+  .f-grid{ display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr; gap:32px; padding-bottom:44px; }
+
+  .f-brand{ display:flex; flex-direction:column; gap:16px; }
+  .f-logo{ display:flex; align-items:center; gap:10px; }
+  .f-logo svg{ width:30px; height:30px; color:var(--purple-light); }
+  .f-logo b{ font-family:'Tajawal',sans-serif; font-weight:800; font-size:17px; color:#fff; }
+  .f-desc{ font-size:13px; line-height:1.9; color:#a99bb7; max-width:280px; }
+  .f-social{ display:flex; gap:10px; margin-top:4px; }
+  .f-social a{
+    width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center;
+    color:#cfc4da; transition:.2s;
+  }
+  .f-social a:hover{ background:var(--purple); border-color:var(--purple); color:#fff; transform:translateY(-2px); }
+  .f-social svg{ width:15px; height:15px; }
+
+  .f-col h4{ font-family:'Tajawal',sans-serif; color:#fff; font-size:14.5px; font-weight:800; margin:0 0 18px; position:relative; padding-bottom:10px; }
+  .f-col h4::after{ content:""; position:absolute; bottom:0; right:0; width:26px; height:2.5px; background:linear-gradient(90deg, var(--purple-light), var(--gold)); border-radius:2px; }
+  .f-col ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+  .f-col a{ color:#a99bb7; text-decoration:none; font-size:13.2px; transition:.15s; display:flex; align-items:center; gap:6px; }
+  .f-col a:hover{ color:#fff; }
+  .f-col a svg{ width:12px; height:12px; opacity:0; transform:translateX(-3px); transition:.2s; }
+  [dir="rtl"] .f-col a svg{ transform:translateX(3px); }
+  .f-col a:hover svg{ opacity:1; transform:translateX(0); color:var(--purple-light); }
+
+  .f-contact-item{ display:flex; align-items:flex-start; gap:10px; font-size:13px; color:#a99bb7; margin-bottom:14px; }
+  .f-contact-item .ic{
+    width:30px; height:30px; border-radius:8px; background:rgba(139,47,158,.2); color:var(--purple-light);
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .f-contact-item .ic svg{ width:14px; height:14px; }
+
+  .f-bottom{
+    border-top:1px solid rgba(255,255,255,.08); padding:22px 0;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    font-size:12.5px; color:#8d7f9c;
+  }
+  .f-bottom-links{ display:flex; gap:20px; }
+  .f-bottom-links a{ color:#8d7f9c; text-decoration:none; }
+  .f-bottom-links a:hover{ color:#fff; }
+
+  @media (max-width:900px){
+    .f-grid{ grid-template-columns:1fr 1fr; }
+    .f-brand{ grid-column:1 / -1; }
+    .newsletter{ flex-direction:column; align-items:stretch; text-align:center; }
+    .newsletter-form{ justify-content:center; }
+  }
+  @media (max-width:560px){
+    .f-wrap{ padding:0 20px; }
+    .f-grid{ grid-template-columns:1fr; gap:30px; }
+    .newsletter-form{ flex-direction:column; }
+    .newsletter-form input{ width:100%; }
+    .f-bottom{ flex-direction:column; text-align:center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="spacer"></div>
+
+<footer>
+  <div class="f-wrap">
+    <div class="newsletter">
+      <div>
+        <h3 class="tajawal">اشترك في نشرتنا البريدية</h3>
+        <p>كتب جديدة، عروض حصرية، ونصائح قرائية — مباشرة إلى بريدك.</p>
+      </div>
+      <div class="newsletter-form">
+        <input type="email" placeholder="بريدك الإلكتروني">
+        <button>اشتراك</button>
+      </div>
+    </div>
+
+    <div class="f-grid">
+      <div class="f-brand">
+        <div class="f-logo">
+          <svg viewBox="0 0 568 568" fill="currentColor"><path d="M100 460 C160 340 260 300 284 200 C308 300 408 340 468 460 C400 420 340 420 284 460 C228 420 168 420 100 460 Z"/></svg>
+          <b class="tajawal">مكتبة أرين</b>
+        </div>
+        <div class="f-desc">وصف جديد ومميز لمكتبة أرين للكتب الشرعية — رفيقك في طلب العلم واختيار الكتاب المناسب.</div>
+        <div class="f-social">
+          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 20.9V13H6.6v-3h2.8V7.7c0-2.8 1.7-4.3 4.1-4.3 1.2 0 2.2.1 2.5.1v2.9h-1.7c-1.4 0-1.6.6-1.6 1.6V10h3.2l-.4 3h-2.8v7.9"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 4.4 2.9 8.2 6.9 9.5.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.6-1.4-2.3-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 4.9 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 22 12c0-5.5-4.5-10-10-10Z"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.2" cy="6.8" r="1"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-3-3.8h-3v13.4a2.6 2.6 0 1 1-1.8-2.5V9.6a5.8 5.8 0 1 0 5 5.8V9.1a7.3 7.3 0 0 0 4.3 1.4V7.2a4.3 4.3 0 0 1-1.5-1.4Z"/></svg></a>
+        </div>
+      </div>
+
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>الرئيسية</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>الكتب</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>الباقات</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>من نحن</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>تواصل معنا</a></li>
+        </ul>
+      </div>
+
+      <div class="f-col">
+        <h4>المساعدة</h4>
+        <ul>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>سياسة الاستبدال والاسترجاع</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>الشحن والتوصيل</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>الأسئلة الشائعة</a></li>
+          <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>الشروط والأحكام</a></li>
+        </ul>
+      </div>
+
+      <div class="f-col">
+        <h4>تواصل معنا</h4>
+        <div class="f-contact-item">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10.5c0 6-8 11-8 11s-8-5-8-11a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.5" r="2.6"/></svg></div>
+          <span>Morocco, Fès, Route Nerjiss</span>
+        </div>
+        <div class="f-contact-item">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8 10.1a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg></div>
+          <span>0665128821</span>
+        </div>
+        <div class="f-contact-item">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4Z"/><path d="m4 5 8 7 8-7"/></svg></div>
+          <span>arine.ma00@gmail.com</span>
+        </div>
+        <div class="f-contact-item">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+          <span>الإثنين - الجمعة: 07:30 ص - 23:59 م</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-line"></div>
+  <div class="f-wrap">
+    <div class="f-bottom">
+      <div>© 2026 مكتبة أرين للكتب الشرعية. جميع الحقوق محفوظة.</div>
+      <div class="f-bottom-links"><a href="#">الخصوصية</a><a href="#">الشروط والأحكام</a></div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

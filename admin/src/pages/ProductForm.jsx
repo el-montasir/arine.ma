@@ -84,6 +84,28 @@ export default function ProductForm() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
+  // Auto-calculate Package discount (%) from Retail Price (price) and Original Price (oldPrice)
+  useEffect(() => {
+    const retailPrice = Number(form.price)
+    const originalPrice = Number(form.oldPrice)
+
+    if (
+      form.oldPrice !== '' &&
+      form.oldPrice != null &&
+      !isNaN(originalPrice) &&
+      originalPrice > 0 &&
+      form.price !== '' &&
+      form.price != null &&
+      !isNaN(retailPrice) &&
+      originalPrice > retailPrice
+    ) {
+      const discount = Math.round(((originalPrice - retailPrice) / originalPrice) * 100)
+      setForm((f) => (f.discount === String(discount) ? f : { ...f, discount: String(discount) }))
+    } else {
+      setForm((f) => (f.discount === '0' ? f : { ...f, discount: '0' }))
+    }
+  }, [form.price, form.oldPrice])
+
   async function onSubmit(e) {
     e.preventDefault()
     setBusy(true)
@@ -269,6 +291,7 @@ export default function ProductForm() {
               value={form.discount}
               onChange={set('discount')}
               placeholder="10"
+              hint={t('autoCalculatedDiscountNote') || '*Auto-calculated from Retail and Original Price*'}
             />
           </div>
         </Card>

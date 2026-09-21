@@ -17,16 +17,16 @@ export default function AnnouncementBar() {
   }
 
   return (
-    <div className="bg-brand-700 text-white text-[0.82rem] py-2 text-center tracking-wide font-medium">
+    <div className="bg-purple-800 text-white text-[0.82rem] py-2 text-center tracking-wide font-medium">
       <div className="max-w-[1440px] mx-auto px-4 flex items-center justify-center gap-2">
         {activeAnnouncement ? (
           <>
-            <Megaphone className="w-4 h-4 opacity-90 shrink-0" />
-            <span>{activeAnnouncement.title}</span>
+            <Megaphone className="w-4 h-4 text-white opacity-95 shrink-0" />
+            <span className="text-white">{activeAnnouncement.title}</span>
             {activeAnnouncement.link && (
               <a
                 href={activeAnnouncement.link}
-                className="underline hover:text-brand-200 transition-colors mr-2"
+                className="underline text-white hover:text-purple-200 transition-colors mr-2"
               >
                 {t('more') || 'المزيد'}
               </a>
@@ -34,8 +34,8 @@ export default function AnnouncementBar() {
           </>
         ) : (
           <>
-            <Truck className="w-4 h-4 opacity-90 shrink-0" />
-            <span>{storeAnnouncement}</span>
+            <Truck className="w-4 h-4 text-white opacity-95 shrink-0" />
+            <span className="text-white">{storeAnnouncement}</span>
           </>
         )}
       </div>

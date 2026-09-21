@@ -95,6 +95,19 @@ export async function createProduct(inputData) {
     data.image = imageUrls[0]
   }
 
+  // Set discount: use explicit discount if passed, or auto-calculate from oldPrice & price
+  if (data.discount !== undefined && data.discount != null) {
+    data.discount = Number(data.discount)
+  } else if (data.price != null) {
+    const pPrice = Number(data.price)
+    const pOldPrice = data.oldPrice != null ? Number(data.oldPrice) : null
+    if (pOldPrice != null && Number.isFinite(pOldPrice) && pOldPrice > pPrice && pOldPrice > 0) {
+      data.discount = Math.round(((pOldPrice - pPrice) / pOldPrice) * 100)
+    } else {
+      data.discount = 0
+    }
+  }
+
   const product = await prisma.product.create({
     data: {
       ...data,
@@ -133,6 +146,19 @@ export async function updateProduct(id, inputData) {
       data.image = imageUrls[0]
     } else {
       data.image = null
+    }
+  }
+
+  // Set discount: use explicit discount if passed, or auto-calculate from oldPrice & price
+  if (data.discount !== undefined && data.discount != null) {
+    data.discount = Number(data.discount)
+  } else if (data.oldPrice !== undefined || data.price !== undefined) {
+    const targetPrice = data.price !== undefined ? Number(data.price) : existing.price
+    const targetOldPrice = data.oldPrice !== undefined ? (data.oldPrice != null ? Number(data.oldPrice) : null) : existing.oldPrice
+    if (targetOldPrice != null && Number.isFinite(targetOldPrice) && targetPrice != null && targetOldPrice > targetPrice && targetOldPrice > 0) {
+      data.discount = Math.round(((targetOldPrice - targetPrice) / targetOldPrice) * 100)
+    } else {
+      data.discount = 0
     }
   }
 

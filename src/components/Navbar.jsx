@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, ShoppingCart, Heart, Menu, X, BookOpen, ChevronLeft, ChevronRight, Package as PackageIcon } from 'lucide-react'
+import { Search, ShoppingCart, Heart, Menu, X, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
@@ -42,14 +42,14 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-xs">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-[72px] gap-4">
 
             {/* Mobile menu toggle */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 -mr-1 text-foreground/70 hover:text-brand-700 transition-colors"
+              className="lg:hidden p-2 -mr-1 text-gray-700 hover:text-purple-800 transition-colors"
               aria-label="القائمة"
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -68,11 +68,11 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="bg-brand-700 w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
+                  <div className="bg-purple-800 w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
                     <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
                   </div>
                   <div className="leading-none">
-                    <div className="text-[1.15rem] font-bold text-brand-800 tracking-tight">
+                    <div className="text-[1.15rem] font-bold text-purple-800 tracking-tight font-tajawal">
                       {config?.store?.name || t('appName') || 'مكتبة أرين'}
                     </div>
                     <div className="text-[0.6rem] text-muted mt-px">
@@ -84,15 +84,15 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop nav */}
-            <ul className="hidden lg:flex items-center gap-1">
+            <ul className="hidden lg:flex items-center gap-1.5">
               {NAV_LINKS.map((link) => (
                 <li key={link.key}>
                   <Link
                     to={link.to}
-                    className={`block px-3.5 py-2 rounded-lg text-[0.88rem] font-medium transition-colors ${
+                    className={`block text-[0.88rem] transition-colors ${
                       pathname === link.to
-                        ? 'bg-brand-100 text-brand-700'
-                        : 'text-foreground/75 hover:bg-brand-50 hover:text-brand-700'
+                        ? 'bg-purple-50 text-purple-800 px-4 py-1.5 rounded-full font-bold'
+                        : 'text-gray-700 hover:text-purple-800 font-medium transition-colors px-3.5 py-1.5'
                     }`}
                   >
                     {link.label}
@@ -106,7 +106,7 @@ export default function Navbar() {
               {/* Search trigger */}
               <button
                 onClick={() => setSearchOpen(true)}
-                className="p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                className="p-2.5 rounded-xl text-gray-700 hover:text-purple-800 hover:bg-purple-50 transition-colors"
                 aria-label={t('search') || 'بحث'}
               >
                 <Search className="w-[1.15rem] h-[1.15rem]" />
@@ -115,14 +115,14 @@ export default function Navbar() {
               {/* Favorites */}
               <Link
                 to="/favorites"
-                className="p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors relative"
+                className="p-2.5 rounded-xl text-gray-700 hover:text-purple-800 hover:bg-purple-50 transition-colors relative"
                 aria-label={t('favorites') || 'المفضلة'}
               >
                 <Heart className="w-[1.15rem] h-[1.15rem]" />
                 {favorites.length > 0 && (
                   <span
                     key={favorites.length}
-                    className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-red-500 text-white text-[0.65rem] font-bold rounded-full flex items-center justify-center shadow-sm pop-in"
+                    className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-red-500 text-white text-[0.65rem] font-bold rounded-full flex items-center justify-center shadow-xs pop-in"
                   >
                     {favorites.length}
                   </span>
@@ -132,14 +132,14 @@ export default function Navbar() {
               {/* Cart */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="p-2.5 rounded-xl text-foreground/65 hover:bg-brand-50 hover:text-brand-700 transition-colors relative"
+                className="p-2.5 rounded-xl text-gray-700 hover:text-purple-800 hover:bg-purple-50 transition-colors relative"
                 aria-label={t('cart') || 'سلة المشتريات'}
               >
                 <ShoppingCart className="w-[1.15rem] h-[1.15rem]" />
                 {count > 0 && (
                   <span
                     key={count}
-                    className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-brand-700 text-white text-[0.65rem] font-bold rounded-full flex items-center justify-center shadow-sm pop-in"
+                    className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-purple-800 text-white text-[0.65rem] font-bold rounded-full flex items-center justify-center shadow-xs pop-in"
                   >
                     {count}
                   </span>
@@ -151,17 +151,17 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-white">
+          <div className="lg:hidden border-t border-gray-100 bg-white">
             <div className="px-4 py-4 space-y-1">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.key}
                   to={link.to}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] font-medium transition-colors ${
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] transition-colors ${
                     pathname === link.to
-                      ? 'bg-brand-100 text-brand-700'
-                      : 'text-foreground/80 hover:bg-brand-50'
+                      ? 'bg-purple-50 text-purple-800 font-bold'
+                      : 'text-gray-700 hover:text-purple-800 hover:bg-purple-50 font-medium'
                   }`}
                 >
                   <span>{link.label}</span>
@@ -172,7 +172,7 @@ export default function Navbar() {
               <Link
                 to="/favorites"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] font-medium text-foreground/80 hover:bg-brand-50"
+                className="flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] font-medium text-gray-700 hover:text-purple-800 hover:bg-purple-50 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
                   <Heart className="w-4 h-4 text-red-500" />
@@ -200,20 +200,20 @@ export default function Navbar() {
             className="w-full max-w-[600px] mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center border-b border-border px-4">
-              <Search className="w-5 h-5 text-muted mx-3 flex-shrink-0" />
+            <div className="flex items-center border-b border-gray-100 px-4">
+              <Search className="w-5 h-5 text-gray-400 mx-3 flex-shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
                 placeholder={t('searchPlaceholder') || 'ابحث عن كتاب، مؤلف، أو باقة...'}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 py-4 text-[0.95rem] text-foreground placeholder:text-muted/70 outline-none bg-transparent"
+                className="flex-1 py-4 text-[0.95rem] text-foreground placeholder:text-gray-400 outline-none bg-transparent"
               />
               <button
                 type="button"
                 onClick={() => setSearchOpen(false)}
-                className="text-sm text-muted hover:text-brand-700 transition-colors"
+                className="text-sm text-gray-400 hover:text-purple-800 transition-colors"
                 aria-label={t('close') || 'إغلاق'}
               >
                 <X className="w-4 h-4" />
@@ -232,7 +232,7 @@ export default function Navbar() {
                         window.location.href = `/shop?q=${encodeURIComponent(term)}`
                         setSearchOpen(false)
                       }}
-                      className="px-3 py-1.5 bg-brand-50 text-brand-700 text-[0.8rem] rounded-full hover:bg-brand-100 transition-colors font-medium"
+                      className="px-3 py-1.5 bg-purple-50 text-purple-800 text-[0.8rem] rounded-full hover:bg-purple-100 transition-colors font-medium cursor-pointer"
                     >
                       {term}
                     </button>

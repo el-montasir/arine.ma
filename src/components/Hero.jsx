@@ -11,93 +11,77 @@ export default function Hero({ onExplore, onBestsellers, heroConfig }) {
     (isRTL
       ? 'مجموعة مختارة من الكتب الشرعية والمعرفية لعشاق القراءة وطلب العلم.'
       : t('footerAbout'))
-  const statBooks = heroConfig?.statBooks || t('statBooksDefault')
-  const statDelivery = heroConfig?.statDelivery || t('statDeliveryDefault')
-  const statCustomers = heroConfig?.statCustomers || t('statCustomersDefault')
+  const statBooks = heroConfig?.statBooks || t('statBooksDefault') || '30+'
+  const statDelivery = heroConfig?.statDelivery || t('statDeliveryDefault') || '24h'
+  const statCustomers = heroConfig?.statCustomers || t('statCustomersDefault') || '100+'
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Decorative background */}
-      <div className="absolute inset-0 -z-10">
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[1100px] rounded-full opacity-40 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle at 50% 30%, #EDE9FE 0%, transparent 60%)',
-          }}
-        />
-        <div
-          className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-30 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle at center, #DDD6FE 0%, transparent 65%)',
-          }}
-        />
-        {/* Subtle geometric arc pattern */}
-        <svg
-          className="absolute top-0 right-[8%] h-[420px] w-[420px] opacity-[0.07] text-brand-800"
-          viewBox="0 0 200 200"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="0.6"
-        >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <rect
-              key={i}
-              x={40 + i * 6}
-              y={40 + i * 6}
-              width={120 - i * 12}
-              height={120 - i * 12}
-              rx="4"
-            />
-          ))}
-        </svg>
+    <section className="relative overflow-hidden pt-12 sm:pt-16 pb-10 sm:pb-12 text-center bg-[radial-gradient(circle_at_50%_-10%,#f3ebfa,transparent_60%)]">
+      {/* Decorative 4-ring square frame on desktop */}
+      <div
+        className="hidden lg:block absolute top-[20%] w-[260px] h-[260px] pointer-events-none select-none -z-0"
+        style={{ insetInlineEnd: '6%' }}
+      >
+        <div className="absolute inset-0 rounded-[22px] border-[1.5px] border-[#8b2f9e]/[0.18]" />
+        <div className="absolute inset-[22px] rounded-[22px] border-[1.5px] border-[#8b2f9e]/[0.28]" />
+        <div className="absolute inset-[44px] rounded-[22px] border-[1.5px] border-[#8b2f9e]/[0.40]" />
+        <div className="absolute inset-[66px] rounded-[22px] border-[1.5px] border-[#8b2f9e]/[0.55]" />
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-20 lg:py-24">
-        <div className="max-w-2xl mx-auto text-center">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-brand-100 text-brand-800 text-[0.82rem] font-medium rounded-full mb-7">
-            <Sparkles className="w-3.5 h-3.5" />
-            {badge}
-          </span>
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-2xl mx-auto">
+          {/* Eyebrow badge */}
+          <div className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-bold text-[#8b2f9e] bg-[#f3ebfa] px-4 sm:px-5 py-2 rounded-full mb-5 sm:mb-6 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#8b2f9e]" />
+            <span>{badge}</span>
+          </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground lg:leading-[1.15] leading-[1.25]">
+          {/* Main Headline */}
+          <h1 className="font-tajawal font-extrabold text-3xl sm:text-5xl lg:text-[46px] text-[#161616] leading-[1.25] tracking-tight mb-4">
             {title}
           </h1>
 
-          <p className="mt-5 text-lg text-muted leading-relaxed max-w-xl mx-auto">
+          {/* Subtitle */}
+          <p className="text-[#6b6577] text-sm sm:text-[15.5px] max-w-[560px] mx-auto leading-relaxed sm:leading-[1.9] mb-8 sm:mb-9">
             {subtitle}
           </p>
 
-          <div className="mt-10 flex items-center justify-center gap-3 flex-wrap">
+          {/* Call-to-action buttons */}
+          <div className="flex items-center justify-center gap-3 sm:gap-3.5 flex-wrap mb-10 sm:mb-11">
             <button
               onClick={onExplore}
-              className="inline-flex items-center gap-2 px-7 py-4 bg-brand-700 hover:bg-brand-800 text-white text-[0.95rem] font-semibold rounded-2xl transition-all shadow-lg shadow-brand-700/25 hover:shadow-brand-800/30 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 px-6 sm:px-7 py-3.5 sm:py-4 bg-gradient-to-r from-[#8b2f9e] to-[#4c1660] hover:from-[#7c288d] hover:to-[#3e1150] text-white text-[14.5px] font-bold rounded-[13px] transition-all duration-200 shadow-lg shadow-[#8b2f9e]/30 hover:shadow-xl hover:shadow-[#8b2f9e]/40 hover:-translate-y-0.5 active:translate-y-0"
             >
-              <span>{t('exploreBooks')}</span>
+              <span>{t('exploreBooks') || 'استكشف الكتب'}</span>
               <ArrowIcon className="w-4 h-4" />
             </button>
             <button
               onClick={onBestsellers}
-              className="px-7 py-4 bg-white border border-border hover:border-brand-300 text-foreground text-[0.95rem] font-semibold rounded-2xl transition-all hover:text-brand-700"
+              className="inline-flex items-center gap-2 px-6 sm:px-7 py-3.5 sm:py-4 bg-white hover:bg-[#FAF9F7] border-[1.5px] border-[#ece5f2] text-[#161616] text-[14.5px] font-bold rounded-[13px] transition-all duration-200 hover:border-[#8b2f9e]/30 hover:-translate-y-0.5 active:translate-y-0"
             >
-              {t('bestsellers')}
+              <span>{t('bestsellers') || 'الأكثر مبيعاً'}</span>
             </button>
           </div>
 
-          {/* Trust markers */}
-          <div className="mt-16 grid grid-cols-3 gap-4 max-w-md mx-auto">
+          {/* Stats cards */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap max-w-lg mx-auto">
             {[
-              { label: t('statBooksLabel'), value: statBooks },
-              { label: t('statDeliveryLabel'), value: statDelivery },
-              { label: t('statCustomersLabel'), value: statCustomers },
+              { label: t('statBooksLabel') || 'كتاب', value: statBooks },
+              { label: t('statDeliveryLabel') || 'توصيل سريع', value: statDelivery },
+              { label: t('statCustomersLabel') || 'عملاء راضون', value: statCustomers },
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="text-center px-2 py-4 bg-white/70 backdrop-blur rounded-xl border border-border/60"
+                className="bg-white border border-[#ece5f2] rounded-2xl py-3.5 sm:py-4 px-5 sm:px-7 min-w-[120px] sm:min-w-[140px] text-center shadow-[0_12px_26px_-18px_rgba(76,22,96,0.2)]"
               >
-                <div className="text-lg font-bold text-brand-800">{stat.value}</div>
-                <div className="text-[0.72rem] text-muted mt-0.5">{stat.label}</div>
+                <div className="font-tajawal font-extrabold text-xl sm:text-2xl text-[#8b2f9e] leading-none mb-1">
+                  {stat.value}
+                </div>
+                <div className="text-[12px] sm:text-[12.5px] text-[#6b6577] font-medium">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>

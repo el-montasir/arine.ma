@@ -2,6 +2,7 @@
 
 @theme {
   --font-arabic: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-tajawal: 'Tajawal', 'IBM Plex Sans Arabic', sans-serif;
 
   --color-brand-50: #F5F3FF;
   --color-brand-100: #EDE9FE;

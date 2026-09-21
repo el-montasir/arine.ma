@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>أرين — من نحن</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple:#8b2f9e;
+    --purple-deep:#4c1660;
+    --purple-light:#c25fd6;
+    --ink:#161616;
+    --ink-soft:#6b6577;
+    --paper:#faf8fc;
+    --card:#ffffff;
+    --line:#ece5f2;
+  }
+  [data-theme="dark"]{
+    --ink:#f1ecf7; --ink-soft:#b3a8c4; --paper:#120e1a; --card:#1c1628;
+    --line:#332a45;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif;
+  }
+  .tajawal{ font-family:'Tajawal',sans-serif; }
+
+  /* Page */
+  .wrap{ max-width:1180px; margin:0 auto; padding:44px 24px 70px; }
+  .hero{ text-align:center; margin-bottom:50px; }
+  .hero .eyebrow{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
+    color:var(--purple); background:rgba(139,47,158,.08); padding:6px 14px; border-radius:20px;
+    margin-bottom:14px;
+  }
+  .hero h1{ font-family:'Tajawal',sans-serif; font-weight:800; font-size:36px; margin:0 0 12px; }
+  .hero p{ color:var(--ink-soft); font-size:15px; max-width:520px; margin:0 auto; line-height:1.8; }
+
+  .layout{ display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; }
+
+  /* Right panel (Story) */
+  .story-panel { padding: 10px; }
+  .story-panel h2 { font-family:'Tajawal',sans-serif; font-weight:800; font-size:26px; margin:0 0 16px; color:var(--ink); }
+  .story-panel p { color:var(--ink-soft); font-size:14.5px; line-height:2; margin:0 0 16px; }
+
+  /* Left panel (Stats) */
+  .stats-panel {
+    background: #faf5ff; /* Soft purple matching the brand */
+    border-radius: 24px;
+    padding: 40px;
+  }
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .stat-card {
+    background:var(--card); border-radius:16px; padding:28px 20px; text-align:center;
+    box-shadow: 0 10px 30px -10px rgba(139,47,158,.08);
+  }
+  .stat-card h3 { font-family:'Tajawal',sans-serif; font-weight:800; font-size:28px; color:var(--purple); margin:0 0 8px; }
+  .stat-card p { font-size:13.5px; color:var(--ink-soft); margin:0; font-weight:600; }
+
+  @media (max-width:920px){
+    .layout{ grid-template-columns:1fr; gap: 30px; }
+    .stats-panel{ padding: 24px; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<div class="wrap">
+  <div class="hero">
+    <span class="eyebrow">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      من نحن
+    </span>
+    <h1 class="tajawal">مكتبة أرين</h1>
+    <p>وصف جديد ومميز لمكتبة أرين الشرعية 2026</p>
+  </div>
+
+  <div class="layout">
+    <div class="story-panel">
+      <h2 class="tajawal">قصتنا</h2>
+      <p>بدأت مكتبة أرين بشغف القراءة وإيمانًا بأن الكتب هي أساس المعرفة والتنوير. نسعى لتوفير أفضل الكتب الشرعية والمعرفية بأسعار مناسبة لكل بيت مغربي.</p>
+      <p>نعمل مع دور النشر والمستوردين الموثوقين لنضمن لك جودة الكتب ومصداقيتها. فريقنا من المتحمسين للقراءة والعلم يختار لك كل كتاب بعناية.</p>
+    </div>
+    <div class="stats-panel">
+      <div class="stats-grid">
+        <div class="stat-card"><h3>100+</h3><p>عميل سعيد</p></div>
+        <div class="stat-card"><h3>30+</h3><p>كتاب متاح</p></div>
+        <div class="stat-card"><h3>95%+</h3><p>رضا العملاء</p></div>
+        <div class="stat-card"><h3>24h</h3><p>ساعة توصيل</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -229,6 +229,7 @@ export default function PackageForm() {
       price: num(form.price),
       costPrice: num(form.costPrice),
       oldPrice: num(form.oldPrice) || (totalBooksRetailPrice > Number(form.price) ? totalBooksRetailPrice : null),
+      discount: calculatedDiscount,
       availability: form.availability,
       image: primaryImage,
       images: imagesArray,

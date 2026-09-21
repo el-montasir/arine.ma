@@ -167,11 +167,6 @@ export default function PackageDetails() {
                 {t('saveDiscount', { percent: Math.round(pkg.discount) })}
               </span>
             )}
-            {pkg.sumBooksPrice && pkg.sumBooksPrice > pkg.price && (
-              <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-lg">
-                {t('totalSaving') || 'مجموع التوفير'}: {formatPrice(pkg.sumBooksPrice - pkg.price)}
-              </span>
-            )}
           </div>
 
           {/* Description */}
