@@ -30,8 +30,8 @@ export const sessionMiddleware = session({
   saveUninitialized: false, // no cookie for anonymous requests
   cookie: {
     httpOnly: true, // JS never sees the token
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 12, // 12 hours
   },
 })
