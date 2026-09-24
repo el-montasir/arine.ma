@@ -34,13 +34,25 @@ app.use(
   })
 )
 
-// CORS — explicit origins only, never '*'. Both the Store (5173) and the Admin
-// Panel (5174) are allowed. credentials:true lets the admin session cookie cross
-// these two localhost origins; it does not open up third-party origins.
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  process.env.ADMIN_URL || 'http://localhost:5174',
-].filter(Boolean)
+// CORS — explicit origins only, never '*'. Both the Store and the Admin
+// Panel are allowed. credentials:true lets the admin session cookie cross
+// origins safely. Supports comma-separated list in env vars.
+const parseOrigins = (val) =>
+  (val || '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+
+const frontendOrigins = parseOrigins(process.env.FRONTEND_URL)
+const adminOrigins = parseOrigins(process.env.ADMIN_URL)
+
+const allowedOrigins = Array.from(
+  new Set([
+    ...(frontendOrigins.length ? frontendOrigins : ['http://localhost:5173']),
+    ...(adminOrigins.length ? adminOrigins : ['http://localhost:5174']),
+    ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:5174'] : []),
+  ])
+)
 app.use(cors({ origin: allowedOrigins, credentials: true }))
 
 app.use(express.json())

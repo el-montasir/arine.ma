@@ -5,22 +5,20 @@ import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
-import books from '../data/books'
 import api from '../utils/api'
 import { trackViewContent } from '../utils/tracking'
+import { getImageUrl } from '../utils/images'
 
 export default function BookDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { t, isRTL } = useLanguage()
-  const [apiBook, setApiBook] = useState(null)
-  const localBook = useMemo(() => books.find((b) => b.id === Number(id)), [id])
+  const [book, setApiBook] = useState(null)
   const { addToCart, toggleFavorite, isFavorite } = useCart()
   const [qty, setQty] = useState(1)
   const [selectedImageIdx, setSelectedImageIdx] = useState(0)
 
-  // Pull the canonical product data from PostgreSQL; fall back to the bundled
-  // catalog ONLY while the request is in flight or if the API is unreachable.
+  // Pull canonical product data from PostgreSQL API
   const [loading, setLoading] = useState(true)
   const [apiError, setApiError] = useState(false)
 
@@ -49,10 +47,6 @@ export default function BookDetails() {
       cancelled = true
     }
   }, [id])
-
-  // CRITICAL: API data takes absolute priority when loaded successfully.
-  // Only use local book during loading or when API genuinely failed.
-  const book = apiBook || (loading || apiError ? localBook : null)
 
   useEffect(() => {
     if (book && book.id) {
@@ -96,12 +90,10 @@ export default function BookDetails() {
     if (Array.isArray(apiRelated) && apiRelated.length > 0) {
       return apiRelated
     }
-    return books
-      .filter((b) => b.category === book?.category && b.id !== book?.id)
-      .slice(0, 4)
-  }, [apiRelated, book?.category, book?.id])
+    return []
+  }, [apiRelated])
 
-  if (loading && !book) {
+  if (loading) {
     return (
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-24 flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-3 text-muted">
@@ -149,7 +141,7 @@ export default function BookDetails() {
             {currentImageUrl ? (
               <div className="relative aspect-[3/4] w-56 lg:w-full mx-auto lg:mx-0 overflow-hidden rounded-2xl bg-[#F3F4F6] border border-border shadow-md">
                 <img
-                  src={currentImageUrl}
+                  src={getImageUrl(currentImageUrl)}
                   alt={book.title}
                   className="h-full w-full object-cover transition-all"
                   onError={(e) => {
@@ -180,7 +172,7 @@ export default function BookDetails() {
                     }`}
                   >
                     <img
-                      src={url}
+                      src={getImageUrl(url)}
                       alt={`صورة ${idx + 1}`}
                       className="h-full w-full object-cover"
                     />
@@ -383,7 +375,7 @@ function ProductCardMini({ book }) {
         {primaryImg ? (
           <div className="aspect-[3/4] w-full overflow-hidden rounded-lg bg-surface-900">
             <img
-              src={primaryImg}
+              src={getImageUrl(primaryImg)}
               alt={book.title}
               className="h-full w-full object-cover"
               onError={(e) => {

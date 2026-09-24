@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { api } from '../lib/api.js'
+import { getImageUrl } from '../lib/images.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -355,7 +356,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
                   {/* Image Preview & Badge */}
                   <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-surface-900 border border-line/40 shadow-inner">
                     <img
-                      src={img.url}
+                      src={getImageUrl(img.url)}
                       alt={`Image ${index + 1}`}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {

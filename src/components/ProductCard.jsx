@@ -4,6 +4,7 @@ import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { getImageUrl } from '../utils/images'
 
 export default function ProductCard({ book }) {
   const { addToCart, toggleFavorite, isFavorite } = useCart()
@@ -36,7 +37,7 @@ export default function ProductCard({ book }) {
             {primaryImage ? (
               <div className="h-full w-full overflow-hidden">
                 <img
-                  src={primaryImage}
+                  src={getImageUrl(primaryImage)}
                   alt={book.title}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {

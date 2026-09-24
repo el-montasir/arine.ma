@@ -4,6 +4,7 @@ import { Search, Package, MapPin, CreditCard, Clock, CheckCircle2, Truck, AlertC
 import { useLanguage } from '../context/LanguageContext'
 import api from '../utils/api'
 import { formatPrice } from '../utils/format'
+import { getImageUrl } from '../utils/images'
 
 export default function TrackOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -263,7 +264,7 @@ export default function TrackOrder() {
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.productImage ? (
-                      <img src={item.productImage} alt="" className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0" />
+                      <img src={getImageUrl(item.productImage)} alt="" className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0" />
                     ) : null}
                     <div className="min-w-0">
                       <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.productTitle}</h4>
@@ -281,7 +282,7 @@ export default function TrackOrder() {
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.packageImage ? (
-                      <img src={item.packageImage} alt="" className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0" />
+                      <img src={getImageUrl(item.packageImage)} alt="" className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0" />
                     ) : null}
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">

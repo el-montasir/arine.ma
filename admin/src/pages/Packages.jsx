@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, Search, Truck, Package as PackageIcon, BookOpen }
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
 import { formatMoney, formatBookCount, getAvailability } from '../lib/format.js'
+import { getImageUrl } from '../lib/images.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import Table from '../components/ui/Table.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
@@ -65,7 +66,7 @@ export default function Packages() {
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
               {r.image ? (
-                <img src={r.image} alt="" className="h-11 w-10 rounded-[8px] object-cover border border-[var(--line)]" loading="lazy" />
+                <img src={getImageUrl(r.image)} alt="" className="h-11 w-10 rounded-[8px] object-cover border border-[var(--line)]" loading="lazy" />
               ) : (
                 <span className="grid h-11 w-10 place-items-center rounded-[8px] bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--line)]">
                   <PackageIcon className="h-5 w-5" />

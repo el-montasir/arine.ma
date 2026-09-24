@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice, formatBookCount, formatPackageContains } from '../utils/format'
 import { trackViewContent } from '../utils/tracking'
+import { getImageUrl } from '../utils/images'
 import BookCover from '../components/BookCover'
 
 export default function PackageDetails() {
@@ -83,7 +84,7 @@ export default function PackageDetails() {
             <div className="relative aspect-[4/3] sm:aspect-square w-full mx-auto lg:mx-0 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900/5 to-brand-700/10 border border-border shadow-md flex items-center justify-center">
               {currentImageUrl ? (
                 <img
-                  src={currentImageUrl}
+                  src={getImageUrl(currentImageUrl)}
                   alt={pkg.title}
                   className="h-full w-full object-cover"
                 />
@@ -111,7 +112,7 @@ export default function PackageDetails() {
                         : 'border-border/80 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={url} alt={`صورة ${idx + 1}`} className="h-full w-full object-cover" />
+                    <img src={getImageUrl(url)} alt={`صورة ${idx + 1}`} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -196,7 +197,7 @@ export default function PackageDetails() {
                 >
                   <div className="w-14 h-18 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-border">
                     {book.image ? (
-                      <img src={book.image} alt={book.title} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(book.image)} alt={book.title} className="w-full h-full object-cover" />
                     ) : (
                       <BookCover book={book} size="sm" />
                     )}

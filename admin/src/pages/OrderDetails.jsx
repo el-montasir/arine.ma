@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, Save, MapPin, Phone, User, StickyNote, Truck, Pa
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
 import { formatMoney, formatDate, getPaymentLabel, getOrderStatus } from '../lib/format.js'
+import { getImageUrl } from '../lib/images.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import { StatusBadge } from '../components/ui/Badge.jsx'
 import Table from '../components/ui/Table.jsx'
@@ -92,7 +93,7 @@ export default function OrderDetails() {
       render: (r) => (
         <div className="flex items-center gap-2.5">
           {r.productImage ? (
-            <img src={r.productImage} alt="" className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)] shrink-0" />
+            <img src={getImageUrl(r.productImage)} alt="" className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)] shrink-0" />
           ) : null}
           <div>
             <span className="font-semibold text-[var(--ink)] block">{r.productTitle}</span>
@@ -125,7 +126,7 @@ export default function OrderDetails() {
       render: (r) => (
         <div className="flex items-center gap-2.5">
           {r.packageImage ? (
-            <img src={r.packageImage} alt="" className="h-10 w-10 rounded-[8px] object-cover border border-[var(--line)] shrink-0" />
+            <img src={getImageUrl(r.packageImage)} alt="" className="h-10 w-10 rounded-[8px] object-cover border border-[var(--line)] shrink-0" />
           ) : (
             <PackageIcon className="h-5 w-5 text-[var(--purple)] shrink-0" />
           )}

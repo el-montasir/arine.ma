@@ -3,6 +3,7 @@ import { ShoppingCart, Package as PackageIcon, BookOpen } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice, formatBookCount } from '../utils/format'
+import { getImageUrl } from '../utils/images'
 
 export default function PackageCard({ pkg }) {
   const { addPackageToCart } = useCart()
@@ -16,7 +17,7 @@ export default function PackageCard({ pkg }) {
       <Link to={`/package/${pkg.id}`} className="block relative overflow-hidden bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd] p-5 flex items-center justify-center min-h-[200px]">
         {pkg.image ? (
           <img
-            src={pkg.image}
+            src={getImageUrl(pkg.image)}
             alt={pkg.title}
             className="w-full h-44 object-cover rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300"
           />

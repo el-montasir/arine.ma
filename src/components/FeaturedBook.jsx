@@ -4,6 +4,7 @@ import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { getImageUrl } from '../utils/images'
 
 export default function FeaturedBook({ book }) {
   const { addToCart, toggleFavorite, isFavorite } = useCart()
@@ -37,7 +38,7 @@ export default function FeaturedBook({ book }) {
             {primaryImage ? (
               <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl shadow-md border border-[#ece5f2] bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd]">
                 <img
-                  src={primaryImage}
+                  src={getImageUrl(primaryImage)}
                   alt={book.title}
                   className="h-full w-full object-cover"
                   onError={(e) => {

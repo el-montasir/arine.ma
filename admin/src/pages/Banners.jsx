@@ -13,6 +13,7 @@ import {
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
 import { formatDateShort } from '../lib/format.js'
+import { getImageUrl } from '../lib/images.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import Table from '../components/ui/Table.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
@@ -202,7 +203,7 @@ export default function Banners() {
         <div className="h-14 w-24 overflow-hidden rounded-[8px] bg-[var(--bg)] border border-[var(--line)] flex items-center justify-center">
           {b.image ? (
             <img
-              src={b.image}
+              src={getImageUrl(b.image)}
               alt={b.title}
               className="h-full w-full object-cover"
               onError={(e) => {
@@ -473,7 +474,7 @@ export default function Banners() {
               <div className="h-16 w-28 rounded-[8px] bg-[var(--card)] border border-[var(--line)] flex items-center justify-center overflow-hidden shrink-0">
                 {form.image ? (
                   <img
-                    src={form.image}
+                    src={getImageUrl(form.image)}
                     alt="Banner Preview"
                     className="h-full w-full object-cover"
                     onError={(e) => {

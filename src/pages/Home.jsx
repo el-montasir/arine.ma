@@ -11,6 +11,7 @@ import usePackages from '../hooks/usePackages'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { useBanners } from '../hooks/useBanners'
 import { useLanguage } from '../context/LanguageContext'
+import { getImageUrl } from '../utils/images'
 import { Megaphone, ArrowLeft, ArrowRight, Package as PackageIcon } from 'lucide-react'
 
 export default function Home() {
@@ -42,7 +43,7 @@ export default function Home() {
               >
                 {banner.image && (
                   <img
-                    src={banner.image}
+                    src={getImageUrl(banner.image)}
                     alt={banner.title}
                     className="h-20 w-32 object-cover rounded-xl shrink-0 border border-white/20"
                   />

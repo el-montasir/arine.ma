@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, Search, Truck } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
 import { formatMoney, getAvailability } from '../lib/format.js'
+import { getImageUrl } from '../lib/images.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import Table from '../components/ui/Table.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
@@ -62,7 +63,7 @@ export default function Products() {
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
               {r.image ? (
-                <img src={r.image} alt="" className="h-11 w-8 rounded-[6px] object-cover border border-[var(--line)]" loading="lazy" />
+                <img src={getImageUrl(r.image)} alt="" className="h-11 w-8 rounded-[6px] object-cover border border-[var(--line)]" loading="lazy" />
               ) : (
                 <span className="grid h-11 w-8 place-items-center rounded-[6px] bg-[var(--bg)] border border-[var(--line)] text-[10px] text-[var(--ink-soft)]">—</span>
               )}

@@ -4,6 +4,7 @@ import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { getImageUrl } from '../utils/images'
 
 export default function CartPage() {
   const { items, subtotal, shipping, total, shippingConfig, updateQuantity, removeFromCart } = useCart()
@@ -58,7 +59,7 @@ export default function CartPage() {
                     {item.isPackage ? (
                       item.image ? (
                         <img
-                          src={item.image}
+                          src={getImageUrl(item.image)}
                           alt={item.title}
                           className="w-20 h-24 object-cover rounded-[14px] border border-[#EFE8F2]"
                         />
@@ -80,7 +81,7 @@ export default function CartPage() {
                         if (primaryImg) {
                           return (
                             <img
-                              src={primaryImg}
+                              src={getImageUrl(primaryImg)}
                               alt={item.title}
                               className="w-20 h-24 object-cover rounded-[14px] border border-[#EFE8F2]"
                               onError={(e) => {

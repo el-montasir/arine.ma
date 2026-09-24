@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useProducts } from '../hooks/useProducts'
 import BookCover from '../components/BookCover'
 import { formatPrice } from '../utils/format'
+import { getImageUrl } from '../utils/images'
 
 export default function Favorites() {
   const { favorites, toggleFavorite, addToCart } = useCart()
@@ -90,7 +91,7 @@ export default function Favorites() {
                         return (
                           <div className="aspect-[3/4] w-32 mx-auto overflow-hidden rounded-lg bg-surface-900 shadow-sm">
                             <img
-                              src={primaryImg}
+                              src={getImageUrl(primaryImg)}
                               alt={book.title}
                               className="h-full w-full object-cover"
                               onError={(e) => {

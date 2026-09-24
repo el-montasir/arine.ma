@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
-import staticCategories from '../data/categories'
 
 export function useCategories() {
   const [categories, setCategories] = useState([])
@@ -16,7 +15,6 @@ export function useCategories() {
       .then((res) => {
         if (!cancelled) {
           const list = Array.isArray(res.data) ? res.data : []
-          // CRITICAL: API data successfully loaded - use it exclusively
           setCategories(list)
           setError(null)
           setLoading(false)
@@ -24,9 +22,8 @@ export function useCategories() {
       })
       .catch((err) => {
         if (!cancelled) {
-          console.warn('Failed to fetch categories from API, using static fallback:', err)
-          // Only use static fallback when API is genuinely unreachable
-          setCategories(staticCategories)
+          console.error('Failed to fetch categories from API:', err)
+          setCategories([])
           setError(err)
           setLoading(false)
         }
