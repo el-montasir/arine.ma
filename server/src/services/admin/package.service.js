@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
+import { deleteFromStorage } from '../../lib/storage.js'
 
 const INCLUDE = {
   items: {
@@ -383,11 +384,29 @@ export async function updatePackage(id, inputData) {
 
 export async function deletePackage(id) {
   const pkgId = Number(id)
-  const existing = await prisma.package.findUnique({ where: { id: pkgId } })
+  const existing = await prisma.package.findUnique({
+    where: { id: pkgId },
+    include: { images: true },
+  })
   if (!existing) {
     throw ApiError.notFound('الباقة غير موجودة')
   }
 
+  // Collect image URLs to delete from storage
+  const imagesToDelete = new Set()
+  if (existing.image) imagesToDelete.add(existing.image)
+  if (existing.images && Array.isArray(existing.images)) {
+    existing.images.forEach((img) => {
+      if (img?.url) imagesToDelete.add(img.url)
+    })
+  }
+
   await prisma.package.delete({ where: { id: pkgId } })
+
+  // Clean up storage assets safely in the background
+  for (const imgUrl of imagesToDelete) {
+    deleteFromStorage(imgUrl).catch(() => {})
+  }
+
   return { success: true }
 }

@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
 import { logActivity } from '../../services/admin/activity-log.service.js'
+import { deleteFromStorage } from '../../lib/storage.js'
 
 // GET /api/admin/banners
 export async function getBannersHandler(_req, res, next) {
@@ -151,7 +152,16 @@ export async function deleteBannerHandler(req, res, next) {
       throw new ApiError(400, 'INVALID_ID', 'معرف العرض غير صحيح')
     }
 
+    const existing = await prisma.banner.findUnique({ where: { id } })
+    if (!existing) {
+      throw new ApiError(404, 'NOT_FOUND', 'العرض غير موجود')
+    }
+
     await prisma.banner.delete({ where: { id } })
+
+    if (existing.image) {
+      deleteFromStorage(existing.image).catch(() => {})
+    }
 
     await logActivity({
       actor: req.admin,

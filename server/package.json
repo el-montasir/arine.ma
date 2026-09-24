@@ -11,12 +11,14 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "node prisma/seed.js",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "migrate:r2": "node scripts/migrate-local-uploads-to-r2.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1140.0",
     "@prisma/client": "^6.5.0",
     "bcryptjs": "^3.0.3",
     "connect-pg-simple": "^10.0.0",

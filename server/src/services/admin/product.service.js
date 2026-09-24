@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
+import { deleteFromStorage } from '../../lib/storage.js'
 
 const INCLUDE = {
   category: true,
@@ -189,11 +190,29 @@ export async function updateProduct(id, inputData) {
 }
 
 export async function deleteProduct(id) {
-  const existing = await prisma.product.findUnique({ where: { id } })
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    include: { images: true },
+  })
   if (!existing) {
     throw new ApiError(404, 'NOT_FOUND', 'الكتاب غير موجود')
   }
 
+  // Collect image URLs to delete from storage
+  const imagesToDelete = new Set()
+  if (existing.image) imagesToDelete.add(existing.image)
+  if (existing.images && Array.isArray(existing.images)) {
+    existing.images.forEach((img) => {
+      if (img?.url) imagesToDelete.add(img.url)
+    })
+  }
+
   await prisma.product.delete({ where: { id } })
+
+  // Clean up storage assets safely in the background
+  for (const imgUrl of imagesToDelete) {
+    deleteFromStorage(imgUrl).catch(() => {})
+  }
+
   return true
 }
