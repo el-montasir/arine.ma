@@ -4,6 +4,7 @@ import { Search, ShoppingCart, Heart, Menu, X, BookOpen, ChevronLeft, ChevronRig
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
+import { getImageUrl } from '../utils/images'
 
 export default function Navbar() {
   const { count, setIsCartOpen, isMenuOpen, setIsMenuOpen, favorites } = useCart()
@@ -60,7 +61,7 @@ export default function Navbar() {
               {config?.store?.logo && !logoError ? (
                 <div className="flex items-center gap-2.5">
                   <img
-                    src={config.store.logo}
+                    src={getImageUrl(config.store.logo)}
                     alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
                     className="h-9 lg:h-10 w-auto max-w-[170px] object-contain transition-all"
                     onError={() => setLogoError(true)}

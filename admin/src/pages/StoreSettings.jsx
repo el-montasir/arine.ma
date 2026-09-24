@@ -30,6 +30,7 @@ import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Button from '../components/ui/Button.jsx'
 import { Input, Select, Textarea } from '../components/ui/Input.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { getImageUrl } from '../lib/images.js'
 
 const MAX_LOGO_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -338,7 +339,7 @@ export default function StoreSettings() {
                   </span>
                   {form.storeLogo ? (
                     <img
-                      src={form.storeLogo}
+                      src={getImageUrl(form.storeLogo)}
                       alt="Brand Logo Preview"
                       className="max-h-12 max-w-[140px] w-auto object-contain mt-3"
                       onError={(e) => {
@@ -365,7 +366,7 @@ export default function StoreSettings() {
                   </span>
                   {form.storeLogo ? (
                     <img
-                      src={form.storeLogo}
+                      src={getImageUrl(form.storeLogo)}
                       alt="Brand Logo Preview Dark"
                       className="max-h-12 max-w-[140px] w-auto object-contain mt-3 brightness-110"
                       onError={(e) => {

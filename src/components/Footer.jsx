@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
+import { getImageUrl } from '../utils/images'
 
 function normalizeWhatsAppNumber(raw) {
   if (!raw) return ''
@@ -191,7 +192,7 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               {store.logo && !footerLogoError ? (
                 <img
-                  src={store.logo}
+                  src={getImageUrl(store.logo)}
                   alt={store.name || t('appName') || 'مكتبة أرين'}
                   className="max-h-10 max-w-[160px] w-auto object-contain brightness-110"
                   onError={() => setFooterLogoError(true)}

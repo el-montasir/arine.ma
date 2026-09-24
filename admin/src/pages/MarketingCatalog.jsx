@@ -24,6 +24,7 @@ import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { getImageUrl } from '../lib/images.js'
 
 export default function MarketingCatalog() {
   const { t, language } = useLanguage()
@@ -258,7 +259,7 @@ export default function MarketingCatalog() {
                   <div className="flex items-center gap-3 py-1">
                     {image ? (
                       <img
-                        src={image}
+                        src={getImageUrl(image)}
                         alt={title}
                         className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)] bg-[var(--bg)]"
                       />

@@ -26,6 +26,7 @@ import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Button from '../components/ui/Button.jsx'
 import MultiImageUpload from '../components/MultiImageUpload.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { getImageUrl } from '../lib/images.js'
 
 const EMPTY = {
   title: '',
@@ -361,7 +362,7 @@ export default function PackageForm() {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         {book.image ? (
-                          <img src={book.image} alt="" className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)] shrink-0" loading="lazy" />
+                          <img src={getImageUrl(book.image)} alt="" className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)] shrink-0" loading="lazy" />
                         ) : (
                           <div className="h-10 w-8 bg-[var(--bg)] rounded-[6px] border border-[var(--line)] flex items-center justify-center text-[10px] text-[var(--ink-soft)] shrink-0">
                             📚
@@ -406,7 +407,7 @@ export default function PackageForm() {
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="w-5 text-center text-xs font-bold text-[var(--ink-soft)]">{idx + 1}</span>
                       {book.image ? (
-                        <img src={book.image} alt="" className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)]" />
+                        <img src={getImageUrl(book.image)} alt="" className="h-10 w-8 rounded-[6px] object-cover border border-[var(--line)]" />
                       ) : (
                         <div className="h-10 w-8 bg-[var(--bg)] rounded-[6px] border border-[var(--line)] flex items-center justify-center text-xs text-[var(--ink-soft)]">
                           📚

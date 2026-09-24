@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
+import { getImageUrl } from '../utils/images'
 
 function InstagramIcon({ className = 'w-4 h-4' }) {
   return (
@@ -157,7 +158,7 @@ export default function Contact() {
             <div className="flex items-center gap-2.5">
               {store.logo && !logoError ? (
                 <img
-                  src={store.logo}
+                  src={getImageUrl(store.logo)}
                   alt={store.name || t('appName') || 'مكتبة أرين'}
                   className="max-h-9 max-w-[150px] w-auto object-contain brightness-110"
                   onError={() => setLogoError(true)}
