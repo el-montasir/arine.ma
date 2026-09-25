@@ -10,11 +10,21 @@ export default function Navbar() {
   const { count, setIsCartOpen, isMenuOpen, setIsMenuOpen, favorites } = useCart()
   const { t, isRTL } = useLanguage()
   const { config } = useStoreConfig()
-  const [logoError, setLogoError] = useState(false)
+  const [erroredLogoUrl, setErroredLogoUrl] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
   const { pathname } = useLocation()
+
+  // Resolve the configured logo once so the <img> src and the error state
+  // always agree on a single stable value.
+  const resolvedLogoUrl = getImageUrl(config?.store?.logo)
+
+  // Track *which* URL failed rather than a boolean. An error is only honoured
+  // for the URL it actually happened on, so a logo that arrives after first
+  // paint, changes in Store Settings, or is refreshed automatically clears the
+  // error with no effect and no extra render.
+  const showLogoImage = Boolean(resolvedLogoUrl) && erroredLogoUrl !== resolvedLogoUrl
 
   const NAV_LINKS = [
     { key: 'home', label: t('home') || 'الرئيسية', to: '/' },
@@ -57,32 +67,27 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0 flex items-center gap-2 select-none min-w-[36px]">
-              {config?.store?.logo && !logoError ? (
-                <div className="flex items-center gap-2.5">
+            <Link
+              to="/"
+              className="flex flex-none shrink-0 items-center select-none min-w-[36px] min-h-[36px] lg:min-w-[40px] lg:min-h-[40px]"
+            >
+              {/* Fixed circular brand area: the image and the fallback occupy
+                  the exact same box, so the navbar never has an empty brand. */}
+              <span className="flex flex-none shrink-0 items-center justify-center w-9 h-9 lg:w-10 lg:h-10 min-w-[36px] min-h-[36px] lg:min-w-[40px] lg:min-h-[40px] rounded-full overflow-hidden bg-purple-800 shadow-sm border border-gray-100">
+                {showLogoImage ? (
                   <img
-                    src={getImageUrl(config.store.logo)}
+                    key={resolvedLogoUrl}
+                    src={resolvedLogoUrl}
                     alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
-                    className="h-9 lg:h-10 w-9 lg:w-10 rounded-full object-cover transition-all shadow-sm border border-gray-100 shrink-0"
+                    className="w-full h-full object-cover shrink-0"
                     loading="eager"
-                    onError={() => setLogoError(true)}
+                    decoding="async"
+                    onError={() => setErroredLogoUrl(resolvedLogoUrl)}
                   />
-                </div>
-              ) : (
-                <div className="flex items-center gap-2.5">
-                  <div className="bg-purple-800 w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
-                    <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
-                  </div>
-                  <div className="leading-none">
-                    <div className="text-[1.15rem] font-bold text-purple-800 tracking-tight font-tajawal">
-                      {config?.store?.name || t('appName') || 'مكتبة أرين'}
-                    </div>
-                    <div className="text-[0.6rem] text-muted mt-px">
-                      {t('appTagline') || 'للكتب والعلوم الشرعية'}
-                    </div>
-                  </div>
-                </div>
-              )}
+                ) : (
+                  <BookOpen className="w-5 h-5 text-white" strokeWidth={2} aria-hidden="true" />
+                )}
+              </span>
             </Link>
 
             {/* Desktop nav */}

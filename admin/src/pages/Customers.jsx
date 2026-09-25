@@ -196,7 +196,7 @@ export default function Customers() {
     setBusy(true)
     try {
       const idOrPhone = deleteTargetCustomer.id || deleteTargetCustomer.phone
-      const res = await api.delete(`/customers/${encodeURIComponent(idOrPhone)}`)
+      const res = await api.del(`/customers/${encodeURIComponent(idOrPhone)}`)
 
       if (res?.success) {
         showToast(t('customerDeletedSuccess'))
