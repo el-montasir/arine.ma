@@ -1,6 +1,12 @@
 import { asyncHandler } from '../../utils/async-handler.js'
 import { errorResponse } from '../../utils/api-response.js'
-import { listOrders, getOrder, updateOrderStatus, deleteOrder } from '../../services/admin/order.service.js'
+import {
+  listOrders,
+  getOrder,
+  updateOrderStatus,
+  deleteOrder,
+  getPendingOrdersCount,
+} from '../../services/admin/order.service.js'
 import { logActivity } from '../../services/admin/activity-log.service.js'
 
 export const getOrders = asyncHandler(async (req, res) => {
@@ -9,6 +15,11 @@ export const getOrders = asyncHandler(async (req, res) => {
     status: req.query.status?.trim() || '',
   })
   res.json({ success: true, data: orders, count: orders.length })
+})
+
+export const getPendingOrdersCountHandler = asyncHandler(async (req, res) => {
+  const count = await getPendingOrdersCount()
+  res.json({ success: true, count })
 })
 
 export const getOrderById = asyncHandler(async (req, res) => {

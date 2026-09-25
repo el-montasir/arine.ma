@@ -81,7 +81,12 @@ const PERMISSION_GROUPS = [
   {
     key: 'customers',
     labelKey: 'navCustomers',
-    permissions: ['CUSTOMERS_VIEW'],
+    permissions: [
+      'CUSTOMERS_VIEW',
+      'CUSTOMERS_UPDATE',
+      'CUSTOMERS_ARCHIVE',
+      'CUSTOMERS_DELETE',
+    ],
   },
   {
     key: 'finance',

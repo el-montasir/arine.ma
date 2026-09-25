@@ -149,7 +149,7 @@ export default function Dashboard() {
                 #{admin?.role === 'SUPER_ADMIN' ? 'SUPER-ADMIN' : 'ADMIN'}
               </div>
               <div className="text-[17px] font-bold leading-tight">
-                {t('welcomeBack')}, {admin?.name || admin?.username || 'Admin'}
+                {t('welcomeBack')}, <span className="text-[#e9d5ff] font-bold">{admin?.name || admin?.username || 'Admin'}</span>
               </div>
               <div className="text-[11.5px] text-white/70 mt-1">
                 Store · {t('appName')} &nbsp;|&nbsp; {formatNumber(data.productCount)} {t('booksCount')} live

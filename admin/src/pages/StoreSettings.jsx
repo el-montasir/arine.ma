@@ -243,6 +243,7 @@ export default function StoreSettings() {
       await api.put('/store-config', payload)
       setSuccessMsg(t('storeSettingsSaveSuccess'))
       reloadConfig()
+      window.dispatchEvent(new CustomEvent('store-config-updated', { detail: { logo: payload.store.logo } }))
       setTimeout(() => setSuccessMsg(''), 4000)
     } catch (err) {
       setErrorMsg(err.message || t('storeSettingsSaveError'))

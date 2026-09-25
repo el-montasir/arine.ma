@@ -194,7 +194,7 @@ export default function Footer() {
                 <img
                   src={getImageUrl(store.logo)}
                   alt={store.name || t('appName') || 'مكتبة أرين'}
-                  className="max-h-10 max-w-[160px] w-auto object-contain brightness-110"
+                  className="max-h-10 max-w-[160px] w-10 h-10 rounded-full object-cover border border-white/20 shadow-md shrink-0"
                   onError={() => setFooterLogoError(true)}
                 />
               ) : (

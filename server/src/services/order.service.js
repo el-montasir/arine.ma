@@ -134,7 +134,28 @@ export async function createOrder(input) {
     const shipping = await calcShipping(subtotal, shippingOverrides)
     const total = subtotal + shipping
 
-    // 6. Create the order + items with a collision-safe order number.
+    // 6. Find or link customer based on phone
+    const normalizedPhone = String(input.phone || '').trim().replace(/\s+/g, '')
+    let customer = null
+    if (normalizedPhone) {
+      customer = await tx.customer.upsert({
+        where: { phone: normalizedPhone },
+        update: {
+          fullName: input.fullName,
+          city: input.city,
+          address: input.address,
+        },
+        create: {
+          fullName: input.fullName,
+          phone: normalizedPhone,
+          city: input.city,
+          address: input.address,
+          status: 'ACTIVE',
+        },
+      })
+    }
+
+    // 7. Create the order + items with a collision-safe order number.
     let order = null
     for (let attempt = 0; attempt < 5 && !order; attempt++) {
       try {
@@ -145,6 +166,7 @@ export async function createOrder(input) {
             phone: input.phone,
             city: input.city,
             address: input.address,
+            customerId: customer ? customer.id : null,
             note: input.note && input.note.length > 0 ? input.note : null,
             paymentMethod: input.paymentMethod,
             status: 'PENDING',
@@ -167,6 +189,25 @@ export async function createOrder(input) {
 
     if (!order) {
       throw new OrderError(500, 'ORDER_NUMBER_FAILED', 'تعذر إنشاء رقم الطلب')
+    }
+
+    // 8. Create real admin notifications for active admins
+    const activeAdmins = await tx.admin.findMany({
+      where: { isActive: true, status: 'ACTIVE' },
+      select: { id: true },
+    })
+
+    if (activeAdmins.length > 0) {
+      await tx.notification.createMany({
+        data: activeAdmins.map((adm) => ({
+          adminId: adm.id,
+          type: 'NEW_ORDER',
+          orderId: order.id,
+          title: 'طلب جديد',
+          message: `طلب جديد رقم #${order.orderNumber} من ${order.fullName} (${order.city}) بقيمة ${order.total} د.م`,
+          isRead: false,
+        })),
+      })
     }
 
     return order

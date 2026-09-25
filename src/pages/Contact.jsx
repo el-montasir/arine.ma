@@ -160,7 +160,7 @@ export default function Contact() {
                 <img
                   src={getImageUrl(store.logo)}
                   alt={store.name || t('appName') || 'مكتبة أرين'}
-                  className="max-h-9 max-w-[150px] w-auto object-contain brightness-110"
+                  className="w-10 h-10 rounded-full object-cover shadow-sm border border-white/20 shrink-0"
                   onError={() => setLogoError(true)}
                 />
               ) : (

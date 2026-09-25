@@ -88,13 +88,6 @@ export default function Login() {
               {busy ? t('loading') : t('loginBtn')}
             </Button>
           </form>
-
-          {/* Demo helper */}
-          <div className="mt-5 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] p-3 text-center">
-            <p className="text-[11px] font-mono text-[var(--ink-soft)]">
-              {t('loginDemoHint')}
-            </p>
-          </div>
         </div>
 
         {/* Security badge */}

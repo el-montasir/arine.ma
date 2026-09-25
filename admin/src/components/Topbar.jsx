@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Menu, LogOut, ExternalLink, Search, Bell } from 'lucide-react'
+import { Menu, LogOut, ExternalLink, Search } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
+import NotificationDropdown from './NotificationDropdown.jsx'
 
 export default function Topbar({ onMenu }) {
   const { admin, logout } = useAuth()
@@ -84,17 +85,8 @@ export default function Topbar({ onMenu }) {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* Notification Bell with red dot */}
-        <button
-          type="button"
-          onClick={() => navigate('/activity-log')}
-          title={t('navActivityLog')}
-          aria-label={t('navActivityLog')}
-          className="w-9 h-9 rounded-[10px] border border-[var(--line)] bg-[var(--card)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)] transition-colors cursor-pointer relative shrink-0"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1.5 end-1.5 w-1.5 h-1.5 rounded-full bg-[var(--red)]" />
-        </button>
+        {/* Real Admin Notification Dropdown */}
+        <NotificationDropdown />
 
         {/* Language Switcher */}
         <LanguageSwitcher />

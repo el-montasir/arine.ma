@@ -18,6 +18,17 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum CustomerStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum NotificationType {
+  NEW_ORDER
+  STATUS_UPDATE
+  SYSTEM
+}
+
 enum PaymentMethod {
   CASH_ON_DELIVERY
 }
@@ -141,6 +152,23 @@ model PackageOrderItem {
   @@map("package_order_items")
 }
 
+model Customer {
+  id        Int            @id @default(autoincrement())
+  fullName  String
+  phone     String         @unique
+  city      String?
+  address   String?
+  notes     String?
+  status    CustomerStatus @default(ACTIVE)
+  orders    Order[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([phone])
+  @@index([status])
+  @@map("customers")
+}
+
 model Order {
   id            Int           @id @default(autoincrement())
   orderNumber   String        @unique
@@ -154,14 +182,38 @@ model Order {
   subtotal      Int
   shipping      Int
   total         Int
+  customerId    Int?
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   items         OrderItem[]
   packageItems  PackageOrderItem[]
+  notifications Notification[]
   marketingAttribution MarketingAttribution?
   marketingEvents      MarketingEvent[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  @@index([customerId])
   @@map("orders")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  adminId   Int
+  type      NotificationType @default(NEW_ORDER)
+  title     String?
+  message   String?
+  isRead    Boolean          @default(false)
+  orderId   Int?
+  order     Order?           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  admin     Admin            @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([adminId])
+  @@index([isRead])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 model OrderItem {
@@ -210,6 +262,7 @@ model Admin {
   creator      Admin?        @relation("AdminCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   createdAdmins Admin[]      @relation("AdminCreator")
   activityLogs ActivityLog[]
+  notifications Notification[]
 
   @@map("admins")
 }

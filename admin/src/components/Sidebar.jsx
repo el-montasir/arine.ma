@@ -22,10 +22,12 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { usePendingOrdersCount } from '../hooks/usePendingOrdersCount.js'
 
 export function SidebarContent({ onNavigate }) {
   const { t } = useLanguage()
   const { can, isOwner } = useAuth()
+  const { pendingCount } = usePendingOrdersCount()
 
   const ALL_SECTIONS = [
     {
@@ -71,6 +73,7 @@ export function SidebarContent({ onNavigate }) {
           label: t('navOrders'),
           icon: ShoppingBag,
           permission: 'ORDERS_VIEW',
+          badge: pendingCount > 0 ? (pendingCount > 99 ? '99+' : pendingCount) : null,
         },
         {
           to: '/customers',
@@ -206,22 +209,39 @@ export function SidebarContent({ onNavigate }) {
             </p>
           )}
           <div className="space-y-0.5">
-            {section.items.map(({ to, label, icon: Icon, end }) => (
+            {section.items.map(({ to, label, icon: Icon, end, badge }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={end}
                 onClick={onNavigate}
                 className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-2.5 py-2 rounded-[9px] text-[13.5px] font-medium transition-all duration-150 ${
+                  `flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-[9px] text-[13.5px] font-medium transition-all duration-150 ${
                     isActive
                       ? 'bg-[var(--purple)] text-white font-semibold shadow-[0_6px_14px_-4px_rgba(124,58,237,0.45)]'
                       : 'text-[var(--ink-soft)] hover:bg-[var(--bg)] hover:text-[var(--ink)]'
                   }`
                 }
               >
-                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="truncate">{label}</span>
+                {({ isActive }) => (
+                  <>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{label}</span>
+                    </div>
+                    {badge ? (
+                      <span
+                        className={`shrink-0 text-[10.5px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center transition-colors ${
+                          isActive
+                            ? 'bg-white/25 text-white'
+                            : 'bg-[var(--purple-bg)] text-[var(--purple)] border border-[var(--purple)]/20'
+                        }`}
+                      >
+                        {badge}
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </NavLink>
             ))}
           </div>

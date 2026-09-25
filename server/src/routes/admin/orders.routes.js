@@ -8,11 +8,13 @@ import {
   getOrderById,
   patchOrderStatus,
   deleteOrderHandler,
+  getPendingOrdersCountHandler,
 } from '../../controllers/admin/order.controller.js'
 
 const router = Router()
 
 router.get('/', requirePermission(PERMISSIONS.ORDERS_VIEW), getOrders)
+router.get('/pending-count', requirePermission(PERMISSIONS.ORDERS_VIEW), getPendingOrdersCountHandler)
 router.get('/:id', requirePermission(PERMISSIONS.ORDERS_VIEW), getOrderById)
 router.patch(
   '/:id/status',

@@ -111,6 +111,12 @@ export async function updateOrderStatus(id, status) {
   return serializeAdminOrder(updated)
 }
 
+export async function getPendingOrdersCount() {
+  return prisma.order.count({
+    where: { status: 'PENDING' },
+  })
+}
+
 export async function deleteOrder(id) {
   const order = await prisma.order.findUnique({
     where: { id },

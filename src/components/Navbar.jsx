@@ -63,7 +63,7 @@ export default function Navbar() {
                   <img
                     src={getImageUrl(config.store.logo)}
                     alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
-                    className="h-9 lg:h-10 w-auto max-w-[170px] object-contain transition-all"
+                    className="h-9 lg:h-10 w-9 lg:w-10 rounded-full object-cover transition-all shadow-sm border border-gray-100 shrink-0"
                     onError={() => setLogoError(true)}
                   />
                 </div>

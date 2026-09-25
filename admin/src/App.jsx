@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import { useLanguage } from './context/LanguageContext.jsx'
+import { useAdminFavicon } from './hooks/useAdminFavicon.js'
 import Spinner from './components/ui/Spinner.jsx'
 import PermissionGate from './components/PermissionGate.jsx'
 import Login from './pages/Login.jsx'
@@ -46,6 +47,8 @@ function RequireAuth({ children }) {
 }
 
 export default function App() {
+  useAdminFavicon()
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
