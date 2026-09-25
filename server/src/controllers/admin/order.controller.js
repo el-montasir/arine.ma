@@ -19,7 +19,7 @@ export const getOrders = asyncHandler(async (req, res) => {
 
 export const getPendingOrdersCountHandler = asyncHandler(async (req, res) => {
   const count = await getPendingOrdersCount()
-  res.json({ success: true, count })
+  res.json({ success: true, data: { pendingCount: count } })
 })
 
 export const getOrderById = asyncHandler(async (req, res) => {
