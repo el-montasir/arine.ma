@@ -22,6 +22,8 @@ export function usePendingOrdersCount() {
       const res = await api.get('/orders/pending-count')
       if (res?.success && typeof res?.data?.pendingCount === 'number') {
         setPendingCount(res.data.pendingCount)
+      } else if (res?.success && typeof res?.count === 'number') {
+        setPendingCount(res.count)
       }
     } catch {
       // Gracefully ignore polling errors

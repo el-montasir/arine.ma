@@ -19,10 +19,12 @@ export const listNotifications = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: result.items,
-    unreadCount: result.unreadCount,
-    totalCount: result.totalCount,
-    nextCursor: result.nextCursor,
+    data: {
+      items: result.items,
+      unreadCount: result.unreadCount,
+      totalCount: result.totalCount,
+      nextCursor: result.nextCursor,
+    },
   })
 })
 
