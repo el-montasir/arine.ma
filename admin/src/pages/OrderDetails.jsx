@@ -43,6 +43,7 @@ export default function OrderDetails() {
     try {
       await api.patch(`/orders/${id}/status`, { status })
       setSaved(true)
+      window.dispatchEvent(new Event('order-status-updated'))
       reload()
     } catch (err) {
       setSaveError(err.message)
@@ -56,6 +57,7 @@ export default function OrderDetails() {
     setDeleteError('')
     try {
       await api.del(`/orders/${id}`)
+      window.dispatchEvent(new Event('order-status-updated'))
       navigate('/orders')
     } catch (err) {
       setDeleteError(err.message)

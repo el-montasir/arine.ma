@@ -12,19 +12,19 @@ function formatRelativeTime(dateString, t) {
   const diffInSeconds = Math.floor((now - date) / 1000)
 
   if (diffInSeconds < 60) {
-    return t('justNow') || 'الآن'
+    return t('justNow')
   }
   const diffInMinutes = Math.floor(diffInSeconds / 60)
   if (diffInMinutes < 60) {
-    return (t('minutesAgo') || 'منذ {n} دقيقة').replace('{n}', diffInMinutes)
+    return (t('minutesAgo') || '{n}m ago').replace('{n}', diffInMinutes)
   }
   const diffInHours = Math.floor(diffInMinutes / 60)
   if (diffInHours < 24) {
-    return (t('hoursAgo') || 'منذ {n} ساعة').replace('{n}', diffInHours)
+    return (t('hoursAgo') || '{n}h ago').replace('{n}', diffInHours)
   }
   const diffInDays = Math.floor(diffInHours / 24)
   if (diffInDays < 7) {
-    return (t('daysAgo') || 'منذ {n} يوم').replace('{n}', diffInDays)
+    return (t('daysAgo') || '{n}d ago').replace('{n}', diffInDays)
   }
   return date.toLocaleDateString()
 }
@@ -99,11 +99,11 @@ export default function NotificationDropdown() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--line)] bg-[var(--bg)]/50">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--ink)]">
-                {t('notifications') || 'الإشعارات'}
+                {t('notifications')}
               </span>
               {unreadCount > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full bg-[var(--purple-bg)] text-[var(--purple)] text-[10px] font-bold">
-                  {unreadCount} {t('unreadNotifications') || 'جديد'}
+                  {unreadCount} {t('unreadNotifications')}
                 </span>
               )}
             </div>
@@ -115,7 +115,7 @@ export default function NotificationDropdown() {
                 className="flex items-center gap-1 text-[11px] font-medium text-[var(--purple)] hover:text-[var(--purple-hover)] transition-colors cursor-pointer"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
-                <span>{t('markAllAsRead') || 'تعيين الكل كمقروء'}</span>
+                <span>{t('markAllAsRead')}</span>
               </button>
             )}
           </div>
@@ -128,10 +128,10 @@ export default function NotificationDropdown() {
                   <BellOff className="h-5 w-5 opacity-40" />
                 </div>
                 <p className="text-xs font-medium text-[var(--ink)]">
-                  {t('noNotifications') || 'لا توجد إشعارات حالياً'}
+                  {t('noNotifications')}
                 </p>
                 <p className="text-[11px] text-[var(--ink-soft)] mt-1">
-                  {t('recentOrdersSubtitle') || 'سيتم إشعارك فور وصول أي طلب جديد'}
+                  {t('recentOrdersSubtitle')}
                 </p>
               </div>
             ) : (
@@ -163,7 +163,7 @@ export default function NotificationDropdown() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <span className="text-xs font-semibold text-[var(--ink)] truncate">
-                          {t('newOrderNotification') || 'طلب جديد'}{' '}
+                          {t('newOrderNotification')}{' '}
                           {order?.orderNumber ? `#${order.orderNumber}` : ''}
                         </span>
                         <span className="text-[10px] text-[var(--ink-soft)] shrink-0 flex items-center gap-1">
@@ -214,7 +214,7 @@ export default function NotificationDropdown() {
               }}
               className="px-3 py-1.5 rounded-[8px] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--card)] transition-colors text-[11px] font-medium"
             >
-              {t('viewAllOrders') || 'عرض كل الطلبات'}
+              {t('viewAllOrders')}
             </button>
 
             <button
@@ -225,7 +225,7 @@ export default function NotificationDropdown() {
               }}
               className="px-3 py-1.5 rounded-[8px] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--card)] transition-colors text-[11px] font-medium"
             >
-              {t('navActivityLog') || 'سجل النشاطات'}
+              {t('navActivityLog')}
             </button>
           </div>
         </div>

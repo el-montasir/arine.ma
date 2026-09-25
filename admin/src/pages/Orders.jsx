@@ -70,6 +70,7 @@ export default function Orders() {
       await api.del(`/orders/${orderToDelete.id}`)
       setActionSuccess(`${t('deleteOrderSuccess')} (${orderToDelete.orderNumber})`)
       setOrderToDelete(null)
+      window.dispatchEvent(new Event('order-status-updated'))
       load()
     } catch (err) {
       setDeleteError(err.message)

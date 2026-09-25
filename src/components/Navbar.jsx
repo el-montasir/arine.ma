@@ -57,13 +57,14 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0 flex items-center gap-2 select-none">
+            <Link to="/" className="flex-shrink-0 flex items-center gap-2 select-none min-w-[36px]">
               {config?.store?.logo && !logoError ? (
                 <div className="flex items-center gap-2.5">
                   <img
                     src={getImageUrl(config.store.logo)}
                     alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
                     className="h-9 lg:h-10 w-9 lg:w-10 rounded-full object-cover transition-all shadow-sm border border-gray-100 shrink-0"
+                    loading="eager"
                     onError={() => setLogoError(true)}
                   />
                 </div>
