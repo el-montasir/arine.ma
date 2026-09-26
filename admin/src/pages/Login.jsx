@@ -107,6 +107,53 @@ function SystemPanel({ title, modules }) {
   )
 }
 
+/* Decorative boot lines shown while the request is in flight. These are purely
+   cosmetic: the terminal verdict below is decided by the real login() result,
+   never by a timer. */
+const BOOT_STEP_MS = 340
+const RESULT_HOLD_MS = 700
+
+function LoginTerminal({ lines, result }) {
+  const tone = {
+    pending: 'text-[#a78bc9]',
+    granted: 'text-[#34d399]',
+    denied: 'text-[#fda4af]',
+  }[result || 'pending']
+
+  const glow =
+    result === 'granted'
+      ? 'text-shadow:0 0 10px_rgba(52,211,153,0.55)'
+      : result === 'denied'
+        ? 'text-shadow:0 0 10px_rgba(251,113,133,0.5)'
+        : undefined
+
+  return (
+    <div
+      className="mt-6 min-h-[132px] rounded-[12px] border border-[rgba(168,85,247,0.22)] bg-[rgba(10,6,18,0.6)] p-3.5"
+      role="status"
+      aria-live="polite"
+    >
+      <ul className="space-y-1.5 font-mono text-[12px] leading-relaxed">
+        {lines.map((line, i) => (
+          <li
+            key={line}
+            className="cyber-fade flex items-center gap-2"
+            style={{ animationDelay: `${i * 90}ms` }}
+          >
+            <span className="text-[#a855f7]">&gt;</span>
+            <span className={tone} style={glow}>
+              {line}
+              {i === lines.length - 1 && result === 'pending' ? (
+                <span className="cyber-cursor" aria-hidden="true" />
+              ) : null}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export default function Login() {
   const { login } = useAuth()
   const { t } = useLanguage()
@@ -116,25 +163,66 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [phase, setPhase] = useState('idle') // idle | pending | granted | denied
+  const [visibleSteps, setVisibleSteps] = useState(0)
 
   async function onSubmit(e) {
     e.preventDefault()
     if (busy) return
     setBusy(true)
     setError('')
+    setPhase('pending')
+    setVisibleSteps(0)
+
+    // Decorative boot sequence, advanced on its own timer. It is intentionally
+    // NOT awaited: the verdict must never depend on a timer.
+    const stepTimer = setInterval(() => {
+      setVisibleSteps((n) => Math.min(n + 1, 3))
+    }, BOOT_STEP_MS)
+
+    let ok = false
     try {
       await login(identifier.trim(), password)
-      const from = location.state?.from?.pathname || '/dashboard'
-      navigate(from, { replace: true })
-    } catch (err) {
-      setError(err.message || t('loginError'))
-    } finally {
-      setBusy(false)
+      ok = true
+    } catch {
+      // Generic terminal state only. The API error is deliberately not
+      // rendered: its message could hint at which credential was wrong.
+      setError(t('loginError'))
     }
+
+    // Let the boot lines land and the verdict be read before acting on it.
+    const resultTimer = setTimeout(() => {
+      setPhase(ok ? 'granted' : 'denied')
+    }, BOOT_STEP_MS * 2)
+
+    // Shortest safe hold: the real result is already known here, so this is a
+    // fixed visual pause, not a guess.
+    setTimeout(() => {
+      clearInterval(stepTimer)
+      clearTimeout(resultTimer)
+      if (ok) {
+        const from = location.state?.from?.pathname || '/dashboard'
+        navigate(from, { replace: true })
+      } else {
+        setBusy(false)
+        setError('')
+      }
+    }, RESULT_HOLD_MS)
   }
 
   const bootLines = [t('gameBoot1'), t('gameBoot2'), t('gameBoot3'), t('gameBoot4')]
   const modules = t('gameModules') || ['CORE', 'SECTOR', 'MODULES', 'PLAYERS', 'CONFIG']
+
+  let terminalLines = []
+  let terminalResult = null
+  if (phase === 'pending' || phase === 'granted') {
+    const all = [...bootLines.slice(0, 3), t('gameGranted'), t('gameWelcome')]
+    terminalLines = phase === 'granted' ? all : all.slice(0, visibleSteps)
+    terminalResult = phase === 'granted' ? 'granted' : 'pending'
+  } else if (phase === 'denied') {
+    terminalLines = [t('gameDenied'), t('gameTryAgain')]
+    terminalResult = 'denied'
+  }
 
   return (
     <div className="cyber-root cyber-scan relative min-h-screen w-full overflow-hidden bg-[#0a0612] font-mono text-[#e9dcf7]">
@@ -226,7 +314,7 @@ export default function Login() {
               <span className="ms-auto text-[#34d399]">OPEN</span>
             </div>
 
-            {error ? (
+            {error && !terminalResult ? (
               <div
                 role="alert"
                 className="mb-4 rounded-[10px] border border-[rgba(251,113,133,0.5)] bg-[rgba(251,113,133,0.09)] px-3.5 py-2.5 font-mono text-[11.5px] text-[#fda4af]"
@@ -286,12 +374,22 @@ export default function Login() {
                 <span aria-hidden="true" className="text-[#c084fc]">
                   &gt;&gt;
                 </span>
-                <span>{busy ? t('gameEnteringBtn') : t('gameEnterBtn')}</span>
+                <span>
+                  {phase === 'pending'
+                    ? t('gameConnectingBtn')
+                    : phase === 'granted'
+                      ? t('gameGranted')
+                      : t('gameEnterBtn')}
+                </span>
                 <span aria-hidden="true" className="text-[#c084fc]">
                   &gt;&gt;
                 </span>
               </button>
             </form>
+
+            {terminalLines.length > 0 ? (
+              <LoginTerminal lines={terminalLines} result={terminalResult} />
+            ) : null}
           </div>
 
           {/* Secure session status */}
