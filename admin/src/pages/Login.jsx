@@ -111,7 +111,7 @@ function SystemPanel({ title, modules }) {
    cosmetic: the terminal verdict below is decided by the real login() result,
    never by a timer. */
 const BOOT_STEP_MS = 340
-const RESULT_HOLD_MS = 700
+const RESULT_HOLD_MS = 850
 
 function LoginTerminal({ lines, result }) {
   const tone = {
@@ -146,7 +146,7 @@ function LoginTerminal({ lines, result }) {
             <span className="text-[#a855f7]">&gt;</span>
             <span className={tone} style={glow}>
               {line}
-              {i === lines.length - 1 && result === 'pending' ? (
+              {i === lines.length - 1 && result !== 'denied' ? (
                 <span className="cyber-cursor" aria-hidden="true" />
               ) : null}
             </span>
@@ -219,11 +219,16 @@ export default function Login() {
   let terminalLines = []
   let terminalResult = null
   if (phase === 'pending' || phase === 'granted') {
-    const all = [...bootLines.slice(0, 3), t('gameGranted'), t('gameWelcome')]
+    const all = [
+      ...bootLines.slice(0, 3),
+      t('gameGranted'),
+      t('gameLoginSuccess'),
+      t('gameWelcome'),
+    ]
     terminalLines = phase === 'granted' ? all : all.slice(0, visibleSteps)
     terminalResult = phase === 'granted' ? 'granted' : 'pending'
   } else if (phase === 'denied') {
-    terminalLines = [t('gameDenied'), t('gameTryAgain')]
+    terminalLines = [t('gameDenied'), t('gameLoginFailed'), t('gameTryAgain')]
     terminalResult = 'denied'
   }
 
