@@ -1,13 +1,111 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { BookMarked, Lock, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
-import Button from '../components/ui/Button.jsx'
-import { Input } from '../components/ui/Input.jsx'
-import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
+
+/* Inline SVG emblem — a terminal/mainframe glyph. No external assets, so CSP
+   (img-src 'self' data: blob:) is untouched and no favicon/branding changes. */
+function GameEmblem() {
+  return (
+    <svg
+      viewBox="0 0 96 96"
+      className="h-[74px] w-[74px] sm:h-[86px] sm:w-[86px]"
+      fill="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="cyberEmblem" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e9d5ff" />
+          <stop offset="55%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#6d28d9" />
+        </linearGradient>
+      </defs>
+      <rect
+        x="4.5"
+        y="4.5"
+        width="87"
+        height="87"
+        rx="16"
+        stroke="url(#cyberEmblem)"
+        strokeWidth="1.5"
+        opacity="0.75"
+      />
+      {/* corner ticks */}
+      <path d="M4.5 22V12a7.5 7.5 0 0 1 7.5-7.5H22" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" />
+      <path d="M74 4.5h10.5A7.5 7.5 0 0 1 92 12v10" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" />
+      <path d="M92 74v10a7.5 7.5 0 0 1-7.5 7.5H74" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" />
+      <path d="M22 92H12a7.5 7.5 0 0 1-7.5-7.5V74" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" />
+      {/* monitor / mainframe body */}
+      <rect
+        x="22"
+        y="26"
+        width="52"
+        height="34"
+        rx="4"
+        stroke="url(#cyberEmblem)"
+        strokeWidth="2.5"
+      />
+      {/* screen glow */}
+      <rect x="28" y="32" width="40" height="22" rx="2" fill="#a855f7" opacity="0.14" />
+      {/* prompt chevron + cursor on screen */}
+      <path
+        d="M34 38.5l6 5.5-6 5.5"
+        stroke="#e9d5ff"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="45" y="45" width="12" height="2.5" rx="1.25" fill="#e9d5ff" />
+      {/* stand */}
+      <path d="M48 60v9" stroke="url(#cyberEmblem)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M35 72h26" stroke="url(#cyberEmblem)" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function BootLog({ lines }) {
+  return (
+    <ul className="space-y-2.5 font-mono text-[11px] leading-relaxed">
+      {lines.map((line, i) => (
+        <li
+          key={line}
+          className="cyber-fade flex items-center gap-2 text-[#8d7ba8]"
+          style={{ animationDelay: `${i * 140}ms` }}
+        >
+          <span className="text-[#a855f7]">&gt;</span>
+          <span className={i === lines.length - 1 ? 'text-[#34d399]' : undefined}>{line}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function SystemPanel({ title, modules }) {
+  return (
+    <div className="cyber-panel w-[210px] p-4">
+      <div className="flex items-center gap-2 border-b border-[rgba(168,85,247,0.18)] pb-2.5">
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.9)] cyber-pulse" />
+        <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-[#d8c4f5]">{title}</span>
+      </div>
+      <ul className="mt-3 space-y-2.5 font-mono text-[11px]">
+        {modules.map((m) => (
+          <li key={m} className="flex items-center gap-2.5 text-[#8d7ba8]">
+            <span
+              aria-hidden="true"
+              className="inline-block h-2.5 w-2.5 flex-none border border-[rgba(168,85,247,0.55)]"
+            />
+            <span className="tracking-[0.12em]">{m}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 border-t border-[rgba(168,85,247,0.18)] pt-3 font-mono text-[10px] tracking-[0.16em] text-[#6b5a86]">
+        NODE::07-AR
+      </div>
+    </div>
+  )
+}
 
 export default function Login() {
   const { login } = useAuth()
@@ -35,66 +133,177 @@ export default function Login() {
     }
   }
 
+  const bootLines = [t('gameBoot1'), t('gameBoot2'), t('gameBoot3'), t('gameBoot4')]
+  const modules = t('gameModules') || ['CORE', 'SECTOR', 'MODULES', 'PLAYERS', 'CONFIG']
+
   return (
-    <div className="relative flex min-h-screen items-center justify-center p-4 bg-[var(--bg)] text-[var(--ink)]">
-      {/* Top right quick controls */}
-      <div className="absolute top-4 end-4 flex items-center gap-2">
+    <div className="cyber-root cyber-scan relative min-h-screen w-full overflow-hidden bg-[#0a0612] font-mono text-[#e9dcf7]">
+      {/* Backdrop: grid, horizon glow, dotted globe, glitch lines — all CSS/SVG */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <div
+          className="absolute inset-0 opacity-[0.55]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(168,85,247,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.07) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+        <div
+          className="absolute inset-x-0 top-0 h-[420px]"
+          style={{
+            background:
+              'radial-gradient(70% 60% at 50% 0%, rgba(124,58,237,0.28) 0%, rgba(168,85,247,0.08) 45%, transparent 75%)',
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-[300px] opacity-40"
+          style={{
+            background:
+              'radial-gradient(60% 100% at 50% 120%, rgba(109,40,217,0.35) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* dotted globe / world-map inspired decoration */}
+        <svg className="absolute -left-24 top-1/2 h-[560px] w-[560px] -translate-y-1/2 opacity-25" viewBox="0 0 400 400" fill="none">
+          <defs>
+            <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.3" fill="#a855f7" />
+            </pattern>
+            <clipPath id="globeClip">
+              <circle cx="200" cy="200" r="150" />
+            </clipPath>
+          </defs>
+          <g clipPath="url(#globeClip)" opacity="0.85">
+            <rect x="0" y="0" width="400" height="400" fill="url(#dots)" />
+            <path
+              d="M40 118c48-30 96 4 140-14s74-44 130-30v70c-58 4-84 44-136 40s-88-24-134-6z"
+              fill="#0a0612"
+              opacity="0.55"
+            />
+            <path d="M96 214c46 6 62 44 118 42s72-30 122-14v70c-52 26-96 4-146 12s-78 26-94 4z" fill="#0a0612" opacity="0.5" />
+          </g>
+          <circle cx="200" cy="200" r="150" stroke="#7c3aed" strokeWidth="1" opacity="0.5" />
+          <circle cx="200" cy="200" r="112" stroke="#7c3aed" strokeWidth="0.75" opacity="0.35" />
+          <ellipse cx="200" cy="200" rx="66" ry="150" stroke="#7c3aed" strokeWidth="0.75" opacity="0.3" />
+          <path d="M50 200h300" stroke="#7c3aed" strokeWidth="0.75" opacity="0.3" />
+        </svg>
+
+        {/* glitch / scan lines */}
+        <div className="absolute inset-x-0 top-[28%] h-px bg-gradient-to-r from-transparent via-[rgba(168,85,247,0.5)] to-transparent" />
+        <div className="absolute inset-x-0 top-[63%] h-px bg-gradient-to-r from-transparent via-[rgba(168,85,247,0.28)] to-transparent" />
+      </div>
+
+      {/* Language + theme controls */}
+      <div className="absolute top-4 end-4 z-30 flex items-center gap-2">
         <LanguageSwitcher />
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-md">
-        {/* Brand header */}
-        <div className="mb-6 flex flex-col items-center gap-2.5 text-center">
-          <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] flex items-center justify-center text-white shadow-lg shadow-[var(--purple)]/20">
-            <BookMarked className="h-7 w-7" aria-hidden="true" />
+      {/* Desktop: left log | center card | right system panel */}
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1180px] items-center justify-center gap-8 px-4 py-20 lg:justify-between lg:gap-6 lg:px-8">
+        <aside className="hidden w-[210px] shrink-0 lg:block" aria-hidden="true">
+          <BootLog lines={bootLines} />
+        </aside>
+
+        <div className="w-full max-w-[420px]">
+          {/* Emblem + heading */}
+          <div className="mb-7 flex flex-col items-center text-center">
+            <div className="cyber-pulse">
+              <GameEmblem />
+            </div>
+            <h1 className="mt-4 text-[19px] font-bold tracking-[0.2em] text-[#f3e9ff] sm:text-[22px] sm:tracking-[0.24em]">
+              {t('gameHeading')}
+              <span className="cyber-cursor" aria-hidden="true" />
+            </h1>
+            <p className="mt-2 font-mono text-[10px] tracking-[0.28em] text-[#6b5a86]">TERMINAL v2.6 // ONLINE</p>
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-[var(--ink)]">{t('appName')}</h1>
-            <p className="mt-0.5 text-xs text-[var(--ink-soft)] font-medium">{t('appTagline')}</p>
+
+          {/* Login card */}
+          <div className="cyber-frame cyber-corners p-6 sm:p-8">
+            <div className="mb-5 flex items-center gap-2 border-b border-[rgba(168,85,247,0.16)] pb-3 font-mono text-[10px] tracking-[0.22em] text-[#8d7ba8]">
+              <span className="text-[#a855f7]">&gt;</span>
+              <span>AUTH_GATE</span>
+              <span className="ms-auto text-[#34d399]">OPEN</span>
+            </div>
+
+            {error ? (
+              <div
+                role="alert"
+                className="mb-4 rounded-[10px] border border-[rgba(251,113,133,0.5)] bg-[rgba(251,113,133,0.09)] px-3.5 py-2.5 font-mono text-[11.5px] text-[#fda4af]"
+              >
+                <span className="me-1.5 text-[#fb7185]">!</span>
+                {error}
+              </div>
+            ) : null}
+
+            <form onSubmit={onSubmit} className="space-y-5" aria-label={t('gameHeading')}>
+              <div>
+                <label
+                  htmlFor="game-player"
+                  className="mb-2 block font-mono text-[12px] tracking-[0.08em] text-[#a78bc9]"
+                >
+                  {t('gamePlayerField')}
+                  <span className="text-[#a855f7]">_</span>
+                </label>
+                <div className="cyber-field">
+                  <input
+                    id="game-player"
+                    name="identifier"
+                    type="text"
+                    autoComplete="username"
+                    spellCheck="false"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder={t('gamePlayerPlaceholder')}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="game-level"
+                  className="mb-2 block font-mono text-[12px] tracking-[0.08em] text-[#a78bc9]"
+                >
+                  {t('gameLevelField')}
+                  <span className="text-[#a855f7]">_</span>
+                </label>
+                <div className="cyber-field">
+                  <input
+                    id="game-level"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t('gameLevelPlaceholder')}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="cyber-btn mt-7" disabled={busy}>
+                <span aria-hidden="true" className="text-[#c084fc]">
+                  &gt;&gt;
+                </span>
+                <span>{busy ? t('gameEnteringBtn') : t('gameEnterBtn')}</span>
+                <span aria-hidden="true" className="text-[#c084fc]">
+                  &gt;&gt;
+                </span>
+              </button>
+            </form>
           </div>
+
+          {/* Secure session status */}
+          <p className="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-mono text-[10px] tracking-[0.18em] text-[#8d7ba8]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#34d399] shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+            <span>{t('gameFooter')}</span>
+          </p>
         </div>
 
-        {/* Login form */}
-        <div className="card-ref p-6 sm:p-8">
-          <div className="mb-5">
-            <h2 className="text-lg font-bold text-[var(--ink)]">{t('loginTitle')}</h2>
-            <p className="text-xs text-[var(--ink-soft)] mt-1">{t('loginSubtitle')}</p>
-          </div>
-
-          <ErrorBanner message={error} />
-
-          <form onSubmit={onSubmit} className="space-y-4" aria-label="Sign In Form">
-            <Input
-              label={t('emailOrUsernameField')}
-              autoComplete="username"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="admin@arine.ma or username"
-              required
-            />
-            <Input
-              label={t('passwordField')}
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-
-            <Button type="submit" size="lg" disabled={busy} className="mt-6 w-full">
-              <Lock className="h-4 w-4" aria-hidden="true" />
-              {busy ? t('loading') : t('loginBtn')}
-            </Button>
-          </form>
-        </div>
-
-        {/* Security badge */}
-        <div className="mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-[var(--ink-soft)]">
-          <ShieldCheck className="h-4 w-4 text-[var(--green)]" />
-          <span>{t('secureSession')}</span>
-        </div>
+        <aside className="hidden shrink-0 lg:block" aria-hidden="true">
+          <SystemPanel title={t('gameSystemMode')} modules={modules} />
+        </aside>
       </div>
     </div>
   )

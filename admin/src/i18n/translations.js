@@ -670,6 +670,22 @@ export const translations = {
     loginBtn: 'دخول للوحة التحكم',
     loginError: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
 
+    // Login — Game Terminal
+    gameHeading: 'WELCOME IN THE GAME',
+    gamePlayerField: 'اسم اللاعب',
+    gameLevelField: 'مستواك',
+    gamePlayerPlaceholder: 'choose your game name_',
+    gameLevelPlaceholder: 'enter your level code_',
+    gameEnterBtn: 'ENTER GAME',
+    gameEnteringBtn: 'جاري الدخول…',
+    gameBoot1: 'جاري التشغيل…',
+    gameBoot2: 'جاري التحقق من الصلاحيات…',
+    gameBoot3: 'جاري تحميل الواجهة…',
+    gameBoot4: 'جاهز.',
+    gameSystemMode: 'وضع النظام',
+    gameModules: ['النواة', 'القطاع', 'الوحدات', 'اللاعبون', 'الإعدادات'],
+    gameFooter: 'جلسة آمنة | مشفّرة | الدخول جاهز',
+
     // Admin Team & Management
     navAdminTeam: 'فريق الإدارة',
     navActivityLog: 'سجل النشاطات',
@@ -1794,6 +1810,22 @@ export const translations = {
     loginBtn: 'Se connecter',
     loginError: 'Email ou mot de passe incorrect',
 
+    // Login — Game Terminal
+    gameHeading: 'WELCOME IN THE GAME',
+    gamePlayerField: 'nom du joueur',
+    gameLevelField: 'votre lvl',
+    gamePlayerPlaceholder: 'choose your game name_',
+    gameLevelPlaceholder: 'enter your level code_',
+    gameEnterBtn: 'ENTER GAME',
+    gameEnteringBtn: 'Connexion…',
+    gameBoot1: 'INITIALISATION...',
+    gameBoot2: 'VERIFICATION DE L\'ACCES...',
+    gameBoot3: 'CHARGEMENT DE L\'INTERFACE...',
+    gameBoot4: 'PRET.',
+    gameSystemMode: 'SYSTEM MODE',
+    gameModules: ['CORE', 'SECTOR', 'MODULES', 'PLAYERS', 'CONFIG'],
+    gameFooter: 'SECURE SESSION | ENCRYPTED | ACCESS READY',
+
     // Admin Team & Management
     navAdminTeam: 'Équipe d\'administration',
     navActivityLog: 'Journal d\'activité',
@@ -2879,6 +2911,22 @@ export const translations = {
     passwordField: 'Password',
     loginBtn: 'Sign In',
     loginError: 'Invalid email or password',
+
+    // Login — Game Terminal
+    gameHeading: 'WELCOME IN THE GAME',
+    gamePlayerField: 'game name',
+    gameLevelField: 'your lvl',
+    gamePlayerPlaceholder: 'choose your game name_',
+    gameLevelPlaceholder: 'enter your level code_',
+    gameEnterBtn: 'ENTER GAME',
+    gameEnteringBtn: 'LOADING...',
+    gameBoot1: 'INITIALIZING...',
+    gameBoot2: 'CHECKING ACCESS...',
+    gameBoot3: 'LOADING INTERFACE...',
+    gameBoot4: 'READY.',
+    gameSystemMode: 'SYSTEM MODE',
+    gameModules: ['CORE', 'SECTOR', 'MODULES', 'PLAYERS', 'CONFIG'],
+    gameFooter: 'SECURE SESSION | ENCRYPTED | ACCESS READY',
 
     // Admin Team & Management
     navAdminTeam: 'Admin Team',
