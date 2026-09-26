@@ -111,24 +111,22 @@ function SystemPanel({ title, modules }) {
    cosmetic: the terminal verdict below is decided by the real login() result,
    never by a timer. */
 const BOOT_STEP_MS = 340
-const RESULT_HOLD_MS = 850
+const BOOT_TOTAL_MS = 2000
+const BOOT_READY_HOLD_MS = 220
+const PROGRESS_TICK_MS = 60
+const BAR_CELLS = 16
 
 function LoginTerminal({ lines, result }) {
   const tone = {
     pending: 'text-[#a78bc9]',
-    granted: 'text-[#34d399]',
     denied: 'text-[#fda4af]',
-  }[result || 'pending']
+  }[result]
 
   // React style props must be objects, never CSS strings — a string here
   // throws "The style prop expects a mapping from style properties to values"
   // (React error #62) the moment this component renders.
   const glow =
-    result === 'granted'
-      ? { textShadow: '0 0 10px rgba(52, 211, 153, 0.55)' }
-      : result === 'denied'
-        ? { textShadow: '0 0 10px rgba(251, 113, 133, 0.5)' }
-        : undefined
+    result === 'denied' ? { textShadow: '0 0 10px rgba(251, 113, 133, 0.5)' } : undefined
 
   return (
     <div
@@ -146,13 +144,108 @@ function LoginTerminal({ lines, result }) {
             <span className="text-[#a855f7]">&gt;</span>
             <span className={tone} style={glow}>
               {line}
-              {i === lines.length - 1 && result !== 'denied' ? (
+              {i === lines.length - 1 && result === 'pending' ? (
                 <span className="cyber-cursor" aria-hidden="true" />
               ) : null}
             </span>
           </li>
         ))}
       </ul>
+    </div>
+  )
+}
+
+/* Full-page boot transition, shown only after the real login() call resolved
+   successfully. Everything here is cosmetic: the navigation at the end is a
+   fixed hold, not a second authentication decision. */
+function BootScreen({ lines, percent, ready }) {
+  const filled = Math.round((percent / 100) * BAR_CELLS)
+  const cell = ready ? '█' : '░'
+
+  return (
+    <div className="cyber-boot" role="status" aria-live="polite">
+      <div className="cyber-boot-grid" aria-hidden="true" />
+
+      <div className="cyber-boot-inner">
+        <div className="cyber-boot-emblem cyber-pulse" aria-hidden="true">
+          <svg viewBox="0 0 96 96" className="h-16 w-16 sm:h-20 sm:w-20" fill="none">
+            <rect
+              x="4.5"
+              y="4.5"
+              width="87"
+              height="87"
+              rx="16"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              opacity="0.55"
+            />
+            <path
+              d="M4.5 22V12a7.5 7.5 0 0 1 7.5-7.5H22"
+              stroke="#a855f7"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M74 4.5h10.5A7.5 7.5 0 0 1 92 12v10"
+              stroke="#a855f7"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M92 74v10a7.5 7.5 0 0 1-7.5 7.5H74"
+              stroke="#a855f7"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M22 92H12a7.5 7.5 0 0 1-7.5-7.5V74"
+              stroke="#a855f7"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <rect x="22" y="26" width="52" height="34" rx="4" stroke="currentColor" strokeWidth="2.5" />
+            <rect x="28" y="32" width="40" height="22" rx="2" fill="currentColor" opacity="0.12" />
+            <path
+              d="M34 38.5l6 5.5-6 5.5"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <rect x="45" y="45" width="12" height="2.5" rx="1.25" fill="currentColor" />
+            <path d="M48 60v9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M35 72h26" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+        </div>
+
+        <ul className="cyber-boot-lines font-mono">
+          {lines.map((line, i) => {
+            const isLast = i === lines.length - 1
+            const state = isLast && ready ? 'is-ready' : ready ? 'is-done' : ''
+            return (
+              <li key={line} className="cyber-fade" style={{ animationDelay: `${i * 80}ms` }}>
+                <span aria-hidden="true">&gt;</span>
+                <span className={state}>
+                  {line}
+                  {isLast && ready ? <span className="cyber-cursor" aria-hidden="true" /> : null}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="cyber-boot-progress-wrap">
+          <div className="cyber-boot-progress-track" aria-hidden="true">
+            <div className="cyber-boot-progress-fill" style={{ width: `${percent}%` }} />
+          </div>
+          <div className="cyber-boot-progress-label font-mono" aria-hidden="true">
+            <span>[LOAD]</span>
+            <b>
+              {percent}%{cell.repeat(Math.max(0, filled)).padStart(BAR_CELLS, '░')}
+            </b>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -166,8 +259,13 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [phase, setPhase] = useState('idle') // idle | pending | granted | denied
-  const [visibleSteps, setVisibleSteps] = useState(0)
+  // idle | pending (authenticating) | denied (real failure) | loading (real success)
+  const [phase, setPhase] = useState('idle')
+  const [percent, setPercent] = useState(0)
+
+  // Navigating to the intended route after the boot transition. Defined in
+  // render so a language switch mid-transition cannot change the destination.
+  const redirectTo = location.state?.from?.pathname || '/dashboard'
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -175,61 +273,63 @@ export default function Login() {
     setBusy(true)
     setError('')
     setPhase('pending')
-    setVisibleSteps(0)
-
-    // Decorative boot sequence, advanced on its own timer. It is intentionally
-    // NOT awaited: the verdict must never depend on a timer.
-    const stepTimer = setInterval(() => {
-      setVisibleSteps((n) => Math.min(n + 1, 3))
-    }, BOOT_STEP_MS)
 
     let ok = false
     try {
+      // Exactly one call per submit, exactly as before.
       await login(identifier.trim(), password)
       ok = true
     } catch {
       // Generic terminal state only. The API error is deliberately not
       // rendered: its message could hint at which credential was wrong.
-      setError(t('loginError'))
     }
 
-    // Let the boot lines land and the verdict be read before acting on it.
-    const resultTimer = setTimeout(() => {
-      setPhase(ok ? 'granted' : 'denied')
-    }, BOOT_STEP_MS * 2)
-
-    // Shortest safe hold: the real result is already known here, so this is a
-    // fixed visual pause, not a guess.
-    setTimeout(() => {
-      clearInterval(stepTimer)
-      clearTimeout(resultTimer)
-      if (ok) {
-        const from = location.state?.from?.pathname || '/dashboard'
-        navigate(from, { replace: true })
-      } else {
+    if (!ok) {
+      // The login page stays exactly where it is — no loading screen.
+      setTimeout(() => {
+        setPhase('denied')
         setBusy(false)
-        setError('')
-      }
-    }, RESULT_HOLD_MS)
+      }, BOOT_STEP_MS)
+      return
+    }
+
+    // Real success: hand off to the full-page boot transition. The session is
+    // already established by login(); this is a visual pause only.
+    setPhase('loading')
+    setPercent(0)
+    const startedAt = performance.now()
+
+    const progressTimer = setInterval(() => {
+      const elapsed = performance.now() - startedAt
+      const ratio = Math.min(1, elapsed / BOOT_TOTAL_MS)
+      setPercent(Math.round(Math.pow(ratio, 0.75) * 100))
+    }, PROGRESS_TICK_MS)
+
+    setTimeout(() => {
+      clearInterval(progressTimer)
+      setPercent(100)
+      navigate(redirectTo, { replace: true })
+    }, BOOT_TOTAL_MS + BOOT_READY_HOLD_MS)
   }
 
   const bootLines = [t('gameBoot1'), t('gameBoot2'), t('gameBoot3'), t('gameBoot4')]
   const modules = t('gameModules') || ['CORE', 'SECTOR', 'MODULES', 'PLAYERS', 'CONFIG']
 
-  let terminalLines = []
-  let terminalResult = null
-  if (phase === 'pending' || phase === 'granted') {
-    const all = [
-      ...bootLines.slice(0, 3),
-      t('gameGranted'),
-      t('gameLoginSuccess'),
-      t('gameWelcome'),
-    ]
-    terminalLines = phase === 'granted' ? all : all.slice(0, visibleSteps)
-    terminalResult = phase === 'granted' ? 'granted' : 'pending'
-  } else if (phase === 'denied') {
-    terminalLines = [t('gameDenied'), t('gameLoginFailed'), t('gameTryAgain')]
-    terminalResult = 'denied'
+  const loadLines = [
+    t('gameLoadVerified'),
+    t('gameLoadInit'),
+    t('gameLoadModules'),
+    t('gameLoadSync'),
+    t('gameLoadPrep'),
+    t('gameLoadReady'),
+  ]
+
+  const terminalLines =
+    phase === 'denied' ? [t('gameDenied'), t('gameLoginFailed'), t('gameTryAgain')] : []
+  const terminalResult = phase === 'denied' ? 'denied' : 'pending'
+
+  if (phase === 'loading') {
+    return <BootScreen lines={loadLines} percent={percent} ready={percent >= 100} />
   }
 
   return (
@@ -383,11 +483,7 @@ export default function Login() {
                   &gt;&gt;
                 </span>
                 <span>
-                  {phase === 'pending'
-                    ? t('gameConnectingBtn')
-                    : phase === 'granted'
-                      ? t('gameGranted')
-                      : t('gameEnterBtn')}
+                  {phase === 'pending' ? t('gameConnectingBtn') : t('gameEnterBtn')}
                 </span>
                 <span aria-hidden="true" className="text-[#c084fc]">
                   &gt;&gt;

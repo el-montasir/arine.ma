@@ -556,3 +556,148 @@ table.orders-table tr:hover {
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   Full-page boot transition — replaces the login card after a real success.
+   Reuses the same cyberpunk palette (no new assets, no new origins).
+   ========================================================================== */
+
+.cyber-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background:
+    radial-gradient(70% 60% at 50% 42%, rgba(124, 58, 237, 0.22) 0%, rgba(168, 85, 247, 0.06) 45%, transparent 75%),
+    radial-gradient(60% 100% at 50% 120%, rgba(109, 40, 217, 0.32) 0%, transparent 70%),
+    #0a0612;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.cyber-boot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.022) 0px,
+    rgba(255, 255, 255, 0.022) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 1;
+}
+
+.cyber-boot-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(168, 85, 247, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  z-index: 0;
+}
+
+.cyber-boot-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.cyber-boot-emblem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #34d399;
+  filter: drop-shadow(0 0 14px rgba(52, 211, 153, 0.55));
+}
+
+.cyber-boot-lines {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.cyber-boot-lines > li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cyber-boot-lines > li > span:first-child {
+  color: #a855f7;
+}
+
+.cyber-boot-lines > li > span:last-child {
+  color: #8d7ba8;
+}
+
+.cyber-boot-lines > li > span:last-child.is-done {
+  color: #34d399;
+}
+
+.cyber-boot-lines > li > span:last-child.is-ready {
+  color: #34d399;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
+}
+
+.cyber-boot-progress-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cyber-boot-progress-track {
+  width: 100%;
+  height: 14px;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 999px;
+  background: rgba(10, 6, 18, 0.7);
+  overflow: hidden;
+  position: relative;
+}
+
+.cyber-boot-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.7);
+  transition: width 0.18s linear;
+}
+
+.cyber-boot-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: #8d7ba8;
+}
+
+.cyber-boot-progress-label b {
+  color: #a855f7;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cyber-boot-progress-fill {
+    transition: none;
+  }
+}
