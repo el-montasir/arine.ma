@@ -120,11 +120,14 @@ function LoginTerminal({ lines, result }) {
     denied: 'text-[#fda4af]',
   }[result || 'pending']
 
+  // React style props must be objects, never CSS strings — a string here
+  // throws "The style prop expects a mapping from style properties to values"
+  // (React error #62) the moment this component renders.
   const glow =
     result === 'granted'
-      ? 'text-shadow:0 0 10px_rgba(52,211,153,0.55)'
+      ? { textShadow: '0 0 10px rgba(52, 211, 153, 0.55)' }
       : result === 'denied'
-        ? 'text-shadow:0 0 10px_rgba(251,113,133,0.5)'
+        ? { textShadow: '0 0 10px rgba(251, 113, 133, 0.5)' }
         : undefined
 
   return (
