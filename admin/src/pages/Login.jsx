@@ -262,14 +262,35 @@ export default function Login() {
   // idle | pending (authenticating) | denied (real failure) | loading (real success)
   const [phase, setPhase] = useState('idle')
   const [percent, setPercent] = useState(0)
+  // Per-field validation flags, shown only after a submit attempt. Empty until
+  // then, so the form never nags on first paint.
+  const [fieldErrors, setFieldErrors] = useState({})
 
   // Navigating to the intended route after the boot transition. Defined in
   // render so a language switch mid-transition cannot change the destination.
   const redirectTo = location.state?.from?.pathname || '/dashboard'
 
+  // Replaces native `required`: the same rules, checked here so the browser
+  // never shows its own "Please fill out this field." bubble. Only the empty
+  // case is enforced — everything else still goes to the server unchanged.
+  const nextFieldErrors = {
+    name: identifier.trim() === '',
+    level: password === '',
+  }
+
   async function onSubmit(e) {
     e.preventDefault()
     if (busy) return
+
+    // Local gate first. A missing required field never reaches login().
+    if (nextFieldErrors.name || nextFieldErrors.level) {
+      setFieldErrors(nextFieldErrors)
+      setPhase('idle')
+      setError('')
+      return
+    }
+
+    setFieldErrors({})
     setBusy(true)
     setError('')
     setPhase('pending')
@@ -441,7 +462,9 @@ export default function Login() {
                   {t('gamePlayerField')}
                   <span className="text-[#a855f7]">_</span>
                 </label>
-                <div className="cyber-field">
+                <div
+                  className={fieldErrors.name ? 'cyber-field is-invalid' : 'cyber-field'}
+                >
                   <input
                     id="game-player"
                     name="identifier"
@@ -449,11 +472,29 @@ export default function Login() {
                     autoComplete="username"
                     spellCheck="false"
                     value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
+                    onChange={(e) => {
+                      setIdentifier(e.target.value)
+                      // Clear the message the moment the field becomes valid.
+                      if (fieldErrors.name && e.target.value.trim() !== '') {
+                        setFieldErrors((prev) => ({ ...prev, name: false }))
+                      }
+                    }}
+                    onBlur={() => {
+                      if (identifier.trim() !== '') {
+                        setFieldErrors((prev) => ({ ...prev, name: false }))
+                      }
+                    }}
                     placeholder={t('gamePlayerPlaceholder')}
-                    required
+                    aria-invalid={fieldErrors.name || undefined}
+                    aria-describedby={fieldErrors.name ? 'game-player-error' : undefined}
                   />
                 </div>
+                {fieldErrors.name ? (
+                  <p id="game-player-error" className="cyber-field-error">
+                    <span aria-hidden="true">&gt;</span>
+                    {t('gameNameRequired')}
+                  </p>
+                ) : null}
               </div>
 
               <div>
@@ -464,18 +505,37 @@ export default function Login() {
                   {t('gameLevelField')}
                   <span className="text-[#a855f7]">_</span>
                 </label>
-                <div className="cyber-field">
+                <div
+                  className={fieldErrors.level ? 'cyber-field is-invalid' : 'cyber-field'}
+                >
                   <input
                     id="game-level"
                     name="password"
                     type="password"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (fieldErrors.level && e.target.value !== '') {
+                        setFieldErrors((prev) => ({ ...prev, level: false }))
+                      }
+                    }}
+                    onBlur={() => {
+                      if (password !== '') {
+                        setFieldErrors((prev) => ({ ...prev, level: false }))
+                      }
+                    }}
                     placeholder={t('gameLevelPlaceholder')}
-                    required
+                    aria-invalid={fieldErrors.level || undefined}
+                    aria-describedby={fieldErrors.level ? 'game-level-error' : undefined}
                   />
                 </div>
+                {fieldErrors.level ? (
+                  <p id="game-level-error" className="cyber-field-error">
+                    <span aria-hidden="true">&gt;</span>
+                    {t('gameLevelRequired')}
+                  </p>
+                ) : null}
               </div>
 
               <button type="submit" className="cyber-btn mt-7" disabled={busy}>

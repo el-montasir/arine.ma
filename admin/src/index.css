@@ -458,6 +458,38 @@ table.orders-table tr:hover {
   color: #6b5a86;
 }
 
+/* Custom field validation — replaces the browser's native "Please fill out
+   this field." bubble, which cannot be styled and does not match the theme. */
+.cyber-field.is-invalid {
+  border-color: rgba(251, 113, 133, 0.7);
+  background: rgba(38, 12, 22, 0.6);
+  box-shadow: 0 0 18px -6px rgba(251, 113, 133, 0.55);
+}
+.cyber-field.is-invalid:focus-within {
+  border-color: rgba(251, 113, 133, 0.95);
+  background: rgba(44, 14, 26, 0.85);
+  box-shadow:
+    0 0 0 3px rgba(251, 113, 133, 0.14),
+    0 0 20px -4px rgba(251, 113, 133, 0.6);
+}
+.cyber-field-error {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 7px;
+  font-family: inherit;
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  color: #fda4af;
+  text-shadow: 0 0 10px rgba(251, 113, 133, 0.45);
+  word-break: break-word;
+}
+.cyber-field-error > span:first-child {
+  flex: none;
+  color: #fb7185;
+}
+
 .cyber-btn {
   display: flex;
   align-items: center;
