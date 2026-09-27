@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CheckCircle2, User, MapPin, CreditCard, ArrowLeft, ArrowRight, Package, Truck } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 import { trackPurchase } from '../utils/tracking'
+import { getThumbnailImageProps } from '../utils/image-variants'
 
 export default function OrderSuccess() {
   const { state } = useLocation()
@@ -48,96 +49,104 @@ export default function OrderSuccess() {
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    if (order?.orderNumber) {
+      try { navigator.clipboard.writeText(order.orderNumber); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+    }
+  }
+  const handleShare = () => {
+    if (!order?.orderNumber) return
+    const url = window.location.origin + '/track-order?num=' + encodeURIComponent(order.orderNumber)
+    try { if (navigator.share) navigator.share({ title: order.orderNumber, text: 'طلب ' + order.orderNumber, url }); else if (navigator.clipboard) navigator.clipboard.writeText(url); } catch {}
+  }
+
   return (
-    <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-12 lg:py-20">
-      <div className="max-w-[540px] mx-auto text-center">
-        {/* Success illustration */}
-        <div className="w-24 h-24 bg-[#E8F7F1] border-2 border-[#0F6E51]/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-          <CheckCircle2 className="w-12 h-12 text-[#0F6E51]" />
-        </div>
+    <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-14 lg:py-24">
+      <div className="max-w-[720px] mx-auto">
+        {/* Success top */}
+        <section className="text-center mb-10">
+          <div className="w-20 h-20 bg-[#E8F7F1] border border-[#0F6E51]/15 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 className="w-10 h-10 text-[#0F6E51]" strokeWidth={2.5}/></div>
+          <h1 className="font-tajawal font-extrabold text-3xl sm:text-[2.5rem] text-[#161616] tracking-tight leading-[1.15] mb-3">تم استلام طلبك بنجاح!</h1>
+          <p className="text-[#6B7280] text-sm sm:text-base max-w-[420px] mx-auto leading-relaxed">تم تسجيل طلبك وسيقوم فريقنا بالتواصل معك قريباً لتجهيز وإرسال الطلب.</p>
+        </section>
 
-        <h1 className="font-tajawal font-extrabold text-3xl sm:text-4xl text-[#1C1220] tracking-tight mb-2">
-          {t('thankYou')}
-        </h1>
-        <p className="text-[#7A6D80] text-sm sm:text-base max-w-[440px] mx-auto leading-relaxed">
-          {t('orderReceivedSuccess')}
-        </p>
-
-        {order ? (
-          <>
-            {/* Order number */}
-            <div className="mt-8 inline-flex items-center gap-3 bg-[#F6EDF9] border border-[#EBDCF1] rounded-[20px] px-6 py-3.5 shadow-xs">
-              <Package className="w-5 h-5 text-[#6B2178]" />
+        {/* Order number */}
+        {order?.orderNumber && (
+          <section className="mb-10 flex justify-center">
+            <div className="inline-flex items-center gap-4 bg-white border border-[#E5E7EB] rounded-2xl px-6 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+              <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] flex items-center justify-center"><Package className="w-5 h-5 text-[#6B2178]"/></div>
               <div className="text-start">
-                <div className="text-[0.72rem] text-[#7A6D80] font-medium mb-0.5">{t('orderNumberLabel')}</div>
-                <div dir="ltr" className="text-[1.1rem] font-bold text-[#6B2178] font-mono tracking-wide">
-                  {order.orderNumber}
+                <div className="text-[0.75rem] text-[#6B7280] font-medium">رقم الطلب</div>
+                <div dir="ltr" className="text-base font-bold text-[#161616] font-mono tracking-wide flex items-center gap-2">
+                  <span>{order.orderNumber}</span>
+                  <button onClick={handleCopy} type="button" aria-label="نسخ" className="inline-flex items-center gap-1 text-[0.78rem] text-[#6B2178] font-medium">{copied ? <><Check className="w-3.5 h-3.5"/> تم النسخ</> : <><Copy className="w-3.5 h-3.5"/> نسخ</>}</button>
                 </div>
               </div>
             </div>
-
-            {/* Receipt details */}
-            <div className="mt-8 bg-white border border-[#EFE8F2] rounded-[24px] p-2 divide-y divide-[#EFE8F2] text-start shadow-[0_1px_2px_rgba(62,17,71,.04),0_12px_32px_-12px_rgba(62,17,71,.12)]">
-              <div className="flex items-center justify-between p-4 sm:px-5">
-                <span className="flex items-center gap-2.5 text-[0.85rem] text-[#7A6D80] font-medium">
-                  <User className="w-4 h-4 text-[#6B2178]" /> {t('fullName')}
-                </span>
-                <span className="text-[0.9rem] font-bold text-[#1C1220]">{order.fullName}</span>
-              </div>
-              <div className="flex items-center justify-between p-4 sm:px-5">
-                <span className="flex items-center gap-2.5 text-[0.85rem] text-[#7A6D80] font-medium">
-                  <MapPin className="w-4 h-4 text-[#6B2178]" /> {t('city')}
-                </span>
-                <span className="text-[0.9rem] font-bold text-[#1C1220]">{order.city}</span>
-              </div>
-              <div className="flex items-center justify-between p-4 sm:px-5">
-                <span className="flex items-center gap-2.5 text-[0.85rem] text-[#7A6D80] font-medium">
-                  <CreditCard className="w-4 h-4 text-[#6B2178]" /> {t('paymentMethod')}
-                </span>
-                <span className="text-[0.9rem] font-bold text-[#1C1220]">
-                  {order.paymentMethod === 'CASH_ON_DELIVERY' ? t('cashOnDelivery') : order.paymentMethod}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-4 sm:px-5">
-                <span className="text-[0.88rem] font-bold text-[#1C1220]">{t('total')}</span>
-                <span className="font-tajawal font-extrabold text-xl text-[#6B2178]">{formatPrice(order.total)}</span>
-              </div>
-            </div>
-
-            {/* Track order direct link */}
-            <div className="mt-4">
-              <Link
-                to={`/track-order?num=${encodeURIComponent(order.orderNumber)}`}
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 bg-[#F6EDF9] hover:bg-[#EBDCF1] text-[#6B2178] border border-[#EBDCF1] text-[0.92rem] font-bold rounded-[14px] transition-all shadow-xs"
-              >
-                <Truck className="w-4 h-4 text-[#6B2178]" />
-                {t('trackYourOrder')}
-              </Link>
-            </div>
-          </>
-        ) : (
-          <p className="mt-8 text-[#7A6D80] text-[0.88rem]">
-            {t('orderReceivedSuccess')}
-          </p>
+          </section>
         )}
 
-        {/* CTAs */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 text-white text-base font-bold rounded-[16px] transition-all shadow-lg shadow-[#6B2178]/25 active:scale-[0.99] cursor-pointer"
-          >
-            <span>{t('backToStore')}</span>
-            <ArrowIcon className="w-4 h-4" />
-          </Link>
-          <Link
-            to="/shop"
-            className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white border border-[#EFE8F2] hover:border-[#EBDCF1] hover:bg-[#F6EDF9]/40 text-[#1C1220] text-base font-bold rounded-[16px] transition-all shadow-xs cursor-pointer"
-          >
-            {t('exploreShop')}
-          </Link>
-        </div>
+        {/* Details card */}
+        <section className="mb-10">
+          <div className="bg-white border border-[#E5E7EB] rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+            <div className="px-6 pt-6 pb-3"><h2 className="text-[1.05rem] font-extrabold text-[#161616] flex items-center gap-2.5"><Package className="w-5 h-5 text-[#6B2178]" strokeWidth={2.2}/> تفاصيل الطلب</h2></div>
+            <div className="px-6">
+              <div className="divide-y divide-[#E5E7EB]">
+                {/* Product items */}
+                {order?.items?.map((item) => {
+                  const thumbProps = item.productImage ? getThumbnailImageProps(item.productImage, item.productImageVariantWidths || []) : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
+                  return (
+                    <div key={item.id || item.productTitle} className="py-4 flex items-start gap-4">
+                      <div className="w-14 h-20 shrink-0">{item.productImage ? <img src={thumbProps.src} srcSet={thumbProps.srcSet||''} sizes={thumbProps.sizes||'60px'} alt="" className="w-14 h-20 object-cover rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]" loading="lazy" decoding="async" onError={e=>{ if(e.currentTarget.dataset.variantFallbackApplied!=='1'){e.currentTarget.removeAttribute('srcset');e.currentTarget.removeAttribute('sizes');e.currentTarget.dataset.variantFallbackApplied='1';}}}/> : <div className="w-14 h-20 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-center"><BookOpen className="w-6 h-6 text-[#D1D5DB]"/></div>}</div>
+                      <div className="min-w-0 flex-1 pt-0.5"><h3 className="text-[0.92rem] font-bold text-[#161616] truncate">{item.productTitle||item.title||'منتج'}</h3><p className="text-[0.82rem] text-[#6B7280] mt-1.5">{item.quantity} × {formatPrice(item.unitPrice||item.price)}</p></div>
+                      <div className="text-[0.92rem] font-extrabold text-[#161616] pt-0.5 shrink-0">{formatPrice(item.totalPrice)}</div>
+                    </div>
+                  )
+                })}
+                {/* Package items */}
+                {order?.packageItems?.map((item) => {
+                  const thumbProps = item.packageImage ? getThumbnailImageProps(item.packageImage, item.packageImageVariantWidths || []) : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
+                  return (
+                    <div key={item.id || item.packageTitle} className="py-4 flex items-start gap-4">
+                      <div className="w-14 h-14 shrink-0">{item.packageImage ? <img src={thumbProps.src} srcSet={thumbProps.srcSet||''} sizes={thumbProps.sizes||'60px'} alt="" className="w-14 h-14 object-cover rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]" loading="lazy" decoding="async" onError={e=>{ if(e.currentTarget.dataset.variantFallbackApplied!=='1'){e.currentTarget.removeAttribute('srcset');e.currentTarget.removeAttribute('sizes');e.currentTarget.dataset.variantFallbackApplied='1';}}}/> : <div className="w-14 h-14 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-center"><Package className="w-6 h-6 text-[#D1D5DB]"/></div>}</div>
+                      <div className="min-w-0 flex-1 pt-0.5"><div className="flex items-center gap-1.5"><span className="text-[0.7rem] font-semibold bg-[#6B2178]/10 text-[#6B2178] px-2 py-0.5 rounded-md">باقة</span><h3 className="text-[0.92rem] font-bold text-[#161616] truncate">{item.packageTitle||item.title||'باقة'}</h3></div>{item.itemsSnapshot?.length>0 && <p className="text-[0.75rem] text-[#6B7280] truncate mt-1">{item.itemsSnapshot.map(i=>i.title||i.productTitle||'').filter(Boolean).join(' + ')}</p>}<p className="text-[0.82rem] text-[#6B7280] mt-1.5">{item.quantity} × {formatPrice(item.unitPrice||item.price)}</p></div>
+                      <div className="text-[0.92rem] font-extrabold text-[#161616] pt-0.5 shrink-0">{formatPrice(item.totalPrice)}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="border-t border-[#E5E7EB] bg-[#FAFAFA] px-6 py-6 space-y-4">
+              {(order.fullName||order.customerName||order.name)&&<div className="flex justify-between"><span className="flex items-center gap-2 text-[0.85rem] text-[#6B7280] font-medium"><User className="w-4 h-4 text-[#6B2178]"/> العميل</span><span className="text-[0.9rem] font-bold text-[#161616]">{order.fullName||order.customerName||order.name}</span></div>}
+              {(order.city||order.cityName)&&<div className="flex justify-between"><span className="flex items-center gap-2 text-[0.85rem] text-[#6B7280] font-medium"><MapPin className="w-4 h-4 text-[#6B2178]"/> المدينة</span><span className="text-[0.9rem] font-bold text-[#161616]">{order.city||order.cityName}</span></div>}
+              {order.paymentMethod&&<div className="flex justify-between"><span className="flex items-center gap-2 text-[0.85rem] text-[#6B7280] font-medium"><CreditCard className="w-4 h-4 text-[#6B2178]"/> طريقة الدفع</span><span className="text-[0.9rem] font-bold text-[#161616]">{order.paymentMethod==='CASH_ON_DELIVERY'?'الدفع عند الاستلام':order.paymentMethod}</span></div>}
+              <div className="pt-3 border-t border-[#E5E7EB] flex justify-between"><span className="text-[0.92rem] font-extrabold text-[#161616]">الإجمالي</span><span className="font-tajawal font-extrabold text-xl text-[#6B2178]">{formatPrice(order.total||0)}</span></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Actions */}
+        <section className="mb-10"><div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5"><Link to={`/track-order?num=${encodeURIComponent(order?.orderNumber||'')}`} className="inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-[#161616] hover:bg-[#262626] text-white text-[0.92rem] font-extrabold rounded-2xl transition-all shadow-[0_1px_3px_rgba(0,0,0,0.12)] active:scale-[0.99]"><Truck className="w-4 h-4"/> متابعة الطلب</Link><Link to="/shop" className="inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-white border border-[#E5E7EB] hover:border-[#EBDCF1] hover:bg-[#F9FAFB] text-[#161616] text-[0.92rem] font-extrabold rounded-2xl transition-all active:scale-[0.99]"><BookOpen className="w-4 h-4 text-[#6B2178]"/> تصفح الكتب</Link><button type="button" onClick={handleShare} className="inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-white border border-[#E5E7EB] hover:border-[#EBDCF1] hover:bg-[#F9FAFB] text-[#161616] text-[0.92rem] font-extrabold rounded-2xl transition-all active:scale-[0.99]"><Share2 className="w-4 h-4 text-[#6B2178]"/> مشاركة الطلب</button></div></section>
+
+        {/* Progress */}
+        <section className="mb-6"><div className="bg-white border border-[#E5E7EB] rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden"><div className="px-6 pt-6 pb-4"><h2 className="text-[1.05rem] font-extrabold text-[#161616] flex items-center gap-2.5"><Clock className="w-5 h-5 text-[#6B2178]" strokeWidth={2.2}/> ماذا يحدث الآن؟</h2></div><div className="px-6 pb-6"><div className="relative"><div className="absolute top-[2.2rem] bottom-[2.2rem] start-[1.15rem] w-px bg-[#E5E7EB]"/><div className="space-y-6">{[
+          {label:'تم استلام الطلب',desc:'تم تسجيل طلبك بنجاح',icon:CheckCircle2,done:true},
+          {label:'تجهيز الطلب',desc:'سنقوم بتجهيز طلبك قريباً',icon:Package,done:false},
+          {label:'في طريقه إليك',desc:'سيتم شحن طلبك قريباً',icon:Truck,done:false},
+          {label:'تم التوصيل',desc:'سيصلك طلبك قريباً',icon:ShieldCheck,done:false}
+        ].map((s,i)=>{
+          const Ic=s.icon; return (
+            <div key={i} className="relative flex gap-4">
+              <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${s.done?'bg-[#0F6E51] text-white':'bg-white border-2 border-[#E5E7EB] text-[#9CA3AF]'}`}><Ic className="w-5 h-5" strokeWidth={2}/></div>
+              <div className="pt-0.5 min-w-0"><h3 className="text-[0.92rem] font-extrabold leading-snug text-[#161616]">{s.label}</h3><p className="text-[0.82rem] text-[#6B7280] mt-0.5">{s.desc}</p></div>
+            </div>
+          )
+        })}</div></div></div></div></section>
       </div>
     </div>
   )
 }
+
+/* Small safe helpers — never shadow translation t */
+function getItemThumbProps(path, widths) { try { return getThumbnailImageProps(path, widths||[]) } catch { return {src:path||'',srcSet:'',sizes:'60px',fallbackSrc:path||''} } }
