@@ -612,7 +612,19 @@ export async function writeVariantMetadata(entries, deps = {}) {
     const widths = [...new Set(entry.metadataWidths || [])]
       .filter((w) => Number.isInteger(w) && w > 0)
       .sort((a, b) => a - b)
-    if (widths.length === 0) continue
+    // An EMPTY set is kept, and is a real correction rather than a no-op.
+    //
+    // A source narrower than the smallest rung (or one whose variants could
+    // not be established) legitimately has no widths, and requirement is that
+    // it must not advertise any. The only way to make a row that currently
+    // advertises widths it does not have STOP advertising them is to write it
+    // empty — so dropping empty entries here would make exactly the rows that
+    // need repairing unrepairable, and the run would report success having
+    // changed nothing.
+    //
+    // What this is NOT is a licence to invent widths: an empty list carries no
+    // claim, and a non-empty one has already been verified against storage by
+    // `metadataTruthFor` before it got here.
     byKey.set(entry.key, widths)
   }
   if (byKey.size === 0) return { updated: 0, unmatchedKeys: [], errors: [], references: emptyReferences() }
@@ -1072,7 +1084,92 @@ OPTIONS
 `)
 }
 
-export /**
+/**
+ * Decides the metadata truth for EVERY eligible measured source.
+ *
+ * WHY THIS IS NOT `results.map(...)`
+ * The execution loop only visits sources that had work to do, so `results` is
+ * empty whenever a backfill has already been run — which is exactly the state
+ * a metadata repair is performed in. Deriving the write set from `results`
+ * meant a fully-backfilled bucket could never have its metadata corrected:
+ * the run would upload nothing, write nothing, and report success. Production
+ * hit this on the branding logo, whose 200w and 400w variants existed but whose
+ * `store.logo_variant_widths` row recorded nothing.
+ *
+ * WHERE EACH WIDTH COMES FROM
+ * - A source that generated this run: the widths the generator returned. That
+ *   is ground truth — it is what was written, not what was intended.
+ * - A source already complete: `present` from the plan, which the planner
+ *   filled by HEAD-ing each expected variant key. Also ground truth, and NOT
+ *   the four-rung ladder: a 401px source has 200w and 400w present and 800w
+ *   ineligible, and writing the ladder would advertise two 404s.
+ * - A source that FAILED this run: contributes nothing. Existence could not be
+ *   established after a failed upload, so no width is authorized — see the
+ *   `uncertain` return, which the caller reports rather than writes.
+ * - An unmeasurable source: absent entirely. Its width was never read, so
+ *   there is no basis for any claim about it.
+ *
+ * A zero-width entry is legitimate and is NOT filtered here: requirement is
+ * that a source narrower than the smallest rung records nothing, and the only
+ * way to make a row STOP advertising widths it does not have is to write it
+ * empty. See `writeVariantMetadata` for why its own guard is width-sensitive.
+ *
+ * @param {{plan: object, results: Array<{status: string, value?: object}>}} input
+ * @returns {{entries: Array<{key: string, metadataWidths: number[]}>, generated: number,
+ *            alreadyComplete: number, failed: number, noVariants: number,
+ *            uncertain: Array<{key: string, reason: string}>}}
+ */
+export function metadataTruthFor({ plan, results }) {
+  const byKey = new Map()
+
+  // 1. What this run actually wrote. Wins over the plan for the same key.
+  let failed = 0
+  for (const result of results || []) {
+    if (result.status === 'error') {
+      failed++
+      continue
+    }
+    const value = result?.value
+    if (!value?.key || !Array.isArray(value.metadataWidths)) continue
+    byKey.set(value.key, [...value.metadataWidths].sort((a, b) => a - b))
+  }
+
+  // 2. Everything else eligible and measured, from the plan.
+  let alreadyComplete = 0
+  let noVariants = 0
+  for (const entry of plan?.plan || []) {
+    if (byKey.has(entry.key)) continue
+    if (entry.missing?.length) continue // would have been generated; absent means it failed
+    if (!entry.complete) continue
+    if (!entry.present?.length) noVariants++
+    else alreadyComplete++
+    byKey.set(entry.key, [...entry.present].sort((a, b) => a - b))
+  }
+
+  // 3. Sources that entered execution but did not come back clean. Their
+  // existence is UNCERTAIN, so no width is authorized for them and their
+  // existing record is left alone. Reporting them is the alternative to
+  // silently writing a claim that may be about objects that do not exist.
+  const uncertain = []
+  for (const result of results || []) {
+    if (result.status !== 'error') continue
+    uncertain.push({
+      key: result.value?.key ?? '(unknown)',
+      reason: safeErrorMessage(result.error),
+    })
+  }
+
+  return {
+    entries: [...byKey.entries()].map(([key, metadataWidths]) => ({ key, metadataWidths })),
+    generated: (results || []).filter((r) => r.status === 'ok').length,
+    alreadyComplete,
+    noVariants,
+    failed,
+    uncertain,
+  }
+}
+
+/**
  * Runs the read-only reconciliation and reports it.
  *
  * Exists so that `--check-metadata` and `--execute --check-metadata` reach the
@@ -1291,6 +1388,13 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   // ---- execution ----
+  //
+  // Driven by `incomplete` — the sources with work to do. It is deliberately
+  // NOT `plan.plan`: `processSource` short-circuits on a complete entry before
+  // it reaches any storage call, so including them would be harmless today but
+  // would be one refactor away from re-uploading a source that needed nothing.
+  // The complete entries are not discarded, though — they are folded into the
+  // metadata truth below, which is the only thing that needs them.
   console.log('--- EXECUTING ---')
   const results = await mapWithConcurrency(incomplete, args.concurrency, (source) =>
     processSource({
@@ -1346,10 +1450,34 @@ export async function main(argv = process.argv.slice(2)) {
     console.log('\n--- WRITING VARIANT METADATA ---')
     try {
       const { prisma } = await import('../src/lib/prisma.js')
-      const entries = results
-        .filter((result) => result.status === 'ok' && result.value?.metadataWidths?.length)
-        .map((result) => ({ key: result.value.key, metadataWidths: result.value.metadataWidths }))
-      const meta = await writeVariantMetadata(entries, { prisma })
+
+      // EVERY eligible measured source contributes, not just the ones this run
+      // generated for. This is the fix for the branding logo: the logo's
+      // variants were already present, so its plan entry was `complete`, so it
+      // never entered the execution loop, so no result ever mentioned it — and
+      // `--write-metadata` reported "rows updated: 0" while
+      // `--check-metadata` still called the logo MISSING, with no way to
+      // repair it without re-uploading.
+      //
+      // For a source that DID generate, `results` holds what was actually
+      // written this run. For one that was already complete, the plan's
+      // `present` is the truth — the widths the planner verified by HEAD, not
+      // a re-derived ladder. See `metadataTruthFor`.
+      const truth = metadataTruthFor({ plan, results })
+      console.log(`  sources considered : ${truth.entries.length}`)
+      console.log(`    generated this run : ${truth.generated}  (widths taken from what was written)`)
+      console.log(
+        `    already complete   : ${truth.alreadyComplete}  (widths taken from the planner's verified-present set, 0 uploads)`
+      )
+      console.log(`    no variants        : ${truth.noVariants}  (nothing legitimate to advertise; records nothing)`)
+      if (truth.uncertain.length) {
+        // The safety property, stated in the output: an uncertain existence is
+        // never allowed to authorize a width.
+        console.log(`    UNCERTAIN          : ${truth.uncertain.length}  (no widths recorded — existence not established)`)
+        for (const u of truth.uncertain) console.log(`        ${u.key}  — ${u.reason}`)
+      }
+
+      const meta = await writeVariantMetadata(truth.entries, { prisma })
       console.log(`  rows updated   : ${meta.updated}`)
       if (meta.unmatchedKeys.length) {
         // Split by cause. "No row anywhere" and "a row exists but has no
