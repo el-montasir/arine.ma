@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
 import { logActivity } from '../../services/admin/activity-log.service.js'
 import { deleteFromStorage } from '../../lib/storage.js'
+import { normalizeVariantWidths } from '../../lib/image-metadata.js'
 
 // GET /api/admin/banners
 export async function getBannersHandler(_req, res, next) {
@@ -39,6 +40,7 @@ export async function createBannerHandler(req, res, next) {
       title,
       description,
       image,
+      imageVariantWidths,
       link,
       type = 'promotional',
       isActive = true,
@@ -56,6 +58,11 @@ export async function createBannerHandler(req, res, next) {
         title: title.trim(),
         description: description?.trim() || null,
         image: image?.trim() || null,
+        // Widths the upload pipeline reported generating for `image`. Recorded
+        // as sent, so the storefront advertises only variants that exist.
+        // Normalizing means a malformed list degrades to "no variants known"
+        // (serve the original) rather than putting junk in a URL.
+        imageVariantWidths: normalizeVariantWidths(imageVariantWidths),
         link: link?.trim() || null,
         type: type || 'promotional',
         isActive: Boolean(isActive),
@@ -101,6 +108,7 @@ export async function updateBannerHandler(req, res, next) {
       title,
       description,
       image,
+      imageVariantWidths,
       link,
       type,
       isActive,
@@ -119,6 +127,27 @@ export async function updateBannerHandler(req, res, next) {
     if (sortOrder !== undefined) data.sortOrder = Number(sortOrder) || 0
     if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null
     if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null
+
+    // VARIANT WIDTHS ON UPDATE
+    // ========================
+    // Widths describe one specific file, so they must never outlive a change of
+    // that file. Two cases, and the second is the one that used to be unsafe:
+    //
+    //   1. Widths supplied  -> store exactly those. The admin form always sends
+    //      them alongside the image, so a re-uploaded image is described by the
+    //      variants generated for THAT file.
+    //   2. Image replaced, widths omitted -> the stored widths now describe a
+    //      file that is no longer referenced. Keeping them would advertise
+    //      `-400w.webp` candidates for the previous image, which 404s. So they
+    //      are cleared, and the banner degrades to the original, which exists.
+    //
+    // A partial update that touches neither field (e.g. toggling `isActive`)
+    // leaves both alone.
+    if (imageVariantWidths !== undefined) {
+      data.imageVariantWidths = normalizeVariantWidths(imageVariantWidths)
+    } else if (image !== undefined && image?.trim() !== existing.image) {
+      data.imageVariantWidths = []
+    }
 
     const banner = await prisma.banner.update({
       where: { id },

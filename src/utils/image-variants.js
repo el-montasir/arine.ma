@@ -291,11 +291,39 @@ export function getThumbnailImageProps(path, explicitWidths) {
   }
 }
 
+/**
+ * Returns srcset + sizes for the compact homepage promo banner image.
+ *
+ * The slot is a fixed `h-20 w-32` (128x80 CSS px) at every breakpoint, so the
+ * declared `sizes` is the constant `128px`. Sizing it up (`100vw`, or the
+ * 80px the thumbnail helper uses) would over-declare the slot and make the
+ * browser fetch a heavier variant than the box can show — or, at 100vw, pull a
+ * 1200w candidate for an 80px-tall box.
+ *
+ * `loading="eager"`: the banner sits at the very top of the homepage, where a
+ * lazy image is often still un-requested when the section is scrolled into view,
+ * which costs a visible blank. Eager is also safe against double-download — the
+ * browser still requests exactly ONE srcset candidate, and the widths advertised
+ * are only the ones the server recorded as generated.
+ */
+export function getCompactBannerImageProps(path, explicitWidths) {
+  const data = getImageVariants(path, explicitWidths)
+  return {
+    src: data.src,
+    srcSet: data.srcset,
+    sizes: '128px',
+    loading: 'eager',
+    decoding: 'async',
+    fallbackSrc: data.src,
+  }
+}
+
 export default {
   getImageVariants,
   getCardImageProps,
   getDetailImageProps,
   getThumbnailImageProps,
+  getCompactBannerImageProps,
   createVariantFallbackHandler,
   areVariantsEnabled,
   availableVariantWidths,

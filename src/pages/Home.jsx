@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import Hero from '../components/Hero'
+import PromoBanner from '../components/PromoBanner'
 import CategoryPills from '../components/CategoryPills'
 import ProductGrid from '../components/ProductGrid'
 import FeaturedBook from '../components/FeaturedBook'
@@ -11,8 +11,7 @@ import usePackages from '../hooks/usePackages'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { useBanners } from '../hooks/useBanners'
 import { useLanguage } from '../context/LanguageContext'
-import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
-import { Megaphone, ArrowLeft, ArrowRight, Package as PackageIcon } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Package as PackageIcon } from 'lucide-react'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -26,71 +25,23 @@ export default function Home() {
 
   return (
     <>
-      <Hero
-        heroConfig={config?.hero}
-        onExplore={() => navigate('/shop')}
-        onBestsellers={() => navigate('/shop?sort=popular')}
-      />
+      {/*
+        Compact promotional banner, in the space the old large hero occupied.
 
-      {/* Promotional Banners Carousel / Grid (if active) */}
+        The old hero also carried the page's only <h1>. Removing it would leave
+        this document with no top-level heading, so the store's own name is
+        rendered here as a visually-hidden <h1> — it keeps the heading structure
+        intact at zero visual cost, and avoids promoting rotating marketing copy
+        to be the site's identity.
+      */}
+      <h1 className="sr-only">{config?.store?.name || 'arine'}</h1>
+
+      {/* Existing promotional banners (type: promotional), presented as one compact band */}
       {banners && banners.length > 0 && (
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {banners.map((banner) => (
-              <div
-                key={banner.id}
-                className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#4c1660] to-[#8b2f9e] border border-[#8b2f9e]/30 p-5 text-white flex flex-col sm:flex-row items-center gap-4 justify-between shadow-md"
-              >
-                {banner.image && (
-                  (() => {
-                    const bannerProps = getThumbnailImageProps(banner.image)
-                    const retryBanner = createVariantFallbackHandler(bannerProps.fallbackSrc)
-                    return (
-                      <img
-                        src={bannerProps.src}
-                        srcSet={bannerProps.srcSet}
-                        sizes={bannerProps.sizes}
-                        alt={banner.title}
-                        className="h-20 w-32 object-cover rounded-xl shrink-0 border border-white/20"
-                        loading={bannerProps.loading}
-                        decoding={bannerProps.decoding}
-                        onError={(e) => {
-                          if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                            retryBanner(e)
-                          }
-                        }}
-                      />
-                    )
-                  })()
-                )}
-                <div className="flex-1 text-right">
-                  <div className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-white/20 px-2.5 py-0.5 rounded-full mb-1.5">
-                    <Megaphone className="h-3 w-3" />
-                    عرض خاص
-                  </div>
-                  <h3 className="font-tajawal font-bold text-base text-white">{banner.title}</h3>
-                  {banner.description && (
-                    <p className="text-xs text-white/85 mt-1 line-clamp-2 leading-relaxed">
-                      {banner.description}
-                    </p>
-                  )}
-                </div>
-                {banner.link && (
-                  <button
-                    onClick={() => {
-                      if (banner.link.startsWith('http')) {
-                        window.open(banner.link, '_blank')
-                      } else {
-                        navigate(banner.link)
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-[#4c1660] hover:bg-[#FAF9F7] text-xs font-bold rounded-xl transition-all shrink-0 shadow-sm"
-                  >
-                    <span>استفد من العرض</span>
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
+              <PromoBanner key={banner.id} banner={banner} onNavigate={navigate} />
             ))}
           </div>
         </div>
