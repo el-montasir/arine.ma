@@ -275,15 +275,15 @@ export default function TrackOrder() {
               {order.items?.map((item) => {
                 // Resolved once, not three times, and from the widths the order
                 // row snapshotted at purchase time.
-                const t = orderThumb(item.productImage, item.productImageVariantWidths)
+                const thumb = orderThumb(item.productImage, item.productImageVariantWidths)
                 return (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.productImage ? (
                       <img
-                        src={t.src}
-                        srcSet={t.srcSet}
-                        sizes={t.sizes}
+                        src={thumb.src}
+                        srcSet={thumb.srcSet}
+                        sizes={thumb.sizes}
                         alt=""
                         className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0"
                         loading="lazy"
@@ -311,15 +311,15 @@ export default function TrackOrder() {
               )
               })}
               {order.packageItems?.map((item) => {
-                const t = orderThumb(item.packageImage, item.packageImageVariantWidths)
+                const thumb = orderThumb(item.packageImage, item.packageImageVariantWidths)
                 return (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.packageImage ? (
                       <img
-                        src={t.src}
-                        srcSet={t.srcSet}
-                        sizes={t.sizes}
+                        src={thumb.src}
+                        srcSet={thumb.srcSet}
+                        sizes={thumb.sizes}
                         alt=""
                         className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0"
                         loading="lazy"
