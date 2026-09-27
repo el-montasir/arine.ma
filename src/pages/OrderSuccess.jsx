@@ -96,22 +96,24 @@ export default function OrderSuccess() {
                 {/* Product items */}
                 {order?.items?.map((item) => {
                   const thumbProps = item.productImage ? getThumbnailImageProps(item.productImage, item.productImageVariantWidths || []) : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
+                  const lineTotal = item.totalPrice ?? (Number(item.unitPrice ?? item.price ?? 0) * Number(item.quantity ?? 1))
                   return (
                     <div key={item.id || item.productTitle} className="py-4 flex items-start gap-4">
                       <div className="w-14 h-20 shrink-0">{item.productImage ? <img src={thumbProps.src} srcSet={thumbProps.srcSet||''} sizes={thumbProps.sizes||'60px'} alt="" className="w-14 h-20 object-cover rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]" loading="lazy" decoding="async" onError={e=>{ if(e.currentTarget.dataset.variantFallbackApplied!=='1'){e.currentTarget.removeAttribute('srcset');e.currentTarget.removeAttribute('sizes');e.currentTarget.dataset.variantFallbackApplied='1';}}}/> : <div className="w-14 h-20 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-center"><BookOpen className="w-6 h-6 text-[#D1D5DB]"/></div>}</div>
                       <div className="min-w-0 flex-1 pt-0.5"><h3 className="text-[0.92rem] font-bold text-[#161616] truncate">{item.productTitle||item.title||'منتج'}</h3><p className="text-[0.82rem] text-[#6B7280] mt-1.5">{item.quantity} × {formatPrice(item.unitPrice||item.price)}</p></div>
-                      <div className="text-[0.92rem] font-extrabold text-[#161616] pt-0.5 shrink-0">{formatPrice(item.totalPrice)}</div>
+                      <div className="text-[0.92rem] font-extrabold text-[#161616] pt-0.5 shrink-0">{formatPrice(lineTotal)}</div>
                     </div>
                   )
                 })}
                 {/* Package items */}
                 {order?.packageItems?.map((item) => {
                   const thumbProps = item.packageImage ? getThumbnailImageProps(item.packageImage, item.packageImageVariantWidths || []) : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
+                  const lineTotal = item.totalPrice ?? (Number(item.unitPrice ?? item.price ?? 0) * Number(item.quantity ?? 1))
                   return (
                     <div key={item.id || item.packageTitle} className="py-4 flex items-start gap-4">
                       <div className="w-14 h-14 shrink-0">{item.packageImage ? <img src={thumbProps.src} srcSet={thumbProps.srcSet||''} sizes={thumbProps.sizes||'60px'} alt="" className="w-14 h-14 object-cover rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]" loading="lazy" decoding="async" onError={e=>{ if(e.currentTarget.dataset.variantFallbackApplied!=='1'){e.currentTarget.removeAttribute('srcset');e.currentTarget.removeAttribute('sizes');e.currentTarget.dataset.variantFallbackApplied='1';}}}/> : <div className="w-14 h-14 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-center"><Package className="w-6 h-6 text-[#D1D5DB]"/></div>}</div>
                       <div className="min-w-0 flex-1 pt-0.5"><div className="flex items-center gap-1.5"><span className="text-[0.7rem] font-semibold bg-[#6B2178]/10 text-[#6B2178] px-2 py-0.5 rounded-md">باقة</span><h3 className="text-[0.92rem] font-bold text-[#161616] truncate">{item.packageTitle||item.title||'باقة'}</h3></div>{item.itemsSnapshot?.length>0 && <p className="text-[0.75rem] text-[#6B7280] truncate mt-1">{item.itemsSnapshot.map(i=>i.title||i.productTitle||'').filter(Boolean).join(' + ')}</p>}<p className="text-[0.82rem] text-[#6B7280] mt-1.5">{item.quantity} × {formatPrice(item.unitPrice||item.price)}</p></div>
-                      <div className="text-[0.92rem] font-extrabold text-[#161616] pt-0.5 shrink-0">{formatPrice(item.totalPrice)}</div>
+                      <div className="text-[0.92rem] font-extrabold text-[#161616] pt-0.5 shrink-0">{formatPrice(lineTotal)}</div>
                     </div>
                   )
                 })}
