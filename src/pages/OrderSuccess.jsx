@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { BookOpen, Check, CheckCircle2, Clock, Copy, CreditCard, MapPin, Package, Share2, Truck, User, ArrowLeft, ArrowRight } from 'lucide-react'
+import { BookOpen, Check, CheckCircle2, Clock, Copy, CreditCard, MapPin, Package, ShieldCheck, Share2, Truck, User, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 import { trackPurchase } from '../utils/tracking'
