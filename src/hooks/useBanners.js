@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { registerImageVariantsFromPayload } from '../lib/image-metadata'
 
 export function useBanners(type = '') {
   const [banners, setBanners] = useState([])
@@ -14,6 +15,8 @@ export function useBanners(type = '') {
       .get(path)
       .then((res) => {
         if (mounted && Array.isArray(res?.data)) {
+          // BEFORE setBanners, so the first render already sees the widths.
+          registerImageVariantsFromPayload(res.data)
           setBanners(res.data)
         }
       })

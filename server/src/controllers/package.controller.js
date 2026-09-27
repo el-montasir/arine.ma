@@ -1,33 +1,32 @@
 import { prisma } from '../lib/prisma.js'
 import { errorResponse } from '../utils/api-response.js'
+import {
+  normalizeVariantWidths,
+  pickPrimaryImageUrl,
+  widthsForImageUrl,
+} from '../lib/image-metadata.js'
 
 export function serializePublicPackage(pkg) {
   const images = (pkg.images || []).map((img) => ({
     id: img.id,
     url: img.url,
+    variantWidths: normalizeVariantWidths(img.variantWidths),
     sortOrder: img.sortOrder,
     isPrimary: img.isPrimary,
   }))
 
-  const primaryImage =
-    images.find((img) => img.isPrimary)?.url ||
-    images[0]?.url ||
-    pkg.image ||
-    null
+  const primaryImage = pickPrimaryImageUrl(images, pkg.image)
 
   const books = (pkg.items || []).map((item) => {
     const p = item.product
     const bookImages = (p?.images || []).map((img) => ({
       id: img.id,
       url: img.url,
+      variantWidths: normalizeVariantWidths(img.variantWidths),
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
     }))
-    const bookPrimaryImage =
-      bookImages.find((img) => img.isPrimary)?.url ||
-      bookImages[0]?.url ||
-      p?.image ||
-      null
+    const bookPrimaryImage = pickPrimaryImageUrl(bookImages, p?.image)
 
     return {
       id: p.id,
@@ -37,6 +36,7 @@ export function serializePublicPackage(pkg) {
       oldPrice: p.oldPrice,
       category: p.category?.name ?? null,
       image: bookPrimaryImage,
+      imageVariantWidths: widthsForImageUrl(bookImages, bookPrimaryImage),
       availability: p.availability,
       sortOrder: item.sortOrder,
     }
@@ -66,6 +66,7 @@ export function serializePublicPackage(pkg) {
     oldPrice: effectiveOldPrice,
     discount,
     image: primaryImage,
+    imageVariantWidths: widthsForImageUrl(images, primaryImage),
     images,
     availability: pkg.availability,
     isNew: pkg.isNew,

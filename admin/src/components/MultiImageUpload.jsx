@@ -31,6 +31,12 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
   const [successMessage, setSuccessMessage] = useState('')
 
   // Normalize incoming images to standard array of objects
+  //
+  // `variantWidths` is carried through unchanged: it records which WebP variants
+  // the server actually generated for this image, and the storefront is only
+  // cleared to advertise exactly those. It must round-trip back on save, or a
+  // product whose images were backfilled server-side would lose its srcsets the
+  // next time an admin edits an unrelated field.
   const normalizedImages = (images || [])
     .map((img, idx) => {
       if (typeof img === 'string') {
@@ -38,6 +44,7 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
       }
       return {
         url: img?.url || '',
+        variantWidths: Array.isArray(img?.variantWidths) ? img.variantWidths : [],
         isPrimary: Boolean(img?.isPrimary ?? idx === 0),
         sortOrder: img?.sortOrder ?? idx,
       }
@@ -85,16 +92,20 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
       const response = await api.upload(endpoint, formData)
 
       const uploadedFiles = response?.files || (response?.data ? (Array.isArray(response.data) ? response.data : [response.data]) : [])
-      const newUrls = uploadedFiles.map((f) => f.url).filter(Boolean)
+      const newItemsSource = uploadedFiles.filter((f) => f?.url)
 
-      if (newUrls.length === 0) {
+      if (newItemsSource.length === 0) {
         throw new Error(t('errUploadGeneric'))
       }
 
       // Append new images
       const hadNoImages = normalizedImages.length === 0
-      const newItems = newUrls.map((url, i) => ({
-        url,
+      const newItems = newItemsSource.map((f, i) => ({
+        url: f.url,
+        // Widths the server generated for THIS file. The storefront advertises a
+        // srcset candidate only for these, so dropping them would cost the
+        // responsive optimization entirely.
+        variantWidths: Array.isArray(f.variantWidths) ? f.variantWidths : [],
         isPrimary: hadNoImages && i === 0,
         sortOrder: normalizedImages.length + i,
       }))
@@ -137,16 +148,20 @@ export default function MultiImageUpload({ images = [], onChange, type = 'produc
       const response = await api.upload(endpoint, formData)
 
       const uploadedFiles = response?.files || (response?.data ? (Array.isArray(response.data) ? response.data : [response.data]) : [])
-      const newUrl = uploadedFiles[0]?.url
+      const replacement = uploadedFiles[0]
 
-      if (!newUrl) {
+      if (!replacement?.url) {
         throw new Error(t('errUploadGeneric'))
       }
 
       const updated = [...normalizedImages]
       updated[replaceIndex] = {
         ...updated[replaceIndex],
-        url: newUrl,
+        url: replacement.url,
+        // OVERWRITE, never merge: the previous widths describe the file that was
+        // just replaced. Carrying them forward would advertise variants for an
+        // image that no longer exists at this URL.
+        variantWidths: Array.isArray(replacement.variantWidths) ? replacement.variantWidths : [],
       }
 
       onChange(updated)

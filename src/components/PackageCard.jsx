@@ -3,7 +3,7 @@ import { ShoppingCart, Package as PackageIcon, BookOpen } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice, formatBookCount } from '../utils/format'
-import { getImageUrl } from '../utils/images'
+import { getCardImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 export default function PackageCard({ pkg }) {
   const { addPackageToCart } = useCart()
@@ -16,11 +16,26 @@ export default function PackageCard({ pkg }) {
       {/* Visual Header / Cover */}
       <Link to={`/package/${pkg.id}`} className="block relative overflow-hidden bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd] p-5 flex items-center justify-center min-h-[200px]">
         {pkg.image ? (
-          <img
-            src={getImageUrl(pkg.image)}
-            alt={pkg.title}
-            className="w-full h-44 object-cover rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300"
-          />
+          (() => {
+            const cardProps = getCardImageProps(pkg.image)
+            const retryOriginal = createVariantFallbackHandler(cardProps.fallbackSrc)
+            return (
+              <img
+                src={cardProps.src}
+                srcSet={cardProps.srcSet}
+                sizes={cardProps.sizes}
+                alt={pkg.title}
+                className="w-full h-44 object-cover rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300"
+                loading={cardProps.loading}
+                decoding={cardProps.decoding}
+                onError={(e) => {
+                  if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                    retryOriginal(e)
+                  }
+                }}
+              />
+            )
+          })()
         ) : (
           <div className="flex flex-col items-center justify-center text-[#4c1660] p-4">
             <div className="w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-sm flex items-center justify-center mb-2.5 shadow-xs">

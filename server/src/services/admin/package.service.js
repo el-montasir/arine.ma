@@ -1,6 +1,12 @@
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
 import { deleteFromStorage } from '../../lib/storage.js'
+import {
+  normalizeImageInputs,
+  normalizeVariantWidths,
+  pickPrimaryImageUrl,
+  widthsForImageUrl,
+} from '../../lib/image-metadata.js'
 
 const INCLUDE = {
   items: {
@@ -36,29 +42,24 @@ export function serializeAdminPackage(pkg) {
   const images = (pkg.images || []).map((img) => ({
     id: img.id,
     url: img.url,
+    // Round-tripped so editing an unrelated field does not wipe this metadata.
+    variantWidths: normalizeVariantWidths(img.variantWidths),
     sortOrder: img.sortOrder,
     isPrimary: img.isPrimary,
   }))
 
-  const primaryImage =
-    images.find((img) => img.isPrimary)?.url ||
-    images[0]?.url ||
-    pkg.image ||
-    null
+  const primaryImage = pickPrimaryImageUrl(images, pkg.image)
 
   const books = (pkg.items || []).map((item) => {
     const p = item.product
     const bookImages = (p?.images || []).map((img) => ({
       id: img.id,
       url: img.url,
+      variantWidths: normalizeVariantWidths(img.variantWidths),
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
     }))
-    const bookPrimaryImage =
-      bookImages.find((img) => img.isPrimary)?.url ||
-      bookImages[0]?.url ||
-      p?.image ||
-      null
+    const bookPrimaryImage = pickPrimaryImageUrl(bookImages, p?.image)
 
     return {
       id: p.id,
@@ -68,6 +69,7 @@ export function serializeAdminPackage(pkg) {
       costPrice: p.costPrice ?? null,
       category: p.category?.name ?? null,
       image: bookPrimaryImage,
+      imageVariantWidths: widthsForImageUrl(bookImages, bookPrimaryImage),
       availability: p.availability,
       sortOrder: item.sortOrder,
     }
@@ -89,6 +91,7 @@ export function serializeAdminPackage(pkg) {
     oldPrice: effectiveOldPrice,
     discount,
     image: primaryImage,
+    imageVariantWidths: widthsForImageUrl(images, primaryImage),
     images,
     availability: pkg.availability,
     isNew: pkg.isNew,
@@ -171,31 +174,17 @@ export async function createPackage(inputData) {
   // Calculate discount automatically from original price and selling price
   const discount = calculatePackageDiscount(effectiveOldPrice, sellingPrice)
 
-  // Normalize images to standard array of objects
-  let imagesList = []
-  if (Array.isArray(rawImages)) {
-    imagesList = rawImages
-      .map((img, idx) => {
-        if (typeof img === 'string') {
-          return { url: img.trim(), isPrimary: idx === 0, sortOrder: idx }
-        }
-        if (img && typeof img.url === 'string') {
-          return {
-            url: img.url.trim(),
-            isPrimary: Boolean(img.isPrimary ?? idx === 0),
-            sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
-          }
-        }
-        return null
-      })
-      .filter((img) => Boolean(img && img.url))
-  }
+  // Normalize images to standard array of objects, KEEPING the generated variant
+  // widths. A bare URL yields an empty list, which is the correct answer for a
+  // source with no variants: serve the original, advertise nothing.
+  const imagesList = normalizeImageInputs(rawImages)
 
-  const primaryImageUrl =
-    imagesList.find((img) => img.isPrimary)?.url ||
-    imagesList[0]?.url ||
-    (typeof data.image === 'string' ? data.image.trim() : null) ||
-    null
+  // Same picker the serializers use, so "which image is primary" cannot differ
+  // between the write path and the read path.
+  const primaryImageUrl = pickPrimaryImageUrl(
+    imagesList,
+    typeof data.image === 'string' ? data.image.trim() : null
+  )
 
   const created = await prisma.package.create({
     data: {
@@ -218,10 +207,11 @@ export async function createPackage(inputData) {
         })),
       },
       images: {
-        create: imagesList.map((img, idx) => ({
+        create: imagesList.map((img) => ({
           url: img.url,
+          variantWidths: img.variantWidths,
           sortOrder: img.sortOrder,
-          isPrimary: Boolean(img.isPrimary) || (idx === 0 && !imagesList.some((i) => i.isPrimary)),
+          isPrimary: img.isPrimary,
         })),
       },
     },
@@ -315,26 +305,12 @@ export async function updatePackage(id, inputData) {
   const hasImageChanges = Array.isArray(rawImages)
   let imagesList = []
   if (hasImageChanges) {
-    imagesList = rawImages
-      .map((img, idx) => {
-        if (typeof img === 'string') {
-          return { url: img.trim(), isPrimary: idx === 0, sortOrder: idx }
-        }
-        if (img && typeof img.url === 'string') {
-          return {
-            url: img.url.trim(),
-            isPrimary: Boolean(img.isPrimary ?? idx === 0),
-            sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
-          }
-        }
-        return null
-      })
-      .filter((img) => Boolean(img && img.url))
+    // Every save rewrites the image rows, so the widths must round-trip through
+    // the form — that is what preserves backfilled metadata across an edit that
+    // did not re-upload the image.
+    imagesList = normalizeImageInputs(rawImages)
 
-    const primaryImg =
-      imagesList.find((img) => img.isPrimary)?.url ||
-      imagesList[0]?.url ||
-      null
+    const primaryImg = pickPrimaryImageUrl(imagesList)
     if (primaryImg) updateData.image = primaryImg
   }
 
@@ -356,11 +332,12 @@ export async function updatePackage(id, inputData) {
       await tx.packageImage.deleteMany({ where: { packageId: pkgId } })
       if (imagesList.length > 0) {
         await tx.packageImage.createMany({
-          data: imagesList.map((img, idx) => ({
+          data: imagesList.map((img) => ({
             packageId: pkgId,
             url: img.url,
+            variantWidths: img.variantWidths,
             sortOrder: img.sortOrder,
-            isPrimary: Boolean(img.isPrimary) || (idx === 0 && !imagesList.some((i) => i.isPrimary)),
+            isPrimary: img.isPrimary,
           })),
         })
       }

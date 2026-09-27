@@ -47,6 +47,9 @@ export default function StoreSettings() {
     storeName: '',
     storeDescription: '',
     storeLogo: '',
+    // Widths of the WebP variants the server generated for the logo. Stored
+    // alongside the URL so the storefront can build a srcset without measuring.
+    storeLogoVariantWidths: [],
     phone: '',
     email: '',
     whatsapp1Name: '',
@@ -89,6 +92,9 @@ export default function StoreSettings() {
         storeName: configData.store?.name || '',
         storeDescription: configData.store?.description || '',
         storeLogo: configData.store?.logo || '',
+        storeLogoVariantWidths: Array.isArray(configData.store?.logoVariantWidths)
+          ? configData.store.logoVariantWidths
+          : [],
         phone: configData.store?.phone || '',
         email: configData.store?.email || '',
         whatsapp1Name: c1.label || 'خدمة العملاء',
@@ -145,13 +151,19 @@ export default function StoreSettings() {
       formData.append('logo', file)
 
       const res = await api.upload('/uploads/branding', formData)
-      const uploadedUrl = res?.data?.url || res?.files?.[0]?.url || res?.url
+      const uploaded = res?.data || res?.files?.[0] || res
+      const uploadedUrl = uploaded?.url
 
       if (!uploadedUrl) {
         throw new Error(t('errUploadGeneric'))
       }
 
-      setForm((prev) => ({ ...prev, storeLogo: uploadedUrl }))
+      setForm((prev) => ({
+        ...prev,
+        storeLogo: uploadedUrl,
+        // Replace, never merge: these widths describe the file just uploaded.
+        storeLogoVariantWidths: Array.isArray(uploaded.variantWidths) ? uploaded.variantWidths : [],
+      }))
       setSuccessMsg(t('logoUploadSuccess'))
       setTimeout(() => setSuccessMsg(''), 4000)
     } catch (err) {
@@ -163,7 +175,7 @@ export default function StoreSettings() {
   }
 
   const handleRemoveLogo = () => {
-    setForm((prev) => ({ ...prev, storeLogo: '' }))
+    setForm((prev) => ({ ...prev, storeLogo: '', storeLogoVariantWidths: [] }))
     setSuccessMsg(t('logoRemoveSuccess'))
     setTimeout(() => setSuccessMsg(''), 4000)
   }
@@ -206,6 +218,7 @@ export default function StoreSettings() {
         name: form.storeName.trim(),
         description: form.storeDescription.trim(),
         logo: form.storeLogo ? form.storeLogo.trim() : '',
+        logoVariantWidths: form.storeLogoVariantWidths || [],
         phone: form.phone.trim(),
         email: form.email.trim(),
         whatsapp: primaryWa,

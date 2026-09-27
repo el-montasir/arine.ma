@@ -4,6 +4,7 @@ import { generateOrderNumber } from '../utils/order-number.js'
 import { calcShipping } from '../utils/shipping.js'
 import { recordOrderAttribution } from './marketing/attribution.service.js'
 import { sendCapiEvent, buildUserData } from './marketing/meta-capi.service.js'
+import { pickPrimaryImageUrl, widthsForImageUrl } from '../lib/image-metadata.js'
 
 export class OrderError extends Error {
   constructor(status, code, message) {
@@ -28,7 +29,7 @@ export async function createOrder(input) {
     const bookIds = (input.items || []).map((i) => i.productId)
     const products = await tx.product.findMany({
       where: { id: { in: bookIds } },
-      include: { category: true },
+      include: { category: true, images: true },
     })
     const productById = new Map(products.map((p) => [p.id, p]))
 
@@ -37,6 +38,7 @@ export async function createOrder(input) {
     const packages = await tx.package.findMany({
       where: { id: { in: packageIds } },
       include: {
+        images: true,
         items: {
           include: {
             product: true,
@@ -84,10 +86,14 @@ export async function createOrder(input) {
       const unitPrice = product.price
       const totalPrice = unitPrice * item.quantity
       subtotal += totalPrice
+      // The product's images came back with the same query (include above), so
+      // the widths resolve from that list — no extra round trip.
+      const primaryImage = pickPrimaryImageUrl(product.images, product.image)
       return {
         productId: product.id,
         productTitle: product.title, // snapshot
-        productImage: product.image || null, // snapshot
+        productImage: primaryImage || null, // snapshot
+        productImageVariantWidths: widthsForImageUrl(product.images || [], primaryImage), // snapshot
         quantity: item.quantity,
         unitPrice, // snapshot
         totalPrice,
@@ -107,10 +113,12 @@ export async function createOrder(input) {
         title: pi.product?.title || null,
         author: pi.product?.author || null,
       }))
+      const primaryPackageImage = pickPrimaryImageUrl(pkg.images, pkg.image)
       return {
         packageId: pkg.id,
         packageTitle: pkg.title, // snapshot
-        packageImage: pkg.image || null, // snapshot
+        packageImage: primaryPackageImage || null, // snapshot
+        packageImageVariantWidths: widthsForImageUrl(pkg.images || [], primaryPackageImage), // snapshot
         itemsSnapshot: itemsSnapshot.length > 0 ? itemsSnapshot : null, // snapshot
         quantity: item.quantity,
         unitPrice, // snapshot

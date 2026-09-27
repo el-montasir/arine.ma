@@ -2,6 +2,12 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
 import { deleteFromStorage } from '../../lib/storage.js'
+import {
+  normalizeImageInputs,
+  normalizeVariantWidths,
+  pickPrimaryImageUrl,
+  widthsForImageUrl,
+} from '../../lib/image-metadata.js'
 
 const INCLUDE = {
   category: true,
@@ -16,15 +22,15 @@ export function serializeAdminProduct(product) {
   const images = (product.images || []).map((img) => ({
     id: img.id,
     url: img.url,
+    // Round-tripped so an admin editing an unrelated field does not wipe the
+    // variant metadata this image already has.
+    variantWidths: normalizeVariantWidths(img.variantWidths),
     sortOrder: img.sortOrder,
     isPrimary: img.isPrimary,
   }))
 
   const primaryImage =
-    images.find((img) => img.isPrimary)?.url ||
-    images[0]?.url ||
-    product.image ||
-    null
+    pickPrimaryImageUrl(images, product.image)
 
   return {
     id: product.id,
@@ -38,6 +44,7 @@ export function serializeAdminProduct(product) {
     oldPrice: product.oldPrice,
     discount: product.discount,
     image: primaryImage,
+    imageVariantWidths: widthsForImageUrl(images, primaryImage),
     images,
     availability: product.availability,
     description: product.description,
@@ -80,20 +87,18 @@ export async function getProduct(id) {
 export async function createProduct(inputData) {
   const { images: rawImages, ...data } = inputData
 
-  // Normalize images list
-  const imageUrls = Array.isArray(rawImages)
-    ? rawImages
-        .map((item) => (typeof item === 'string' ? item.trim() : item?.url?.trim()))
-        .filter(Boolean)
-    : []
+  // Normalize images list, KEEPING the generated variant widths. These are what
+  // the storefront is cleared to advertise; a bare URL carries none, which is
+  // the correct answer for a source with no variants.
+  const imageList = normalizeImageInputs(rawImages)
 
-  if (imageUrls.length === 0 && data.image) {
-    imageUrls.push(data.image.trim())
+  if (imageList.length === 0 && data.image) {
+    imageList.push({ url: String(data.image).trim(), variantWidths: [], sortOrder: 0, isPrimary: true })
   }
 
   // Set primary image to legacy image field for backwards compatibility
-  if (imageUrls.length > 0) {
-    data.image = imageUrls[0]
+  if (imageList.length > 0) {
+    data.image = pickPrimaryImageUrl(imageList)
   }
 
   // Set discount: use explicit discount if passed, or auto-calculate from oldPrice & price
@@ -113,12 +118,13 @@ export async function createProduct(inputData) {
     data: {
       ...data,
       images:
-        imageUrls.length > 0
+        imageList.length > 0
           ? {
-              create: imageUrls.map((url, idx) => ({
-                url,
-                sortOrder: idx,
-                isPrimary: idx === 0,
+              create: imageList.map((img) => ({
+                url: img.url,
+                variantWidths: img.variantWidths,
+                sortOrder: img.sortOrder,
+                isPrimary: img.isPrimary,
               })),
             }
           : undefined,
@@ -135,19 +141,10 @@ export async function updateProduct(id, inputData) {
 
   const { images: rawImages, ...data } = inputData
 
-  let imageUrls = null
+  let imageList = null
   if (rawImages !== undefined) {
-    imageUrls = Array.isArray(rawImages)
-      ? rawImages
-          .map((item) => (typeof item === 'string' ? item.trim() : item?.url?.trim()))
-          .filter(Boolean)
-      : []
-
-    if (imageUrls.length > 0) {
-      data.image = imageUrls[0]
-    } else {
-      data.image = null
-    }
+    imageList = normalizeImageInputs(rawImages)
+    data.image = pickPrimaryImageUrl(imageList)
   }
 
   // Set discount: use explicit discount if passed, or auto-calculate from oldPrice & price
@@ -164,16 +161,19 @@ export async function updateProduct(id, inputData) {
   }
 
   return prisma.$transaction(async (tx) => {
-    if (imageUrls !== null) {
-      // Re-create images array cleanly
+    if (imageList !== null) {
+      // Re-create images array cleanly. Every save rewrites the widths, so the
+      // payload must carry them: the admin form round-trips what the serializer
+      // gave it, which is what preserves backfilled metadata across an edit.
       await tx.productImage.deleteMany({ where: { productId: id } })
-      if (imageUrls.length > 0) {
+      if (imageList.length > 0) {
         await tx.productImage.createMany({
-          data: imageUrls.map((url, idx) => ({
+          data: imageList.map((img) => ({
             productId: id,
-            url,
-            sortOrder: idx,
-            isPrimary: idx === 0,
+            url: img.url,
+            variantWidths: img.variantWidths,
+            sortOrder: img.sortOrder,
+            isPrimary: img.isPrimary,
           })),
         })
       }

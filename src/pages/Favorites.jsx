@@ -6,7 +6,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useProducts } from '../hooks/useProducts'
 import BookCover from '../components/BookCover'
 import { formatPrice } from '../utils/format'
-import { getImageUrl } from '../utils/images'
+import { getCardImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 export default function Favorites() {
   const { favorites, toggleFavorite, addToCart } = useCart()
@@ -90,15 +90,29 @@ export default function Favorites() {
                       if (primaryImg) {
                         return (
                           <div className="aspect-[3/4] w-32 mx-auto overflow-hidden rounded-lg bg-surface-900 shadow-sm">
-                            <img
-                              src={getImageUrl(primaryImg)}
-                              alt={book.title}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none'
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                              }}
-                            />
+                            {(() => {
+                              const cardProps = getCardImageProps(primaryImg)
+                              const retryOriginal = createVariantFallbackHandler(cardProps.fallbackSrc)
+                              return (
+                                <img
+                                  src={cardProps.src}
+                                  srcSet={cardProps.srcSet}
+                                  sizes={cardProps.sizes}
+                                  alt={book.title}
+                                  className="h-full w-full object-cover"
+                                  loading={cardProps.loading}
+                                  decoding={cardProps.decoding}
+                                  onError={(e) => {
+                                    if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                      retryOriginal(e)
+                                      return
+                                    }
+                                    e.currentTarget.style.display = 'none'
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                  }}
+                                />
+                              )
+                            })()}
                             <div className="hidden">
                               <BookCover book={book} size="md" className="mx-auto" />
                             </div>

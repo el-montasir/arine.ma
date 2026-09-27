@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js'
+import { normalizeVariantWidths } from '../lib/image-metadata.js'
 
 const DEFAULT_PUBLIC_CONFIG = {
   store: {
@@ -174,6 +175,12 @@ export async function getPublicStoreConfig(_req, res, next) {
         instagram: map['store.instagram'] !== undefined ? sanitizeUrl(map['store.instagram']) : DEFAULT_PUBLIC_CONFIG.store.instagram,
         tiktok: map['store.tiktok'] !== undefined ? sanitizeUrl(map['store.tiktok']) : DEFAULT_PUBLIC_CONFIG.store.tiktok,
         logo: map['store.logo'] !== undefined ? (map['store.logo'] || null) : DEFAULT_PUBLIC_CONFIG.store.logo,
+        logoVariantWidths: normalizeVariantWidths(
+          (function() {
+            try { return JSON.parse(map['store.logo_variant_widths'] || '[]') }
+            catch { return [] }
+          })()
+        ),
       },
       hero: {
         title: getVal('homepage.hero_title', DEFAULT_PUBLIC_CONFIG.hero.title),

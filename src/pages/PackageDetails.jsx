@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice, formatBookCount, formatPackageContains } from '../utils/format'
 import { trackViewContent } from '../utils/tracking'
-import { getImageUrl } from '../utils/images'
+import { getDetailImageProps, getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 import BookCover from '../components/BookCover'
 
 export default function PackageDetails() {
@@ -83,11 +83,26 @@ export default function PackageDetails() {
           <div className="lg:sticky lg:top-28 max-w-[380px] mx-auto lg:mx-0 space-y-3">
             <div className="relative aspect-[4/3] sm:aspect-square w-full mx-auto lg:mx-0 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900/5 to-brand-700/10 border border-border shadow-md flex items-center justify-center">
               {currentImageUrl ? (
-                <img
-                  src={getImageUrl(currentImageUrl)}
-                  alt={pkg.title}
-                  className="h-full w-full object-cover"
-                />
+                (() => {
+                  const heroProps = getDetailImageProps(currentImageUrl)
+                  const retryHero = createVariantFallbackHandler(heroProps.fallbackSrc)
+                  return (
+                    <img
+                      src={heroProps.src}
+                      srcSet={heroProps.srcSet}
+                      sizes={heroProps.sizes}
+                      alt={pkg.title}
+                      className="h-full w-full object-cover"
+                      loading={heroProps.loading}
+                      decoding={heroProps.decoding}
+                      onError={(e) => {
+                        if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                          retryHero(e)
+                        }
+                      }}
+                    />
+                  )
+                })()
               ) : (
                 <div className="flex flex-col items-center justify-center text-brand-800/60 p-6 text-center">
                   <div className="w-20 h-20 rounded-2xl bg-brand-700/10 flex items-center justify-center mb-3">
@@ -112,7 +127,26 @@ export default function PackageDetails() {
                         : 'border-border/80 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={getImageUrl(url)} alt={`صورة ${idx + 1}`} className="h-full w-full object-cover" />
+                    {(() => {
+                      const thumbProps = getThumbnailImageProps(url)
+                      const retryThumb = createVariantFallbackHandler(thumbProps.fallbackSrc)
+                      return (
+                        <img
+                          src={thumbProps.src}
+                          srcSet={thumbProps.srcSet}
+                          sizes={thumbProps.sizes}
+                          alt={`صورة ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                          loading={thumbProps.loading}
+                          decoding={thumbProps.decoding}
+                          onError={(e) => {
+                            if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                              retryThumb(e)
+                            }
+                          }}
+                        />
+                      )
+                    })()}
                   </button>
                 ))}
               </div>
@@ -197,7 +231,26 @@ export default function PackageDetails() {
                 >
                   <div className="w-14 h-18 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-border">
                     {book.image ? (
-                      <img src={getImageUrl(book.image)} alt={book.title} className="w-full h-full object-cover" />
+                      (() => {
+                        const thumbProps = getThumbnailImageProps(book.image)
+                        const retryThumb = createVariantFallbackHandler(thumbProps.fallbackSrc)
+                        return (
+                          <img
+                            src={thumbProps.src}
+                            srcSet={thumbProps.srcSet}
+                            sizes={thumbProps.sizes}
+                            alt={book.title}
+                            className="w-full h-full object-cover"
+                            loading={thumbProps.loading}
+                            decoding={thumbProps.decoding}
+                            onError={(e) => {
+                              if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                retryThumb(e)
+                              }
+                            }}
+                          />
+                        )
+                      })()
                     ) : (
                       <BookCover book={book} size="sm" />
                     )}

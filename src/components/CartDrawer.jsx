@@ -5,7 +5,8 @@ import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
-import { getImageUrl } from '../utils/images'
+import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
+import { widthsForImageUrl } from '../lib/image-metadata'
 
 export default function CartDrawer() {
   const {
@@ -90,11 +91,26 @@ export default function CartDrawer() {
                     <div className="flex-shrink-0 w-16">
                       {item.isPackage ? (
                         item.image ? (
-                          <img
-                            src={getImageUrl(item.image)}
-                            alt={item.title}
-                            className="w-16 h-20 object-cover rounded-[12px] border border-[#EFE8F2]"
-                          />
+                          (() => {
+                            const pkgThumb = getThumbnailImageProps(item.image, item.imageVariantWidths)
+                            const retryPkg = createVariantFallbackHandler(pkgThumb.fallbackSrc)
+                            return (
+                              <img
+                                src={pkgThumb.src}
+                                srcSet={pkgThumb.srcSet}
+                                sizes={pkgThumb.sizes}
+                                alt={item.title}
+                                className="w-16 h-20 object-cover rounded-[12px] border border-[#EFE8F2]"
+                                loading={pkgThumb.loading}
+                                decoding={pkgThumb.decoding}
+                                onError={(e) => {
+                                  if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                    retryPkg(e)
+                                  }
+                                }}
+                              />
+                            )
+                          })()
                         ) : (
                           <div className="w-16 h-20 bg-[#F6EDF9] rounded-[12px] flex items-center justify-center border border-[#EBDCF1]">
                             <PackageIcon className="w-6 h-6 text-[#6B2178]" />
@@ -111,12 +127,27 @@ export default function CartDrawer() {
                           })()
 
                           if (primaryImg) {
+                            // A cart item is a snapshot of a product, so it carries
+                            // its own widths — including across the localStorage
+                            // round trip, which preserves the array.
+                            const itemWidths = widthsForImageUrl(item.images, primaryImg)
+                            const thumbProps = getThumbnailImageProps(primaryImg, itemWidths)
+                            const retryWithOriginal = createVariantFallbackHandler(thumbProps.fallbackSrc)
                             return (
                               <img
-                                src={getImageUrl(primaryImg)}
+                                src={thumbProps.src}
+                                srcSet={thumbProps.srcSet}
+                                sizes={thumbProps.sizes}
                                 alt={item.title}
                                 className="w-16 h-20 object-cover rounded-[12px] border border-[#EFE8F2]"
+                                loading={thumbProps.loading}
+                                decoding={thumbProps.decoding}
                                 onError={(e) => {
+                                  // Retry once with the original if a variant 404s.
+                                  if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                    retryWithOriginal(e)
+                                    return
+                                  }
                                   e.currentTarget.style.display = 'none'
                                   e.currentTarget.nextElementSibling?.classList.remove('hidden')
                                 }}

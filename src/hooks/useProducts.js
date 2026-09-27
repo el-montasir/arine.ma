@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
 import api from '../utils/api'
+import { registerImageVariantsFromPayload } from '../lib/image-metadata'
 
 /**
  * Load products from GET /api/products with search/category/sort params.
+ *
+ * The payload carries, per image, the variant widths the server actually
+ * generated. `registerImageVariantsFromPayload` records them synchronously
+ * BEFORE `setBooks`, so the render that follows already has them and the first
+ * paint carries the correct srcset (see the existence invariant in
+ * `utils/image-variants.js`). No image is downloaded to work this out.
  *
  * Returns:
  *   books   – API results (array of products from DB, empty array on error or when none match).
@@ -29,7 +36,11 @@ export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
       .get(`/products${qs ? `?${qs}` : ''}`)
       .then((res) => {
         if (!cancelled) {
-          setBooks(Array.isArray(res.data) ? res.data : [])
+          const list = Array.isArray(res.data) ? res.data : []
+          // BEFORE setBooks: the registry is a module singleton, so the render
+          // this triggers must not be able to run before the widths are in it.
+          registerImageVariantsFromPayload(list)
+          setBooks(list)
           setError(false)
         }
       })

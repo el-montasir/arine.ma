@@ -30,6 +30,12 @@ const productFields = {
         z.string().trim().min(1),
         z.object({
           url: z.string().trim().min(1),
+          // Widths of the WebP variants the server actually generated. Stored so
+          // the storefront advertises exactly those and never a 404. Any
+          // positive integers are accepted rather than being checked against the
+          // known ladder: the generator is authoritative, and a stricter check
+          // would silently drop metadata if the ladder ever changes.
+          variantWidths: z.array(z.number().int().positive()).optional(),
           sortOrder: z.number().int().optional(),
           isPrimary: z.boolean().optional(),
         }),

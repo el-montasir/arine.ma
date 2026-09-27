@@ -17,6 +17,7 @@ import {
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { getImageUrl } from '../utils/images'
+import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 function normalizeWhatsAppNumber(raw) {
   if (!raw) return ''
@@ -191,12 +192,22 @@ export default function Footer() {
           <div className="flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5">
               {store.logo && !footerLogoError ? (
+                (() => {
+                  const logoImg = getThumbnailImageProps(store.logo)
+                  return (
                 <img
-                  src={getImageUrl(store.logo)}
+                  src={logoImg.src}
+                  srcSet={logoImg.srcSet}
+                  sizes={logoImg.sizes}
                   alt={store.name || t('appName') || 'مكتبة أرين'}
                   className="max-h-10 max-w-[160px] w-10 h-10 rounded-full object-cover border border-white/20 shadow-md shrink-0"
-                  onError={() => setFooterLogoError(true)}
+                  onError={(e) => {
+                    createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                    setFooterLogoError(true)
+                  }}
                 />
+                  )
+                })()
               ) : (
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-[#8b2f9e]/30 border border-[#c25fd6]/40 flex items-center justify-center">

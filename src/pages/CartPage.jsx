@@ -4,7 +4,8 @@ import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
-import { getImageUrl } from '../utils/images'
+import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
+import { widthsForImageUrl } from '../lib/image-metadata'
 
 export default function CartPage() {
   const { items, subtotal, shipping, total, shippingConfig, updateQuantity, removeFromCart } = useCart()
@@ -58,11 +59,26 @@ export default function CartPage() {
                   <div className="flex-shrink-0 w-20">
                     {item.isPackage ? (
                       item.image ? (
-                        <img
-                          src={getImageUrl(item.image)}
-                          alt={item.title}
-                          className="w-20 h-24 object-cover rounded-[14px] border border-[#EFE8F2]"
-                        />
+                        (() => {
+                          const pkgThumb = getThumbnailImageProps(item.image, item.imageVariantWidths)
+                          const retryPkg = createVariantFallbackHandler(pkgThumb.fallbackSrc)
+                          return (
+                            <img
+                              src={pkgThumb.src}
+                              srcSet={pkgThumb.srcSet}
+                              sizes={pkgThumb.sizes}
+                              alt={item.title}
+                              className="w-20 h-24 object-cover rounded-[14px] border border-[#EFE8F2]"
+                              loading={pkgThumb.loading}
+                              decoding={pkgThumb.decoding}
+                              onError={(e) => {
+                                if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                  retryPkg(e)
+                                }
+                              }}
+                            />
+                          )
+                        })()
                       ) : (
                         <div className="w-20 h-24 bg-[#F6EDF9] rounded-[14px] flex items-center justify-center border border-[#EBDCF1]">
                           <PackageIcon className="w-8 h-8 text-[#6B2178]" />
@@ -79,12 +95,23 @@ export default function CartPage() {
                         })()
 
                         if (primaryImg) {
+                          const itemWidths = widthsForImageUrl(item.images, primaryImg)
+                          const thumbProps = getThumbnailImageProps(primaryImg, itemWidths)
+                          const retryOriginal = createVariantFallbackHandler(thumbProps.fallbackSrc)
                           return (
                             <img
-                              src={getImageUrl(primaryImg)}
+                              src={thumbProps.src}
+                              srcSet={thumbProps.srcSet}
+                              sizes={thumbProps.sizes}
                               alt={item.title}
                               className="w-20 h-24 object-cover rounded-[14px] border border-[#EFE8F2]"
+                              loading={thumbProps.loading}
+                              decoding={thumbProps.decoding}
                               onError={(e) => {
+                                if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                  retryOriginal(e)
+                                  return
+                                }
                                 e.currentTarget.style.display = 'none'
                                 e.currentTarget.nextElementSibling?.classList.remove('hidden')
                               }}

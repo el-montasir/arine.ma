@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { registerImageVariantsFromPayload } from '../lib/image-metadata'
 
 export default function usePackage(id) {
   const [pkg, setPkg] = useState(null)
@@ -16,7 +17,10 @@ export default function usePackage(id) {
     setLoading(true)
     api.get(`/packages/${id}`)
       .then((json) => {
-        setPkg(json.data || null)
+        const data = json.data || null
+        // BEFORE setPkg: the detail hero's srcset is correct on first paint.
+        registerImageVariantsFromPayload(data)
+        setPkg(data)
         setError(null)
       })
       .catch((err) => {

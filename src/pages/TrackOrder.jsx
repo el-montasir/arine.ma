@@ -4,7 +4,19 @@ import { Search, Package, MapPin, CreditCard, Clock, CheckCircle2, Truck, AlertC
 import { useLanguage } from '../context/LanguageContext'
 import api from '../utils/api'
 import { formatPrice } from '../utils/format'
-import { getImageUrl } from '../utils/images'
+import { getThumbnailImageProps } from '../utils/image-variants'
+
+/**
+ * Resolves the thumbnail props for an order row's snapshotted image.
+ *
+ * The widths were snapshotted onto the order row when it was placed, so this
+ * works on a tracking lookup where no product payload was ever fetched — the
+ * registry would be empty here. Falls back to the original (always present)
+ * when the row predates the metadata columns.
+ */
+function orderThumb(url, widths) {
+  return getThumbnailImageProps(url, widths)
+}
 
 export default function TrackOrder() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -260,11 +272,30 @@ export default function TrackOrder() {
             </h3>
 
             <div className="divide-y divide-border/60">
-              {order.items?.map((item) => (
+              {order.items?.map((item) => {
+                // Resolved once, not three times, and from the widths the order
+                // row snapshotted at purchase time.
+                const t = orderThumb(item.productImage, item.productImageVariantWidths)
+                return (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.productImage ? (
-                      <img src={getImageUrl(item.productImage)} alt="" className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0" />
+                      <img
+                        src={t.src}
+                        srcSet={t.srcSet}
+                        sizes={t.sizes}
+                        alt=""
+                        className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0"
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                            e.currentTarget.removeAttribute('srcset')
+                            e.currentTarget.removeAttribute('sizes')
+                            e.currentTarget.dataset.variantFallbackApplied = '1'
+                          }
+                        }}
+                      />
                     ) : null}
                     <div className="min-w-0">
                       <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.productTitle}</h4>
@@ -277,12 +308,30 @@ export default function TrackOrder() {
                     {formatPrice(item.totalPrice)}
                   </div>
                 </div>
-              ))}
-              {order.packageItems?.map((item) => (
+              )
+              })}
+              {order.packageItems?.map((item) => {
+                const t = orderThumb(item.packageImage, item.packageImageVariantWidths)
+                return (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     {item.packageImage ? (
-                      <img src={getImageUrl(item.packageImage)} alt="" className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0" />
+                      <img
+                        src={t.src}
+                        srcSet={t.srcSet}
+                        sizes={t.sizes}
+                        alt=""
+                        className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0"
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                            e.currentTarget.removeAttribute('srcset')
+                            e.currentTarget.removeAttribute('sizes')
+                            e.currentTarget.dataset.variantFallbackApplied = '1'
+                          }
+                        }}
+                      />
                     ) : null}
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -305,7 +354,8 @@ export default function TrackOrder() {
                     {formatPrice(item.totalPrice)}
                   </div>
                 </div>
-              ))}
+              )
+              })}
             </div>
 
             {/* Price summary */}

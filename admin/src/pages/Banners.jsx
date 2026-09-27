@@ -30,6 +30,9 @@ const EMPTY_BANNER = {
   title: '',
   description: '',
   image: '',
+  // Widths of the WebP variants the server generated for `image`. The storefront
+  // advertises a srcset candidate only for these, so it must round-trip on save.
+  imageVariantWidths: [],
   link: '',
   type: 'promotional',
   isActive: true,
@@ -78,6 +81,7 @@ export default function Banners() {
       title: banner.title || '',
       description: banner.description || '',
       image: banner.image || '',
+      imageVariantWidths: Array.isArray(banner.imageVariantWidths) ? banner.imageVariantWidths : [],
       link: banner.link || '',
       type: banner.type || 'promotional',
       isActive: Boolean(banner.isActive),
@@ -118,13 +122,19 @@ export default function Banners() {
       formData.append('image', file)
 
       const res = await api.upload('/uploads/branding', formData)
-      const uploadedUrl = res?.data?.url || res?.files?.[0]?.url || res?.url
+      const uploaded = res?.data || res?.files?.[0] || res
+      const uploadedUrl = uploaded?.url
 
       if (!uploadedUrl) {
         throw new Error(t('errUploadGeneric'))
       }
 
-      setForm((prev) => ({ ...prev, image: uploadedUrl }))
+      setForm((prev) => ({
+        ...prev,
+        image: uploadedUrl,
+        // Replace, never merge: these widths describe the file just uploaded.
+        imageVariantWidths: Array.isArray(uploaded.variantWidths) ? uploaded.variantWidths : [],
+      }))
     } catch (err) {
       setImageError(err.message || t('errUploadGeneric'))
     } finally {
@@ -134,7 +144,7 @@ export default function Banners() {
   }
 
   const handleRemoveImage = () => {
-    setForm((prev) => ({ ...prev, image: '' }))
+    setForm((prev) => ({ ...prev, image: '', imageVariantWidths: [] }))
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -152,6 +162,7 @@ export default function Banners() {
       title: form.title.trim(),
       description: form.description.trim() || null,
       image: form.image.trim() || null,
+      imageVariantWidths: form.imageVariantWidths || [],
       link: form.link.trim() || null,
       type: form.type || 'promotional',
       isActive: Boolean(form.isActive),

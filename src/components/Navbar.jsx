@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { getImageUrl } from '../utils/images'
+import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 export default function Navbar() {
   const { count, setIsCartOpen, isMenuOpen, setIsMenuOpen, favorites } = useCart()
@@ -75,15 +76,25 @@ export default function Navbar() {
                   the exact same box, so the navbar never has an empty brand. */}
               <span className="flex flex-none shrink-0 items-center justify-center w-9 h-9 lg:w-10 lg:h-10 min-w-[36px] min-h-[36px] lg:min-w-[40px] lg:min-h-[40px] rounded-full overflow-hidden bg-purple-800 shadow-sm border border-gray-100">
                 {showLogoImage ? (
+                  (() => {
+                    const logoImg = getThumbnailImageProps(config?.store?.logo)
+                    return (
                   <img
                     key={resolvedLogoUrl}
-                    src={resolvedLogoUrl}
+                    src={logoImg.src}
+                    srcSet={logoImg.srcSet}
+                    sizes={logoImg.sizes}
                     alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
                     className="w-full h-full object-cover shrink-0"
                     loading="eager"
                     decoding="async"
-                    onError={() => setErroredLogoUrl(resolvedLogoUrl)}
+                    onError={(e) => {
+                      createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                      setErroredLogoUrl(resolvedLogoUrl)
+                    }}
                   />
+                    )
+                  })()
                 ) : (
                   <BookOpen className="w-5 h-5 text-white" strokeWidth={2} aria-hidden="true" />
                 )}

@@ -126,6 +126,8 @@ model PackageImage {
   id        Int      @id @default(autoincrement())
   packageId Int
   url       String
+  // See ProductImage.variantWidths — the widths actually generated for this image.
+  variantWidths Int[]   @default([])
   sortOrder Int      @default(0)
   isPrimary Boolean  @default(false)
   package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
@@ -141,6 +143,10 @@ model PackageOrderItem {
   packageId      Int?
   packageTitle   String
   packageImage   String?
+  // Snapshot of the generated variant widths at order time, so TrackOrder can
+  // render a srcset for a historical order whose product has since been edited
+  // or deleted. Null/empty -> no srcset, the original always exists.
+  packageImageVariantWidths Int[]  @default([])
   itemsSnapshot  Json?
   quantity       Int
   unitPrice      Int
@@ -224,6 +230,8 @@ model OrderItem {
   // product's title/price/image change or if the product is deleted later.
   productTitle  String
   productImage  String?
+  // See PackageOrderItem.packageImageVariantWidths.
+  productImageVariantWidths Int[]  @default([])
   quantity      Int
   // Selling-price snapshot. Admin profit math uses: unitPrice − unitCostPrice.
   unitPrice     Int
@@ -303,6 +311,12 @@ model ProductImage {
   id        Int      @id @default(autoincrement())
   productId Int
   url       String
+  // Widths (px) of the WebP variants that were ACTUALLY generated for this
+  // image, ascending. The storefront advertises a srcset candidate only for a
+  // width listed here, so the browser can never request a missing variant.
+  // Empty = no metadata (media predates the variant pipeline) -> the storefront
+  // serves the original with no srcset, which always exists.
+  variantWidths Int[]   @default([])
   sortOrder Int      @default(0)
   isPrimary Boolean  @default(false)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -317,6 +331,8 @@ model Banner {
   title       String
   description String?
   image       String?
+  // See ProductImage.variantWidths — the widths actually generated for `image`.
+  imageVariantWidths Int[] @default([])
   link        String?
   type        String    @default("promotional")
   isActive    Boolean   @default(true)

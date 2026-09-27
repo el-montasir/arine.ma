@@ -4,7 +4,7 @@ import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
-import { getImageUrl } from '../utils/images'
+import { getCardImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 export default function FeaturedBook({ book }) {
   const { addToCart, toggleFavorite, isFavorite } = useCart()
@@ -37,15 +37,29 @@ export default function FeaturedBook({ book }) {
           <div className="flex-shrink-0 w-44 sm:w-52 lg:w-56">
             {primaryImage ? (
               <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl shadow-md border border-[#ece5f2] bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd]">
-                <img
-                  src={getImageUrl(primaryImage)}
-                  alt={book.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                  }}
-                />
+                {(() => {
+                  const cardProps = getCardImageProps(primaryImage)
+                  const retryOriginal = createVariantFallbackHandler(cardProps.fallbackSrc)
+                  return (
+                    <img
+                      src={cardProps.src}
+                      srcSet={cardProps.srcSet}
+                      sizes={cardProps.sizes}
+                      alt={book.title}
+                      className="h-full w-full object-cover"
+                      loading={cardProps.loading}
+                      decoding={cardProps.decoding}
+                      onError={(e) => {
+                        if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                          retryOriginal(e)
+                          return
+                        }
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                      }}
+                    />
+                  )
+                })()}
                 <div className="hidden">
                   <BookCover book={book} size="lg" className="w-full" />
                 </div>

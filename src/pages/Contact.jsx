@@ -16,6 +16,7 @@ import {
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { getImageUrl } from '../utils/images'
+import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 function InstagramIcon({ className = 'w-4 h-4' }) {
   return (
@@ -157,12 +158,22 @@ export default function Contact() {
           <div className="space-y-3 relative z-10">
             <div className="flex items-center gap-2.5">
               {store.logo && !logoError ? (
-                <img
-                  src={getImageUrl(store.logo)}
-                  alt={store.name || t('appName') || 'مكتبة أرين'}
-                  className="w-10 h-10 rounded-full object-cover shadow-sm border border-white/20 shrink-0"
-                  onError={() => setLogoError(true)}
-                />
+                (() => {
+                  const logoImg = getThumbnailImageProps(store.logo)
+                  return (
+                  <img
+                    src={logoImg.src}
+                    srcSet={logoImg.srcSet}
+                    sizes={logoImg.sizes}
+                    alt={store.name || t('appName') || 'مكتبة أرين'}
+                    className="w-10 h-10 rounded-full object-cover shadow-sm border border-white/20 shrink-0"
+                    onError={(e) => {
+                      createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                      setLogoError(true)
+                    }}
+                  />
+                  )
+                })()
               ) : (
                 <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                   <BookOpen className="w-4 h-4 text-white" />

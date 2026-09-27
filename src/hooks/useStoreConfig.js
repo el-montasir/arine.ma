@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
 import { getImageUrl } from '../utils/images'
+import { registerImageVariantsFromPayload } from '../lib/image-metadata'
 
 export function updateFavicon(logoPath) {
   if (typeof document === 'undefined') return
@@ -33,6 +34,8 @@ export function useStoreConfig() {
       .get('/store-config')
       .then((res) => {
         if (mounted && res?.data) {
+          // BEFORE setConfig, so the logo's srcset is correct on first paint.
+          registerImageVariantsFromPayload(res.data)
           setConfig(res.data)
           if (res.data.store?.logo) {
             updateFavicon(res.data.store.logo)

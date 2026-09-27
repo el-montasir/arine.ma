@@ -7,7 +7,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
 import api from '../utils/api'
 import { trackViewContent } from '../utils/tracking'
-import { getImageUrl } from '../utils/images'
+import { getDetailImageProps, getCardImageProps, getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 export default function BookDetails() {
   const { id } = useParams()
@@ -140,15 +140,31 @@ export default function BookDetails() {
           <div className="lg:sticky lg:top-28 max-w-[340px] mx-auto lg:mx-0 space-y-3">
             {currentImageUrl ? (
               <div className="relative aspect-[3/4] w-56 lg:w-full mx-auto lg:mx-0 overflow-hidden rounded-2xl bg-[#F3F4F6] border border-border shadow-md">
-                <img
-                  src={getImageUrl(currentImageUrl)}
-                  alt={book.title}
-                  className="h-full w-full object-cover transition-all"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                  }}
-                />
+                {(() => {
+                  const heroProps = getDetailImageProps(currentImageUrl)
+                  const retryHero = createVariantFallbackHandler(heroProps.fallbackSrc)
+                  return (
+                    <img
+                      src={heroProps.src}
+                      srcSet={heroProps.srcSet}
+                      sizes={heroProps.sizes}
+                      alt={book.title}
+                      className="h-full w-full object-cover transition-all"
+                      loading={heroProps.loading}
+                      decoding={heroProps.decoding}
+                      onError={(e) => {
+                        // LCP hero: a 404'd variant falls back to the original
+                        // before the placeholder kicks in.
+                        if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                          retryHero(e)
+                          return
+                        }
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                      }}
+                    />
+                  )
+                })()}
                 <div className="hidden h-full w-full">
                   <BookCover book={book} size="lg" className="w-56 lg:w-full mx-auto lg:mx-0" />
                 </div>
@@ -171,11 +187,26 @@ export default function BookDetails() {
                         : 'border-border/80 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img
-                      src={getImageUrl(url)}
-                      alt={`صورة ${idx + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+                    {(() => {
+                      const thumbProps = getThumbnailImageProps(url)
+                      const retryThumb = createVariantFallbackHandler(thumbProps.fallbackSrc)
+                      return (
+                        <img
+                          src={thumbProps.src}
+                          srcSet={thumbProps.srcSet}
+                          sizes={thumbProps.sizes}
+                          alt={`صورة ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                          loading={thumbProps.loading}
+                          decoding={thumbProps.decoding}
+                          onError={(e) => {
+                            if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                              retryThumb(e)
+                            }
+                          }}
+                        />
+                      )
+                    })()}
                   </button>
                 ))}
               </div>
@@ -374,15 +405,29 @@ function ProductCardMini({ book }) {
       <div className="bg-[#F3F4F6] p-3">
         {primaryImg ? (
           <div className="aspect-[3/4] w-full overflow-hidden rounded-lg bg-surface-900">
-            <img
-              src={getImageUrl(primaryImg)}
-              alt={book.title}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none'
-                e.currentTarget.nextElementSibling?.classList.remove('hidden')
-              }}
-            />
+            {(() => {
+              const relProps = getCardImageProps(primaryImg)
+              const retryRel = createVariantFallbackHandler(relProps.fallbackSrc)
+              return (
+                <img
+                  src={relProps.src}
+                  srcSet={relProps.srcSet}
+                  sizes={relProps.sizes}
+                  alt={book.title}
+                  className="h-full w-full object-cover"
+                  loading={relProps.loading}
+                  decoding={relProps.decoding}
+                  onError={(e) => {
+                    if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                      retryRel(e)
+                      return
+                    }
+                    e.currentTarget.style.display = 'none'
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                  }}
+                />
+              )
+            })()}
             <div className="hidden">
               <BookCover book={book} size="md" />
             </div>

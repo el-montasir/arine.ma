@@ -1,20 +1,27 @@
 import { prisma } from '../lib/prisma.js'
 import { errorResponse } from '../utils/api-response.js'
+import {
+  normalizeVariantWidths,
+  pickPrimaryImageUrl,
+  widthsForImageUrl,
+} from '../lib/image-metadata.js'
 
 // Shape a Prisma product row into the exact JSON shape the React frontend consumes
 export function serializeProduct(product) {
   const images = (product.images || []).map((img) => ({
     id: img.id,
     url: img.url,
+    // Widths the server actually generated. The storefront may advertise a
+    // srcset candidate only for a width listed here — see src/lib/image-metadata.js.
+    variantWidths: normalizeVariantWidths(img.variantWidths),
     sortOrder: img.sortOrder,
     isPrimary: img.isPrimary,
   }))
 
-  const primaryImage =
-    images.find((img) => img.isPrimary)?.url ||
-    images[0]?.url ||
-    product.image ||
-    null
+  // `image` is a BARE URL string, and components call getImageVariants(product.image)
+  // directly. `imageVariantWidths` is the sibling lookup keyed by that exact string,
+  // computed in the same pass that picks the primary so the key always matches.
+  const primaryImage = pickPrimaryImageUrl(images, product.image)
 
   return {
     id: product.id,
@@ -27,6 +34,7 @@ export function serializeProduct(product) {
     oldPrice: product.oldPrice,
     discount: product.discount,
     image: primaryImage,
+    imageVariantWidths: widthsForImageUrl(images, primaryImage),
     images,
     availability: product.availability,
     description: product.description,

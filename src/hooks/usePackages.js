@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { registerImageVariantsFromPayload } from '../lib/image-metadata'
 
 export default function usePackages({ search = '', sort = 'popular' } = {}) {
   const [packages, setPackages] = useState([])
@@ -14,7 +15,10 @@ export default function usePackages({ search = '', sort = 'popular' } = {}) {
     setLoading(true)
     api.get(`/packages?${params.toString()}`)
       .then((json) => {
-        setPackages(json.data || [])
+        const list = json.data || []
+        // BEFORE setPackages, so the first render already sees the widths.
+        registerImageVariantsFromPayload(list)
+        setPackages(list)
         setError(null)
       })
       .catch((err) => {

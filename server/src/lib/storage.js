@@ -3,6 +3,8 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3'
 import path from 'path'
 import fs from 'fs'
@@ -63,12 +65,21 @@ export function getR2Client() {
 /**
  * Extracts the storage object key (e.g. "products/1728192-abc.jpg")
  * from an API path ("/uploads/products/123.jpg") or absolute URL.
+ *
+ * The query string and hash fragment are STRIPPED. They are never part of an
+ * object's name in S3/R2, so a URL of the form `.../a.jpg?v=3` names the same
+ * object as `.../a.jpg`. Keeping them would make two spellings of one object
+ * look like two different ones — which silently breaks any caller that
+ * compares a stored URL against a computed key.
  */
 export function extractStorageKey(pathOrUrl) {
   if (!pathOrUrl || typeof pathOrUrl !== 'string') return null
-  const cleaned = pathOrUrl.trim()
+  let cleaned = pathOrUrl.trim()
 
   if (cleaned.startsWith('data:') || cleaned.startsWith('blob:')) return null
+
+  const q = cleaned.search(/[?#]/)
+  if (q !== -1) cleaned = cleaned.slice(0, q)
 
   // Match /uploads/<subfolder>/<filename>
   const match = cleaned.match(/(?:^|\/)uploads\/(.+)$/)
@@ -219,4 +230,128 @@ export async function deleteFromStorage(pathOrUrlOrKey) {
   }
 
   return deleted
+}
+
+/**
+ * Lists object keys under a given prefix in R2 (paginated).
+ *
+ * READ-ONLY. Used by the image variant backfill tool to discover existing
+ * originals. Returns an empty list when R2 is not configured rather than
+ * throwing, so callers must handle the local-filesystem case themselves.
+ *
+ * @param {string} prefix - Key prefix, e.g. "products" or "products/"
+ * @returns {Promise<Array<{key: string, size: number, lastModified: Date|null}>>}
+ */
+export async function listStorageObjects(prefix = '') {
+  if (!isR2Configured()) return []
+
+  const client = getR2Client()
+  const bucket = getBucketName()
+  const normalized = prefix ? prefix.replace(/^\/+|\/+$/g, '') : ''
+  const objects = []
+
+  let continuationToken
+  do {
+    const response = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: normalized ? `${normalized}/` : '',
+        ContinuationToken: continuationToken,
+      })
+    )
+    for (const item of response.Contents || []) {
+      // Skip the directory placeholder objects S3-style buckets sometimes carry.
+      if (!item.Key || item.Key.endsWith('/')) continue
+      objects.push({
+        key: item.Key,
+        size: item.Size || 0,
+        lastModified: item.LastModified || null,
+      })
+    }
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined
+  } while (continuationToken)
+
+  return objects
+}
+
+/**
+ * Checks whether an object exists in R2.
+ *
+ * Returns true when HeadObject succeeds and false ONLY for genuine not-found
+ * conditions (NoSuchKey / NotFound / HTTP 404). Every other error — auth (403),
+ * throttling, 5xx, or a network/timeout failure — is RE-THROWN.
+ *
+ * WHY: the backfill uses this as the gate immediately before a PutObject, to
+ * avoid overwriting a variant that already exists. Swallowing every error and
+ * reporting `false` turns a transient network blip or an expired credential
+ * into "this object does not exist", which authorizes an overwrite of an object
+ * that is in fact present. Distinguishing "absent" from "could not determine" is
+ * therefore a correctness requirement, not a nicety. This mirrors the
+ * not-found-only handling in getObjectBuffer().
+ *
+ * Note the local-filesystem branch is unchanged: `fs.existsSync` cannot
+ * distinguish ENOENT from EACCES, and it is a dev-only path with no PutObject
+ * overwrite risk in production.
+ *
+ * @param {string} key
+ * @returns {Promise<boolean>}
+ * @throws The original error when existence could not be determined.
+ */
+export async function storageObjectExists(key) {
+  if (!key || typeof key !== 'string') return false
+  if (!isR2Configured()) {
+    return fs.existsSync(path.join(UPLOADS_ROOT, key.replace(/^\/+/, '')))
+  }
+  try {
+    const client = getR2Client()
+    await client.send(new HeadObjectCommand({ Bucket: getBucketName(), Key: key.replace(/^\/+/, '') }))
+    return true
+  } catch (err) {
+    if (
+      err.name === 'NoSuchKey' ||
+      err.name === 'NotFound' ||
+      err.$metadata?.httpStatusCode === 404
+    ) {
+      return false
+    }
+    throw err
+  }
+}
+
+/**
+ * Reads an object's full contents into a Buffer.
+ * Used by the backfill tool to transform existing originals.
+ *
+ * Only supports R2 (returns null when unconfigured) because the backfill tool
+ * reads from the same source of truth it writes to.
+ *
+ * @param {string} key
+ * @returns {Promise<Buffer|null>}
+ */
+export async function getObjectBuffer(key) {
+  if (!key || typeof key !== 'string') return null
+  if (!isR2Configured()) return null
+
+  const cleanKey = key.replace(/^\/+/, '')
+  try {
+    const client = getR2Client()
+    const response = await client.send(
+      new GetObjectCommand({ Bucket: getBucketName(), Key: cleanKey })
+    )
+
+    const chunks = []
+    for await (const chunk of response.Body) {
+      chunks.push(chunk)
+    }
+    return Buffer.concat(chunks)
+  } catch (err) {
+    if (
+      err.name === 'NoSuchKey' ||
+      err.name === 'NotFound' ||
+      err.$metadata?.httpStatusCode === 404
+    ) {
+      return null
+    }
+    throw err
+  }
 }
