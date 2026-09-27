@@ -148,6 +148,32 @@ export function generatedWidthsFor(intrinsicWidth) {
 }
 
 /**
+ * Reads ONLY the intrinsic width of a source image, under the same validated
+ * read — and therefore the same MAX_DIMENSIONS decompression-bomb cap — as
+ * every Sharp entry point in this module.
+ *
+ * WHY THIS EXISTS
+ * The backfill planner must know a source's intrinsic width to apply the
+ * EXISTENCE INVARIANT above, and must apply the SAME predicate the generators
+ * apply. Deriving the width anywhere else (a second Sharp call, a hand-rolled
+ * header parse) would be a second implementation of the rule, free to drift
+ * from it — which is exactly the defect that made a dry-run disagree with the
+ * run it was planning. Reading it here means both sides call one predicate.
+ *
+ * Exported rather than kept private so the planner can be honest about which
+ * widths are creatable. It is read-only: it decodes metadata and nothing else,
+ * and never writes an output buffer.
+ *
+ * @param {Buffer} buffer
+ * @returns {Promise<{width: number, height: number, format?: string}>}
+ * @throws {Error} If the buffer is unreadable, dimensionless, or over the cap.
+ */
+export async function readIntrinsicWidth(buffer) {
+  const { width, height, format } = await readValidatedMetadata(buffer)
+  return { width, height, format }
+}
+
+/**
  * Builds the variant filename for a given original filename and width.
  * SINGLE SOURCE OF TRUTH for variant naming — the upload pipeline and the
  * backfill tool both call this, so the two can never disagree.
@@ -281,6 +307,7 @@ export default {
   buildVariantFilename,
   buildVariantKey,
   generatedWidthsFor,
+  readIntrinsicWidth,
   VARIANT_WIDTHS,
   IMAGE_VARIANT_SIZES,
   IMAGE_DETAIL_SIZE,
