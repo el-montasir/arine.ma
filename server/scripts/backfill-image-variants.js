@@ -928,6 +928,92 @@ export async function reconcileMetadata(planEntries, unmeasurable, deps) {
   }
 }
 
+/**
+ * Renders a reconciliation report and decides the exit code.
+ *
+ * Separated from `main()` so the report is produced by ONE function whether the
+ * run was a bare `--check-metadata` or an `--execute --write-metadata` that
+ * should be checked afterwards. When the rendering lived only at the tail of
+ * `main()`, the check path could not reach it at all — the dry-run return sat
+ * between the two — which is exactly the defect that shipped.
+ *
+ * READ-ONLY: reads the report it is handed and prints. No storage or database
+ * access of any kind.
+ *
+ * @param {{rows: Array<object>, unreadable: Array<object>, summary: object}} report
+ * @returns {number} 0 = safe to enable the storefront, 1 = blocker present.
+ */
+export function printReconciliationReport(report) {
+  const widthList = (w) => (w.length ? w.join(', ') : '(none)')
+  for (const row of report.rows) {
+    const surfaces = row.surfaces.length ? row.surfaces.join(', ') : '-'
+    const recorded = row.recordedWidths.length
+      ? row.recordedWidths.map((r) => `${r.surface}=[${widthList(r.widths)}]`).join(' ')
+      : '(nothing recorded)'
+    console.log(`  ${row.state.toUpperCase().padEnd(12)} ${row.key}`)
+    console.log(
+      `      available widths  : [${widthList(row.availableWidths)}]  (source ${row.intrinsicWidth}px)`
+    )
+    console.log(`      referenced by     : ${surfaces}`)
+    console.log(`      recorded widths   : ${recorded}`)
+    if (row.state === METADATA_STATE.STALE) {
+      const parts = []
+      if (row.variantWidthsMissing.length) parts.push(`missing [${row.variantWidthsMissing.join(', ')}]`)
+      if (row.variantWidthsExtra.length) parts.push(`claims absent [${row.variantWidthsExtra.join(', ')}]`)
+      console.log(`      problem           : ${parts.join('; ')}`)
+    }
+  }
+  for (const u of report.unreadable) {
+    console.log(`  UNREADABLE    ${u.key} — ${u.reason}`)
+  }
+
+  const sm = report.summary
+  console.log('\n  --- RECONCILIATION SUMMARY ---')
+  console.log(`  active refs, metadata correct  : ${sm.correct}`)
+  console.log(`  active refs, metadata missing  : ${sm.missing}`)
+  console.log(`  active refs, metadata stale    : ${sm.stale}  (DB disagrees with storage)`)
+  console.log(`  unreferenced / orphan originals: ${sm.unreferenced}`)
+  console.log(`  unreadable / over cap          : ${sm.unreadable}`)
+  console.log(`  storefront blockers            : ${sm.blocking}`)
+  if (sm.unreferenced) {
+    console.log(
+      '  NOTE: unreferenced objects are R2 leftovers, reported for review only.\n' +
+        '        Nothing renders them, so they are not a storefront blocker, and\n' +
+        '        this tool never deletes them.'
+    )
+  }
+
+  // An unreadable source is a blocker even though it is not counted in
+  // `blocking`: nothing knows what it is, so whether a row references it, or
+  // claims widths for it, cannot be confirmed either way. Reporting exit 0
+  // over an unverified surface would be a claim this tool cannot support.
+  if (sm.blocking || sm.unreadable) {
+    if (sm.blocking) {
+      console.log(
+        '\n  UNSAFE TO ENABLE VITE_IMAGE_VARIANTS:\n' +
+          `    ${sm.missing} active reference(s) record no widths, and ${sm.stale} disagree with\n` +
+          '    storage. The first costs full-size downloads; the second produces 404s on\n' +
+          '    any variant the storefront advertises from a stale row.\n' +
+          '    Repair with: --execute --write-metadata'
+      )
+    }
+    if (sm.unreadable) {
+      console.log(
+        `    ${sm.unreadable} source(s) could not be measured, so their metadata is\n` +
+          '    UNVERIFIED — a stale or missing record on any of them would go unnoticed.'
+      )
+    }
+    return 1
+  }
+
+  console.log(
+    '\n  SAFE: every active reference records the widths storage actually holds.\n' +
+      '  Objects with no variants (source narrower than 200px) intentionally record\n' +
+      '  nothing and emit no srcset, so they are correct, not missing.'
+  )
+  return 0
+}
+
 function normalizeWidths(widths) {
   if (!Array.isArray(widths)) return []
   return [...new Set(widths.filter((w) => Number.isInteger(w) && w > 0))].sort((a, b) => a - b)
@@ -984,6 +1070,40 @@ OPTIONS
                         --write-metadata. Never deletes anything.
   --help                Show this message.
 `)
+}
+
+export /**
+ * Runs the read-only reconciliation and reports it.
+ *
+ * Exists so that `--check-metadata` and `--execute --check-metadata` reach the
+ * SAME code. The two are the same audit; the second only differs in that
+ * uploads have already happened, which changes the storage truth being compared
+ * against but not a single step of the check. When this was inlined at the tail
+ * of `main()`, the standalone mode could not reach it — see the early-exit
+ * comment in `main()`.
+ *
+ * STRICTLY READ-ONLY regardless of the flags passed in: it opens a Prisma
+ * client, reads, prints, and closes. It never consults `execute` and never
+ * passes it to anything, so no future caller can turn this into a write by
+ * passing the right flag.
+ *
+ * @param {{plan: {plan: Array<object>, unmeasurable: Array<object>}}} plan
+ * @param {{checkMetadata: boolean, writeMetadata: boolean, execute: boolean}} _flags
+ *   Present so the call sites document their mode. Deliberately unused: this
+ *   function is the same audit in every mode, and honouring a flag here would
+ *   be the exact way it stopped being read-only.
+ */
+async function runReconciliation(plan, _flags) {
+  console.log('\n--- METADATA RECONCILIATION (read-only) ---')
+  try {
+    const { prisma } = await import('../src/lib/prisma.js')
+    const report = await reconcileMetadata(plan.plan, plan.unmeasurable, { prisma })
+    if (printReconciliationReport(report) !== 0) process.exitCode = 1
+    console.log('\n  This mode performed no uploads and no database writes.')
+  } catch (error) {
+    console.error(`[Backfill] Reconciliation failed: ${safeErrorMessage(error)}`)
+    process.exitCode = 1
+  }
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -1141,6 +1261,22 @@ export async function main(argv = process.argv.slice(2)) {
     console.log('')
   }
 
+  // ---- early exits that are NOT the plain dry-run ----
+  //
+  // Both of these happen before the reconciliation block below, so any return
+  // placed here MUST be conditional on a mode that does not still have work to
+  // do. A bare `if (!execute) return` — which is what this used to be — sends
+  // `--check-metadata` down the plain dry-run path and out of the function
+  // before `reconcileMetadata` is ever called, printing "Re-run with
+  // --execute" for a command the user is not going to re-run with --execute,
+  // because it is precisely the mode where they must not. The condition below
+  // names the two modes explicitly so a new mode cannot be silently swallowed
+  // here again.
+  if (checkMetadata) {
+    await runReconciliation(plan, { checkMetadata: true, writeMetadata, execute: false })
+    return
+  }
+
   if (!execute) {
     for (const entry of incomplete) {
       console.log(
@@ -1241,72 +1377,13 @@ export async function main(argv = process.argv.slice(2)) {
     }
   }
 
-  // ---- metadata reconciliation (opt-in, STRICTLY READ-ONLY) ----
+  // ---- metadata reconciliation (read-only) ----
+  //
+  // Reached only when combined with --execute, because --check-metadata on its
+  // own returns above. Rendering and the exit code come from
+  // printReconciliationReport so both entry points behave identically.
   if (checkMetadata) {
-    console.log('\n--- METADATA RECONCILIATION (read-only) ---')
-    try {
-      const { prisma } = await import('../src/lib/prisma.js')
-      const report = await reconcileMetadata(plan.plan, plan.unmeasurable, { prisma })
-
-      const widthList = (w) => (w.length ? w.join(', ') : '(none)')
-      for (const row of report.rows) {
-        const surfaces = row.surfaces.length ? row.surfaces.join(', ') : '-'
-        const recorded = row.recordedWidths.length
-          ? row.recordedWidths
-              .map((r) => `${r.surface}=[${widthList(r.widths)}]`)
-              .join(' ')
-          : '(nothing recorded)'
-        console.log(`  ${row.state.toUpperCase().padEnd(12)} ${row.key}`)
-        console.log(`      available widths  : [${widthList(row.availableWidths)}]  (source ${row.intrinsicWidth}px)`)
-        console.log(`      referenced by     : ${surfaces}`)
-        console.log(`      recorded widths   : ${recorded}`)
-        if (row.state === METADATA_STATE.STALE) {
-          const parts = []
-          if (row.variantWidthsMissing.length) parts.push(`missing [${row.variantWidthsMissing.join(', ')}]`)
-          if (row.variantWidthsExtra.length) parts.push(`claims absent [${row.variantWidthsExtra.join(', ')}]`)
-          console.log(`      problem           : ${parts.join('; ')}`)
-        }
-      }
-      for (const u of report.unreadable) {
-        console.log(`  UNREADABLE    ${u.key} — ${u.reason}`)
-      }
-
-      const sm = report.summary
-      console.log('\n  --- RECONCILIATION SUMMARY ---')
-      console.log(`  active refs, metadata correct  : ${sm.correct}`)
-      console.log(`  active refs, metadata missing  : ${sm.missing}`)
-      console.log(`  active refs, metadata stale    : ${sm.stale}  (DB disagrees with storage)`)
-      console.log(`  unreferenced / orphan originals: ${sm.unreferenced}`)
-      console.log(`  unreadable / over cap          : ${sm.unreadable}`)
-      console.log(`  storefront blockers            : ${sm.blocking}`)
-      if (sm.unreferenced) {
-        console.log(
-          '  NOTE: unreferenced objects are R2 leftovers, reported for review only.\n' +
-            '        Nothing renders them, so they are not a storefront blocker, and\n' +
-            '        this tool never deletes them.'
-        )
-      }
-      if (sm.blocking) {
-        console.log(
-          '\n  UNSAFE TO ENABLE VITE_IMAGE_VARIANTS:\n' +
-            `    ${sm.missing} active reference(s) record no widths, and ${sm.stale} disagree with\n` +
-            '    storage. The first costs full-size downloads; the second produces 404s on\n' +
-            '    any variant the storefront advertises from a stale row.\n' +
-            '    Repair with: --execute --write-metadata'
-        )
-        process.exitCode = 1
-      } else {
-        console.log(
-          '\n  SAFE: every active reference records the widths storage actually holds.\n' +
-            '  Objects with no variants (source narrower than 200px) intentionally record\n' +
-            '  nothing and emit no srcset, so they are correct, not missing.'
-        )
-      }
-      console.log('\n  This mode performed no uploads and no database writes.')
-    } catch (error) {
-      console.error(`[Backfill] Reconciliation failed: ${safeErrorMessage(error)}`)
-      process.exitCode = 1
-    }
+    await runReconciliation(plan, { checkMetadata, writeMetadata, execute })
   }
 
   console.log('\n--- SUMMARY ---')
@@ -1344,4 +1421,8 @@ export default {
   processSource,
   safeErrorMessage,
   writeVariantMetadata,
+  scanReferences,
+  reconcileMetadata,
+  printReconciliationReport,
+  METADATA_STATE,
 }
