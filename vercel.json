@@ -11,7 +11,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://api.arine.ma https://www.facebook.com; connect-src 'self' https://api.arine.ma https://connect.facebook.net https://www.facebook.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://api.arine.ma https://www.facebook.com; connect-src 'self' https://api.arine.ma https://connect.facebook.net https://www.facebook.com; object-src 'none'; frame-src 'self' https://www.facebook.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://www.facebook.com;"
         },
         {
           "key": "X-Content-Type-Options",
