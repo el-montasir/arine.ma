@@ -61,7 +61,13 @@ export default function MarketingCampaigns() {
           search,
         })
         const res = await api.get(`/marketing/campaigns?${query}`)
-        setCampaigns(res.data || [])
+        // Body shape: { success, campaigns:[...], pagination:{...} } — no 'data' key
+        if (!Array.isArray(res.campaigns)) {
+          setCampaigns([])
+          setError(t('invalidResponseError') || 'Invalid response from server')
+          return
+        }
+        setCampaigns(res.campaigns)
         if (res.pagination) {
           setPagination((prev) => ({
             ...prev,
@@ -71,10 +77,34 @@ export default function MarketingCampaigns() {
         }
       } else if (tab === 'adsets') {
         const res = await api.get('/marketing/adsets')
-        setAdSets(res.data || [])
+        // Body shape: { success, data: { success, connected, adSets:[...] } }
+        const payload = res.data || {}
+        if (!payload.success) {
+          setAdSets([])
+          setError(payload.error || t('metaConnectionError') || 'Failed to load Ad Sets from Meta')
+          return
+        }
+        if (!Array.isArray(payload.adSets)) {
+          setAdSets([])
+          setError(t('invalidResponseError') || 'Invalid response from server')
+          return
+        }
+        setAdSets(payload.adSets)
       } else if (tab === 'ads') {
         const res = await api.get('/marketing/ads')
-        setAds(res.data || [])
+        // Body shape: { success, data: { success, connected, ads:[...] } }
+        const payload = res.data || {}
+        if (!payload.success) {
+          setAds([])
+          setError(payload.error || t('metaConnectionError') || 'Failed to load Ads from Meta')
+          return
+        }
+        if (!Array.isArray(payload.ads)) {
+          setAds([])
+          setError(t('invalidResponseError') || 'Invalid response from server')
+          return
+        }
+        setAds(payload.ads)
       }
     } catch (err) {
       setError(err.message || t('failedToLoadData') || 'Failed to load campaigns')
