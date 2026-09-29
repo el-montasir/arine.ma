@@ -29,6 +29,7 @@ export default function OrderDetails() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [stockConflicts, setStockConflicts] = useState(null)
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -40,13 +41,18 @@ export default function OrderDetails() {
     setSaving(true)
     setSaveError('')
     setSaved(false)
+    setStockConflicts(null)
     try {
       await api.patch(`/orders/${id}/status`, { status })
       setSaved(true)
       window.dispatchEvent(new Event('order-status-updated'))
       reload()
     } catch (err) {
-      setSaveError(err.message)
+      if (err.code === 'STOCK_CONFLICT' && err.conflicts?.length) {
+        setStockConflicts(err.conflicts)
+      } else {
+        setSaveError(err.message)
+      }
     } finally {
       setSaving(false)
     }
@@ -240,6 +246,31 @@ export default function OrderDetails() {
               <Truck className="h-4 w-4 text-[var(--purple)]" aria-hidden="true" /> {t('updateStatusTitle')}
             </h2>
             {saveError ? <ErrorBanner message={saveError} /> : null}
+            {stockConflicts ? (
+              <div className="mb-3 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5 text-xs dark:border-red-800/40 dark:bg-red-900/20">
+                <p className="font-semibold text-red-700 dark:text-red-300 mb-2">
+                  لا يمكن تأكيد الطلب — مخزون غير كافٍ:
+                </p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-red-600 dark:text-red-400 font-semibold">
+                      <th className="text-start pb-1">المنتج</th>
+                      <th className="text-center pb-1">مطلوب</th>
+                      <th className="text-center pb-1">متوفر</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stockConflicts.map((c, i) => (
+                      <tr key={i} className="border-t border-red-200 dark:border-red-800/30">
+                        <td className="py-1 text-red-800 dark:text-red-200 font-medium truncate max-w-[140px]">{c.productTitle}</td>
+                        <td className="py-1 text-center font-mono text-red-700 dark:text-red-300">{c.requested}</td>
+                        <td className="py-1 text-center font-mono text-red-700 dark:text-red-300">{c.available}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
             {saved ? (
               <div className="mb-3 rounded-[10px] border border-[var(--green)]/30 bg-[var(--green-bg)] px-3 py-2 text-xs font-semibold text-[var(--green)]">
                 {t('statusUpdatedSuccess')}

@@ -6,6 +6,19 @@ import {
   widthsForImageUrl,
 } from '../lib/image-metadata.js'
 
+const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
+
+function computeStockFields(product) {
+  if (!STOCK_ENABLED || !product.trackStock) {
+    return { canPurchase: true, stockStatus: 'untracked' }
+  }
+  const stock = product.currentStock ?? 0
+  const threshold = product.lowStockThreshold ?? 5
+  if (stock <= 0) return { canPurchase: false, stockStatus: 'out' }
+  if (stock <= threshold) return { canPurchase: true, stockStatus: 'low' }
+  return { canPurchase: true, stockStatus: 'ok' }
+}
+
 // Shape a Prisma product row into the exact JSON shape the React frontend consumes
 export function serializeProduct(product) {
   const images = (product.images || []).map((img) => ({
@@ -46,6 +59,7 @@ export function serializeProduct(product) {
     year: product.year,
     shippingMode: product.shippingMode ?? null,
     customShipping: product.customShipping ?? null,
+    ...computeStockFields(product),
   }
 }
 

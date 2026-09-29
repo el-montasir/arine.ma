@@ -76,6 +76,11 @@ export const PERMISSIONS = {
 
   // Activity Log
   ACTIVITY_LOG_VIEW: 'ACTIVITY_LOG_VIEW',
+
+  // Stock Management
+  STOCK_VIEW: 'STOCK_VIEW',
+  STOCK_ADJUST: 'STOCK_ADJUST',
+  STOCK_SETTINGS_UPDATE: 'STOCK_SETTINGS_UPDATE',
 }
 
 export const ALL_PERMISSIONS = Object.values(PERMISSIONS)
@@ -180,6 +185,14 @@ export const PERMISSION_GROUPS = [
   {
     key: 'activity_log',
     permissions: [PERMISSIONS.ACTIVITY_LOG_VIEW],
+  },
+  {
+    key: 'stock',
+    permissions: [
+      PERMISSIONS.STOCK_VIEW,
+      PERMISSIONS.STOCK_ADJUST,
+      PERMISSIONS.STOCK_SETTINGS_UPDATE,
+    ],
   },
 ]
 

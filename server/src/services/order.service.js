@@ -6,6 +6,8 @@ import { recordOrderAttribution } from './marketing/attribution.service.js'
 import { sendCapiEvent, buildUserData } from './marketing/meta-capi.service.js'
 import { pickPrimaryImageUrl, widthsForImageUrl } from '../lib/image-metadata.js'
 
+const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
+
 export class OrderError extends Error {
   constructor(status, code, message) {
     super(message)
@@ -79,6 +81,49 @@ export async function createOrder(input) {
       }
     }
 
+    // 4b. Stock preflight: when stock management is enabled, check that all
+    // tracked products in the cart have enough currentStock. This is a soft
+    // read — no locks held — so two PENDING orders may still refer to the last
+    // copy. First CONFIRMED wins (deductStockForOrder enforces hard lock).
+    if (STOCK_ENABLED) {
+      const conflicts = []
+
+      for (const item of input.items || []) {
+        const product = productById.get(item.productId)
+        if (product.trackStock && (product.currentStock ?? 0) < item.quantity) {
+          conflicts.push({
+            productId: product.id,
+            productTitle: product.title,
+            requested: item.quantity,
+            available: product.currentStock ?? 0,
+          })
+        }
+      }
+
+      for (const item of input.packages || []) {
+        const pkg = packageById.get(item.packageId)
+        for (const pi of pkg.items || []) {
+          const p = pi.product
+          if (!p?.trackStock) continue
+          const needed = (pi.quantity ?? 1) * item.quantity
+          if ((p.currentStock ?? 0) < needed) {
+            conflicts.push({
+              productId: p.id,
+              productTitle: p.title,
+              requested: needed,
+              available: p.currentStock ?? 0,
+            })
+          }
+        }
+      }
+
+      if (conflicts.length > 0) {
+        const err = new OrderError(409, 'STOCK_CONFLICT', 'بعض المنتجات غير متوفرة بالكمية المطلوبة')
+        err.conflicts = conflicts
+        throw err
+      }
+    }
+
     // 5. Server-side pricing — never trust the browser.
     let subtotal = 0
     const orderItems = (input.items || []).map((item) => {
@@ -112,6 +157,7 @@ export async function createOrder(input) {
         productId: pi.productId,
         title: pi.product?.title || null,
         author: pi.product?.author || null,
+        componentQuantity: pi.quantity ?? 1,
       }))
       const primaryPackageImage = pickPrimaryImageUrl(pkg.images, pkg.image)
       return {

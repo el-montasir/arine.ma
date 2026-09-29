@@ -17,6 +17,7 @@ import usersRoutes from './users.routes.js'
 import activityLogRoutes from './activity-log.routes.js'
 import marketingRoutes from './marketing.routes.js'
 import notificationRoutes from './notifications.routes.js'
+import stockRoutes from './stock.routes.js'
 
 const router = Router()
 
@@ -45,5 +46,6 @@ router.use('/activity-logs', activityLogRoutes)
 router.use('/activity-log', activityLogRoutes)
 router.use('/marketing', marketingRoutes)
 router.use('/notifications', notificationRoutes)
+router.use('/stock', stockRoutes)
 
 export default router

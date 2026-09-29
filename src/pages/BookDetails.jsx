@@ -121,6 +121,7 @@ export default function BookDetails() {
 
   const currentImageUrl = imagesList[selectedImageIdx] || imagesList[0] || null
   const isFreeShipping = book.shippingMode === 'free' || book.shippingMode === 'FREE'
+  const outOfStock = book.availability === 'out-of-stock' || book.canPurchase === false
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6 lg:py-10">
@@ -222,7 +223,7 @@ export default function BookDetails() {
                 {book.category}
               </span>
             )}
-            {book.availability === 'out-of-stock' ? (
+            {outOfStock ? (
               <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[0.75rem] font-semibold rounded-full">
                 {t('outOfStock') || 'غير متوفر حالياً'}
               </span>
@@ -290,7 +291,7 @@ export default function BookDetails() {
           <div className="flex items-center gap-3 mt-8">
             <div
               className={`flex items-center gap-2 bg-white border border-border rounded-xl px-2 ${
-                book.availability === 'out-of-stock' ? 'opacity-50 pointer-events-none' : ''
+                outOfStock ? 'opacity-50 pointer-events-none' : ''
               }`}
             >
               <button
@@ -308,7 +309,7 @@ export default function BookDetails() {
               </button>
             </div>
 
-            {book.availability === 'out-of-stock' ? (
+            {outOfStock ? (
               <button
                 disabled
                 className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#F3F4F6] text-muted text-[0.95rem] font-semibold rounded-xl cursor-not-allowed"

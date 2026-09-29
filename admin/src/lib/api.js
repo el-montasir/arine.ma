@@ -81,8 +81,9 @@ async function request(path, { method = 'GET', body: payload } = {}) {
       }
     }
     const err = new Error(message)
-    err.code = json?.error?.code || (res.status >= 500 ? 'SERVER_ERROR' : 'REQUEST_FAILED')
+    err.code = json?.error?.code || json?.code || (res.status >= 500 ? 'SERVER_ERROR' : 'REQUEST_FAILED')
     err.status = res.status
+    if (json?.conflicts) err.conflicts = json.conflicts
     throw err
   }
   return json

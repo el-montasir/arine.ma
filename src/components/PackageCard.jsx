@@ -8,7 +8,7 @@ import { getCardImageProps, createVariantFallbackHandler } from '../utils/image-
 export default function PackageCard({ pkg }) {
   const { addPackageToCart } = useCart()
   const { t, language } = useLanguage()
-  const outOfStock = pkg.availability === 'out-of-stock'
+  const outOfStock = pkg.availability === 'out-of-stock' || pkg.canPurchase === false
   const booksCount = pkg.booksCount || pkg.books?.length || 0
 
   return (

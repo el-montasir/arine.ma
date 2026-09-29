@@ -69,7 +69,9 @@ export async function createOrderHandler(req, res, next) {
     })
   } catch (err) {
     if (err instanceof OrderError) {
-      return errorResponse(res, err.status, err.code, err.message)
+      const body = { success: false, error: { code: err.code, message: err.message } }
+      if (err.conflicts) body.conflicts = err.conflicts
+      return res.status(err.status).json(body)
     }
     next(err)
   }

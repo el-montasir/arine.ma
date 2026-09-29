@@ -75,11 +75,16 @@ model Product {
   shippingMode String?
   // Custom shipping price in DH (only applies when shippingMode = 'custom')
   customShipping Int?
+  // Stock management — false = no enforcement (all legacy products default to false)
+  trackStock         Boolean @default(false)
+  currentStock       Int     @default(0)
+  lowStockThreshold  Int     @default(5)
   category     Category       @relation(fields: [categoryId], references: [id])
   orderItems   OrderItem[]
   images       ProductImage[]
   packageItems PackageItem[]
   marketingEvents MarketingEvent[]
+  stockMovements  StockMovement[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -115,6 +120,7 @@ model PackageItem {
   packageId Int
   productId Int
   sortOrder Int      @default(0)
+  quantity  Int      @default(1)
   package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -190,12 +196,16 @@ model Order {
   shipping      Int
   total         Int
   customerId    Int?
+  // Stock lifecycle tracking fields
+  stockDeducted         Boolean @default(false)
+  stockDeductionCycleId String?
   customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   items         OrderItem[]
   packageItems  PackageOrderItem[]
   notifications Notification[]
   marketingAttribution MarketingAttribution?
   marketingEvents      MarketingEvent[]
+  stockMovements       StockMovement[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -272,6 +282,7 @@ model Admin {
   createdAdmins Admin[]      @relation("AdminCreator")
   activityLogs ActivityLog[]
   notifications Notification[]
+  stockMovements StockMovement[]
 
   @@map("admins")
 }
@@ -608,4 +619,44 @@ model MarketingCampaignCache {
   @@index([status])
   @@index([externalId])
   @@map("marketing_campaigns_cache")
+}
+enum StockMovementReason {
+  ORDER_CONFIRMED
+  ORDER_CANCELLED
+  MANUAL_ADJUSTMENT
+  RESTOCK
+}
+
+model StockMovement {
+  id            Int                  @id @default(autoincrement())
+  productId     Int
+  orderId       Int?
+  cycleId       String?
+  reason        StockMovementReason
+  delta         Int
+  previousStock Int
+  newStock      Int
+  actorAdminId  Int?
+  note          String?
+  product       Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order         Order?               @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  actorAdmin    Admin?               @relation(fields: [actorAdminId], references: [id], onDelete: SetNull)
+  createdAt     DateTime             @default(now())
+
+  @@unique([cycleId, productId, reason])
+  @@index([productId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("stock_movements")
+}
+
+model StockSettings {
+  id                       Int      @id @default(1)
+  stockManagementEnabled   Boolean  @default(false)
+  allowOverselling         Boolean  @default(false)
+  lowStockAlertEnabled     Boolean  @default(true)
+  defaultLowStockThreshold Int      @default(5)
+  updatedAt                DateTime @default(now()) @updatedAt
+
+  @@map("stock_settings")
 }

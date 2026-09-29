@@ -19,6 +19,7 @@ import {
   Activity,
   Target,
   Database,
+  Warehouse,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -62,6 +63,12 @@ export function SidebarContent({ onNavigate }) {
           label: t('navCategories'),
           icon: FolderTree,
           permission: 'CATEGORIES_VIEW',
+        },
+        {
+          to: '/stock',
+          label: t('navStock'),
+          icon: Warehouse,
+          permission: 'STOCK_VIEW',
         },
       ],
     },

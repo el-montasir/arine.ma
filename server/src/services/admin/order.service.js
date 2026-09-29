@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/api-error.js'
 import { orderFinance } from '../../utils/admin-finance.js'
 import { ORDER_STATUSES } from '../../validators/admin/order.validator.js'
 import { shippingService } from '../shipping/index.js'
+import { applyStockAndUpdateOrderStatus, StockConflictError } from '../stock/stock.service.js'
 
 const INCLUDE_ITEMS = { items: true, packageItems: true }
 
@@ -89,21 +90,17 @@ export async function getOrder(id) {
   return serializeAdminOrder(order)
 }
 
-// Single admin-facing status change. Validates the enum server-side so the
-// frontend can never inject an unknown status. Delegates dispatch to the
-// active shipping provider via shippingService abstraction.
-export async function updateOrderStatus(id, status) {
+// Stock side-effects and order status update commit in one Serializable transaction.
+// applyStockAndUpdateOrderStatus locks the order row, runs stock deduction/restoration
+// if needed, then updates order.status — all atomically, preventing partial commits.
+export async function updateOrderStatus(id, status, actorAdminId = null) {
   if (!ORDER_STATUSES.includes(status)) {
     throw new ApiError(400, 'INVALID_STATUS', 'الحالة غير صحيحة')
   }
-  const order = await prisma.order.findUnique({ where: { id }, include: INCLUDE_ITEMS })
-  if (!order) throw new ApiError(404, 'NOT_FOUND', 'الطلب غير موجود')
+  const existing = await prisma.order.findUnique({ where: { id } })
+  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'الطلب غير موجود')
 
-  const updated = await prisma.order.update({
-    where: { id },
-    data: { status },
-    include: INCLUDE_ITEMS,
-  })
+  const updated = await applyStockAndUpdateOrderStatus(id, status, INCLUDE_ITEMS, actorAdminId)
 
   // Provider-independent dispatch hook (safe, logs errors without blocking status update)
   await shippingService.onOrderStatusChange(updated, status).catch(() => {})

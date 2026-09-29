@@ -13,7 +13,7 @@ export default function ProductCard({ book }) {
   if (!book) return null
 
   const fav = isFavorite(book.id)
-  const outOfStock = book.availability === 'out-of-stock'
+  const outOfStock = book.availability === 'out-of-stock' || book.canPurchase === false
   const isPreOrder = book.availability === 'pre-order'
 
   // Extract primary image from book.images array or fallback to book.image

@@ -30,6 +30,7 @@ import MarketingTracking from './pages/MarketingTracking.jsx'
 import MarketingAttribution from './pages/MarketingAttribution.jsx'
 import MarketingCatalog from './pages/MarketingCatalog.jsx'
 import MarketingSettings from './pages/MarketingSettings.jsx'
+import Stock from './pages/Stock.jsx'
 
 function RequireAuth({ children }) {
   const { admin, loading } = useAuth()
@@ -143,6 +144,15 @@ export default function App() {
           element={
             <PermissionGate permission="CATEGORIES_VIEW" showDeniedView>
               <Categories />
+            </PermissionGate>
+          }
+        />
+
+        <Route
+          path="stock"
+          element={
+            <PermissionGate permission="STOCK_VIEW" showDeniedView>
+              <Stock />
             </PermissionGate>
           }
         />

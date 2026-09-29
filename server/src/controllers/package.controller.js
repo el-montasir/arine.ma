@@ -6,6 +6,17 @@ import {
   widthsForImageUrl,
 } from '../lib/image-metadata.js'
 
+const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
+
+function productStockFields(p) {
+  if (!STOCK_ENABLED || !p.trackStock) return { canPurchase: true, stockStatus: 'untracked' }
+  const stock = p.currentStock ?? 0
+  const threshold = p.lowStockThreshold ?? 5
+  if (stock <= 0) return { canPurchase: false, stockStatus: 'out' }
+  if (stock <= threshold) return { canPurchase: true, stockStatus: 'low' }
+  return { canPurchase: true, stockStatus: 'ok' }
+}
+
 export function serializePublicPackage(pkg) {
   const images = (pkg.images || []).map((img) => ({
     id: img.id,
@@ -39,6 +50,8 @@ export function serializePublicPackage(pkg) {
       imageVariantWidths: widthsForImageUrl(bookImages, bookPrimaryImage),
       availability: p.availability,
       sortOrder: item.sortOrder,
+      componentQuantity: item.quantity ?? 1,
+      ...productStockFields(p),
     }
   })
 
@@ -58,6 +71,9 @@ export function serializePublicPackage(pkg) {
     )
   }
 
+  const pkgCanPurchase = books.every((b) => b.canPurchase)
+  const pkgStockStatus = !pkgCanPurchase ? 'out' : books.some((b) => b.stockStatus === 'low') ? 'low' : 'ok'
+
   return {
     id: pkg.id,
     title: pkg.title,
@@ -76,6 +92,8 @@ export function serializePublicPackage(pkg) {
     booksCount: books.length,
     books,
     sumBooksPrice,
+    canPurchase: STOCK_ENABLED ? pkgCanPurchase : true,
+    stockStatus: STOCK_ENABLED ? pkgStockStatus : 'untracked',
   }
 }
 

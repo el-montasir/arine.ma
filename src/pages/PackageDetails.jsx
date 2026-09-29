@@ -62,7 +62,7 @@ export default function PackageDetails() {
   }
 
   const currentImageUrl = imagesList[selectedImageIdx] || imagesList[0] || null
-  const outOfStock = pkg.availability === 'out-of-stock'
+  const outOfStock = pkg.availability === 'out-of-stock' || pkg.canPurchase === false
   const isFreeShipping = pkg.shippingMode === 'free' || pkg.shippingMode === 'FREE'
 
   return (

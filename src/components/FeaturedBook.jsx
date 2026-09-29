@@ -13,7 +13,7 @@ export default function FeaturedBook({ book }) {
   if (!book) return null
 
   const fav = isFavorite(book.id)
-  const outOfStock = book.availability === 'out-of-stock'
+  const outOfStock = book.availability === 'out-of-stock' || book.canPurchase === false
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
   // Extract primary image from book.images array or fallback to book.image

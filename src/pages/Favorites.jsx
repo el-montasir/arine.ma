@@ -69,7 +69,7 @@ export default function Favorites() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {favoriteBooks.map((book) => {
-            const outOfStock = book.availability === 'out-of-stock'
+            const outOfStock = book.availability === 'out-of-stock' || book.canPurchase === false
             return (
               <div
                 key={book.id}
