@@ -349,7 +349,10 @@ export async function adjustStock({ productId, newStock, reason, note, actorAdmi
 
     await tx.product.update({
       where: { id: productId },
-      data: { currentStock: newStock },
+      data: {
+        currentStock: newStock,
+        trackStock: true,
+      },
     })
 
     return tx.stockMovement.create({
@@ -394,7 +397,6 @@ export async function getStockSummary({ page = 1, limit = 50, search = '', filte
   const skip = (page - 1) * limit
 
   const whereBase = {
-    trackStock: true,
     ...(search ? { OR: [{ title: { contains: search, mode: 'insensitive' } }, { author: { contains: search, mode: 'insensitive' } }] } : {}),
   }
 
@@ -422,16 +424,32 @@ export async function getStockSummary({ page = 1, limit = 50, search = '', filte
       }),
       prisma.product.count({ where: { id: { in: ids } } }),
     ])
-  } else {
+  } else if (filter === 'out-of-stock') {
+    const outWhere = {
+      ...whereBase,
+      trackStock: true,
+      currentStock: { lte: 0 },
+    }
     ;[products, total] = await Promise.all([
       prisma.product.findMany({
-        where: { ...whereBase, ...(filter === 'out-of-stock' ? { currentStock: { lte: 0 } } : {}) },
+        where: outWhere,
         select: { id: true, title: true, author: true, currentStock: true, lowStockThreshold: true, trackStock: true, availability: true, image: true, images: { where: { isPrimary: true }, take: 1 } },
         orderBy: [{ currentStock: 'asc' }, { title: 'asc' }],
         skip,
         take: limit,
       }),
-      prisma.product.count({ where: { ...whereBase, ...(filter === 'out-of-stock' ? { currentStock: { lte: 0 } } : {}) } }),
+      prisma.product.count({ where: outWhere }),
+    ])
+  } else {
+    ;[products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: whereBase,
+        select: { id: true, title: true, author: true, currentStock: true, lowStockThreshold: true, trackStock: true, availability: true, image: true, images: { where: { isPrimary: true }, take: 1 } },
+        orderBy: [{ currentStock: 'asc' }, { title: 'asc' }],
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where: whereBase }),
     ])
   }
 

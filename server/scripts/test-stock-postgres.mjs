@@ -673,6 +673,127 @@ async function runAll() {
     assert.equal(summary.items[0].currentStock, 25)
   })
 
+  // =========================================================================
+  // Phase 6 — Stock Management Product Visibility & Quantity Setup Tests
+  // =========================================================================
+  console.log('\n--- Phase 6: Product Visibility & Quantity Setup in Stock Management ---')
+
+  await test('Phase 6: Untracked products (currentStock=0, trackStock=false) appear in Stock Summary', async () => {
+    await resetDb()
+
+    // 1. Untracked product with 0 stock
+    await prisma.product.create({
+      data: { id: 601, title: 'Untracked Legacy Book', author: 'Author Untracked', categoryId: 1, price: 60, trackStock: false, currentStock: 0, lowStockThreshold: 5 },
+    })
+    // 2. Tracked product with stock
+    await prisma.product.create({
+      data: { id: 602, title: 'Tracked Available Book', author: 'Author Tracked', categoryId: 1, price: 80, trackStock: true, currentStock: 15, lowStockThreshold: 5 },
+    })
+
+    const summary = await getStockSummary({ page: 1, limit: 50, filter: 'all' })
+    assert.equal(summary.total, 2, 'Both untracked and tracked products must appear in Stock Summary')
+    const untracked = summary.items.find((p) => p.id === 601)
+    const tracked = summary.items.find((p) => p.id === 602)
+    assert.ok(untracked, 'Untracked product 601 must be present')
+    assert.equal(untracked.trackStock, false)
+    assert.equal(untracked.currentStock, 0)
+    assert.ok(tracked, 'Tracked product 602 must be present')
+    assert.equal(tracked.trackStock, true)
+    assert.equal(tracked.currentStock, 15)
+  })
+
+  await test('Phase 6: Newly created product automatically appears in Stock list without second entity', async () => {
+    // Creating a new product like Books & Titles does
+    const newProd = await prisma.product.create({
+      data: {
+        title: 'Freshly Published Novel',
+        author: 'New Author',
+        categoryId: 1,
+        price: 95,
+        trackStock: false,
+        currentStock: 0,
+        lowStockThreshold: 5,
+      },
+    })
+
+    const summary = await getStockSummary({ page: 1, limit: 50, search: 'Freshly Published' })
+    assert.equal(summary.total, 1, 'Newly created product must immediately appear in search')
+    assert.equal(summary.items[0].id, newProd.id)
+    assert.equal(summary.items[0].title, 'Freshly Published Novel')
+  })
+
+  await test('Phase 6: Adjusting stock on untracked product updates stock, enables trackStock, and logs movement', async () => {
+    const untracked = await prisma.product.create({
+      data: {
+        title: 'Initial Setup Book',
+        author: 'Setup Author',
+        categoryId: 1,
+        price: 50,
+        trackStock: false,
+        currentStock: 0,
+        lowStockThreshold: 5,
+      },
+    })
+
+    const movement = await adjustStock({
+      productId: untracked.id,
+      newStock: 30,
+      reason: 'RESTOCK',
+      note: 'Initial inventory intake',
+      actorAdminId: 1,
+    })
+
+    assert.equal(movement.previousStock, 0)
+    assert.equal(movement.newStock, 30)
+    assert.equal(movement.delta, 30)
+    assert.equal(movement.reason, 'RESTOCK')
+
+    const updatedProd = await prisma.product.findUnique({ where: { id: untracked.id } })
+    assert.equal(updatedProd.currentStock, 30)
+    assert.equal(updatedProd.trackStock, true, 'trackStock must be enabled after stock adjustment')
+
+    const movements = await listStockMovements({ productId: untracked.id })
+    assert.equal(movements.total, 1)
+    assert.equal(movements.items[0].actorAdminId, 1)
+  })
+
+  await test('Phase 6: Search and filters (all, low-stock, out-of-stock) work accurately', async () => {
+    await resetDb()
+
+    await prisma.product.createMany({
+      data: [
+        { id: 701, title: 'Learn TypeScript Fast', author: 'Author TS', categoryId: 1, price: 40, trackStock: true, currentStock: 2, lowStockThreshold: 5 }, // low-stock
+        { id: 702, title: 'Learn Python Deeply', author: 'Author Py', categoryId: 1, price: 50, trackStock: true, currentStock: 0, lowStockThreshold: 5 }, // out-of-stock
+        { id: 703, title: 'Learn Rust Safely', author: 'Author Rs', categoryId: 1, price: 60, trackStock: true, currentStock: 20, lowStockThreshold: 5 }, // in-stock
+        { id: 704, title: 'Historical Archive (Untracked)', author: 'Author Hist', categoryId: 1, price: 30, trackStock: false, currentStock: 0, lowStockThreshold: 5 }, // untracked
+      ],
+    })
+
+    // 1. Filter 'all'
+    const allRes = await getStockSummary({ filter: 'all' })
+    assert.equal(allRes.total, 4)
+
+    // 2. Filter 'low-stock'
+    const lowRes = await getStockSummary({ filter: 'low-stock' })
+    assert.equal(lowRes.total, 1)
+    assert.equal(lowRes.items[0].id, 701)
+
+    // 3. Filter 'out-of-stock'
+    const outRes = await getStockSummary({ filter: 'out-of-stock' })
+    assert.equal(outRes.total, 1)
+    assert.equal(outRes.items[0].id, 702)
+
+    // 4. Search by title
+    const searchRes = await getStockSummary({ search: 'Rust' })
+    assert.equal(searchRes.total, 1)
+    assert.equal(searchRes.items[0].id, 703)
+
+    // 5. Search by author
+    const searchAuthorRes = await getStockSummary({ search: 'Hist' })
+    assert.equal(searchAuthorRes.total, 1)
+    assert.equal(searchAuthorRes.items[0].id, 704)
+  })
+
   // Summary
   console.log(`\n========================================`)
   console.log(`Results: ${passed} passed, ${failed} failed`)

@@ -150,11 +150,11 @@ export default function Stock() {
                           {p.currentStock}
                         </span>
                       ) : (
-                        <span className="text-[var(--ink-soft)]">—</span>
+                        <span className="font-mono text-sm text-[var(--ink-soft)]">{p.currentStock ?? 0}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center text-[var(--ink-soft)]">
-                      {p.trackStock ? p.lowStockThreshold : '—'}
+                      {p.lowStockThreshold ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-center">{stockStatusBadge(p)}</td>
                     <td className="px-4 py-3 text-end">
@@ -165,12 +165,12 @@ export default function Stock() {
                         >
                           السجل
                         </button>
-                        {canAdjust && p.trackStock && (
+                        {canAdjust && (
                           <button
                             onClick={() => setAdjustTarget(p)}
                             className="rounded-[7px] px-2.5 py-1.5 text-xs font-medium text-[var(--purple)] border border-[var(--purple)]/30 hover:bg-[var(--purple)]/5 transition-colors"
                           >
-                            تعديل
+                            {p.trackStock ? 'تعديل' : 'تحديد المخزون'}
                           </button>
                         )}
                       </div>
@@ -249,7 +249,7 @@ function FilterBtn({ active, onClick, children }) {
 }
 
 function AdjustModal({ product, onClose, onDone, language }) {
-  const [newStock, setNewStock] = useState(String(product.currentStock))
+  const [newStock, setNewStock] = useState(String(product.currentStock ?? 0))
   const [reason, setReason] = useState('MANUAL_ADJUSTMENT')
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -291,7 +291,7 @@ function AdjustModal({ product, onClose, onDone, language }) {
             onChange={e => setNewStock(e.target.value)}
             className="w-full rounded-[9px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--purple)]/30"
           />
-          <p className="mt-1 text-xs text-[var(--ink-soft)]">الكمية الحالية: {product.currentStock}</p>
+          <p className="mt-1 text-xs text-[var(--ink-soft)]">الكمية الحالية: {product.currentStock ?? 0}</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">السبب</label>
