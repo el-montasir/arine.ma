@@ -55,10 +55,7 @@ function StockStatusPill({ product, t }) {
   if (stock <= 0) {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/25">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-        </span>
+        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
         {t('stockStatusOutOfStock') || 'Out of Stock'}
       </span>
     )
@@ -67,10 +64,7 @@ function StockStatusPill({ product, t }) {
   if (stock <= threshold) {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-        </span>
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
         {t('stockStatusLowStock') || 'Low Stock'}
       </span>
     )
@@ -93,13 +87,11 @@ export default function Stock() {
 
   const canAdjust = isOwner || can('STOCK_ADJUST')
   const canSettings = isOwner || can('STOCK_SETTINGS_UPDATE')
-  const canUpdateProducts = isOwner || can('PRODUCTS_UPDATE')
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all') // 'all' | 'in-stock' | 'low-stock' | 'out-of-stock'
   const [page, setPage] = useState(1)
   const [refreshing, setRefreshing] = useState(false)
-  const [togglingTrackingId, setTogglingTrackingId] = useState(null)
   const [feedbackToast, setFeedbackToast] = useState(null)
 
   // Overall catalog summary statistics
@@ -202,33 +194,6 @@ export default function Stock() {
   function handleFilter(f) {
     setFilter(f)
     setPage(1)
-  }
-
-  // Toggle trackStock for a product directly from table
-  async function handleToggleTrackStock(product, e) {
-    e.stopPropagation()
-    if (!canUpdateProducts || togglingTrackingId) return
-
-    setTogglingTrackingId(product.id)
-    const newTrackState = !product.trackStock
-
-    try {
-      await api.patch(`/products/${product.id}`, { trackStock: newTrackState })
-      setFeedbackToast({
-        type: 'success',
-        message: newTrackState
-          ? t('stockTrackingEnabled') || 'Stock tracking enabled'
-          : t('stockTrackingDisabled') || 'Stock tracking disabled',
-      })
-      await Promise.all([reload(), fetchGlobalStats()])
-    } catch (err) {
-      setFeedbackToast({
-        type: 'error',
-        message: err.message || t('stockUpdateError') || 'Failed to update tracking',
-      })
-    } finally {
-      setTogglingTrackingId(null)
-    }
   }
 
   const attentionCount = summaryStats.lowStock + summaryStats.outOfStock
@@ -699,35 +664,19 @@ export default function Stock() {
                         <StockStatusPill product={p} t={t} />
                       </td>
 
-                      {/* Track Stock Toggle Switch */}
+                      {/* Track Stock Status Badge (Read-Only) */}
                       <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center">
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={isTracked}
-                            disabled={!canUpdateProducts || togglingTrackingId === p.id}
-                            onClick={(e) => handleToggleTrackStock(p, e)}
-                            title={
-                              isTracked
-                                ? t('stockTrackingEnabled') || 'Stock tracking enabled'
-                                : t('stockTrackingDisabled') || 'Stock tracking disabled'
-                            }
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                              isTracked ? 'bg-[var(--purple)]' : 'bg-slate-700'
-                            }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                isTracked
-                                  ? isRTL
-                                    ? '-translate-x-4'
-                                    : 'translate-x-4'
-                                  : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
-                        </div>
+                        {isTracked ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            {t('stockTrackingEnabled') || 'Enabled'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                            {t('stockTrackingDisabled') || 'Disabled'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Actions (History & Adjust Drawer Trigger) */}
@@ -943,7 +892,7 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
           <div className="p-5 border-b border-[var(--line)] bg-[var(--card)] flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[var(--purple)] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[var(--purple)]" />
                 <h2 className="text-base font-bold text-[var(--ink)]">
                   {t('stockDrawerTitle') || 'Adjust Stock'}
                 </h2>
