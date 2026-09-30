@@ -345,7 +345,7 @@ export default function StoreSettings() {
               </div>
 
               {/* Dual Preview: Light Background (Navbar) & Dark Background (Footer) */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Light Preview */}
                 <div className="rounded-[12px] border border-[var(--line)] bg-white p-3.5 flex flex-col items-center justify-center min-h-[96px] shadow-sm relative overflow-hidden">
                   <span className="absolute top-1.5 start-2 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
@@ -824,13 +824,13 @@ export default function StoreSettings() {
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end pt-2">
           <Button
             type="submit"
             variant="primary"
             size="lg"
             disabled={busy}
-            className="min-w-[180px]"
+            className="w-full sm:w-auto min-h-[44px] min-w-[180px]"
           >
             {busy ? (
               <>

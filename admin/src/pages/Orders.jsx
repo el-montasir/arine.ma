@@ -142,8 +142,8 @@ export default function Orders() {
         title={t('ordersTitle')}
         subtitle={t('ordersCountSubtitle', { count: rows.length })}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-initial">
               <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-[var(--ink-soft)]" aria-hidden="true" />
               <input
                 type="search"
@@ -154,7 +154,7 @@ export default function Orders() {
                 }}
                 placeholder={t('searchOrdersPlaceholder')}
                 aria-label={t('search')}
-                className="w-64 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
+                className="w-full sm:w-64 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
               />
             </div>
             <Button variant="secondary" size="md" onClick={() => setQuery(search.trim())}>

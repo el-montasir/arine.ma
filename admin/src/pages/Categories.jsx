@@ -170,7 +170,7 @@ export default function Categories() {
             <label className="mb-1.5 block text-xs font-bold text-[var(--ink)]">
               {t('categoryColor')}
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
               <div className="relative flex h-10 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-[10px] border border-[var(--line)] bg-[var(--card)] transition-colors hover:border-[var(--purple)]">
                 <input
                   type="color"

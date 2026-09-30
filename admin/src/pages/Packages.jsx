@@ -238,7 +238,7 @@ export default function Packages() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-[var(--ink-soft)]" aria-hidden="true" />
           <input
             type="search"
@@ -246,14 +246,14 @@ export default function Packages() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPackagesPlaceholder')}
             aria-label={t('search')}
-            className="w-72 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
+            className="w-full sm:w-72 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
           />
         </div>
         <select
           value={availability}
           onChange={(e) => setAvailability(e.target.value)}
           aria-label={t('filterByAvailability')}
-          className="rounded-[10px] border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
+          className="w-full sm:w-auto rounded-[10px] border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--ink)] focus:border-[var(--purple)] focus:outline-none"
         >
           <option value="">{t('filterByAvailability')}</option>
           {AVAILABILITY_KEYS.map((value) => (

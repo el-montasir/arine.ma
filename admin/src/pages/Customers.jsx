@@ -468,7 +468,7 @@ export default function Customers() {
       {/* Filters & Search Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--card)] border border-[var(--line)] p-3 rounded-[14px]">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 bg-[var(--bg)] p-1 rounded-[10px] border border-[var(--line)] w-fit">
+        <div className="flex flex-wrap items-center gap-1 bg-[var(--bg)] p-1 rounded-[10px] border border-[var(--line)] w-full sm:w-fit">
           <button
             type="button"
             onClick={() => setStatusFilter('ALL')}

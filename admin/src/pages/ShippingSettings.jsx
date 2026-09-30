@@ -240,8 +240,8 @@ export default function ShippingSettings() {
             </p>
           </div>
 
-          <div className="flex justify-end pt-2">
-            <Button type="submit" variant="primary" disabled={shippingBusy}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end pt-2">
+            <Button type="submit" variant="primary" disabled={shippingBusy} className="w-full sm:w-auto min-h-[44px]">
               <Save className="h-4 w-4" aria-hidden="true" />
               {shippingBusy ? t('saving') : t('saveShippingRulesBtn')}
             </Button>
