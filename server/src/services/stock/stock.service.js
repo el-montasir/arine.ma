@@ -401,7 +401,29 @@ export async function getStockSummary({ page = 1, limit = 50, search = '', filte
   }
 
   let products, total
-  if (filter === 'low-stock') {
+  if (filter === 'in-stock') {
+    const searchCondition = search
+      ? Prisma.sql`AND (title ILIKE ${'%' + search + '%'} OR author ILIKE ${'%' + search + '%'})`
+      : Prisma.empty
+
+    const raw = await prisma.$queryRaw`
+      SELECT id FROM products
+      WHERE "trackStock" = true
+        AND "currentStock" > "lowStockThreshold"
+        ${searchCondition}
+    `
+    const ids = raw.map((r) => r.id)
+    ;[products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, title: true, author: true, currentStock: true, lowStockThreshold: true, trackStock: true, availability: true, image: true, images: { where: { isPrimary: true }, take: 1 } },
+        orderBy: { currentStock: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where: { id: { in: ids } } }),
+    ])
+  } else if (filter === 'low-stock') {
     const searchCondition = search
       ? Prisma.sql`AND (title ILIKE ${'%' + search + '%'} OR author ILIKE ${'%' + search + '%'})`
       : Prisma.empty
@@ -439,6 +461,21 @@ export async function getStockSummary({ page = 1, limit = 50, search = '', filte
         take: limit,
       }),
       prisma.product.count({ where: outWhere }),
+    ])
+  } else if (filter === 'not-tracked') {
+    const notTrackedWhere = {
+      ...whereBase,
+      trackStock: false,
+    }
+    ;[products, total] = await Promise.all([
+      prisma.product.findMany({
+        where: notTrackedWhere,
+        select: { id: true, title: true, author: true, currentStock: true, lowStockThreshold: true, trackStock: true, availability: true, image: true, images: { where: { isPrimary: true }, take: 1 } },
+        orderBy: [{ title: 'asc' }],
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where: notTrackedWhere }),
     ])
   } else {
     ;[products, total] = await Promise.all([

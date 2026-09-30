@@ -19,17 +19,12 @@ import {
   Plus,
   Minus,
   Equal,
-  Clock,
-  User,
-  ArrowRight,
-  ArrowLeft,
   Check,
 } from 'lucide-react'
 import { api } from '../lib/api.js'
 import useFetch from '../lib/useFetch.js'
 import { getImageUrl } from '../lib/images.js'
 import { Card } from '../components/ui/Card.jsx'
-import { Badge } from '../components/ui/Badge.jsx'
 import Button from '../components/ui/Button.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
 import Modal from '../components/ui/Modal.jsx'
@@ -37,7 +32,7 @@ import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 /**
- * Status badge with pulse indicator for stock health.
+ * Status badge for stock health (finite transitions, no infinite pulses).
  */
 function StockStatusPill({ product, t }) {
   if (!product.trackStock) {
@@ -89,7 +84,7 @@ export default function Stock() {
   const canSettings = isOwner || can('STOCK_SETTINGS_UPDATE')
 
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all') // 'all' | 'in-stock' | 'low-stock' | 'out-of-stock'
+  const [filter, setFilter] = useState('all') // 'all' | 'in-stock' | 'low-stock' | 'out-of-stock' | 'not-tracked'
   const [page, setPage] = useState(1)
   const [refreshing, setRefreshing] = useState(false)
   const [feedbackToast, setFeedbackToast] = useState(null)
@@ -171,13 +166,13 @@ export default function Stock() {
   const [movementsTarget, setMovementsTarget] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Manual refresh with 360° spin animation
+  // Manual refresh with single 360° spin animation (~420ms)
   async function handleRefresh() {
     setRefreshing(true)
     try {
       await Promise.all([reload(), reloadSettings(), fetchGlobalStats()])
     } finally {
-      setTimeout(() => setRefreshing(false), 400)
+      setTimeout(() => setRefreshing(false), 420)
     }
   }
 
@@ -200,7 +195,67 @@ export default function Stock() {
   const hasAttentionItems = attentionCount > 0
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="stock-page-enter relative space-y-6 pb-12">
+      {/* Micro-animation CSS styles */}
+      <style>{`
+        @keyframes stockPageFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes stockCardEntry {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes stockRefreshOnce {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes stockDrawerSlideLTR {
+          from { opacity: 0; transform: translateX(18px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes stockDrawerSlideRTL {
+          from { opacity: 0; transform: translateX(-18px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        .stock-page-enter {
+          animation: stockPageFadeIn 220ms ease-out forwards;
+        }
+        .stock-card-anim {
+          opacity: 0;
+          animation: stockCardEntry 250ms ease-out forwards;
+        }
+        .stock-spin-once {
+          animation: stockRefreshOnce 420ms cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+        }
+        .stock-drawer-ltr {
+          animation: stockDrawerSlideLTR 220ms ease-out forwards;
+        }
+        .stock-drawer-rtl {
+          animation: stockDrawerSlideRTL 220ms ease-out forwards;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .stock-page-enter,
+          .stock-card-anim,
+          .stock-spin-once,
+          .stock-drawer-ltr,
+          .stock-drawer-rtl {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Page-Scoped Ambient Background Lighting */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+        <div className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-gradient-to-br from-purple-600/12 to-indigo-600/5 blur-3xl" />
+        <div className="absolute top-1/2 -start-24 w-80 h-80 rounded-full bg-gradient-to-tr from-violet-600/10 to-transparent blur-3xl" />
+      </div>
+
       {/* Toast Notification */}
       {feedbackToast && (
         <div className="fixed bottom-5 end-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900/95 border border-[var(--purple)]/40 text-white shadow-xl backdrop-blur-md animate-fade-in text-sm">
@@ -214,7 +269,7 @@ export default function Stock() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] flex items-center justify-center text-white shadow-[0_0_16px_rgba(124,58,237,0.35)] shrink-0">
             <Warehouse className="h-5 w-5" />
@@ -237,7 +292,7 @@ export default function Stock() {
             disabled={loading || refreshing}
             className="rounded-[10px] border border-[var(--line)] bg-[var(--card)] hover:bg-[var(--bg)]"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'stock-spin-once' : ''}`} />
             <span>{t('refresh') || 'Refresh'}</span>
           </Button>
 
@@ -255,17 +310,20 @@ export default function Stock() {
         </div>
       </div>
 
-      {/* Global Stock Management Disabled Notice */}
+      {/* Global Stock Management Disabled Notice (Informational Only) */}
       {settings && !settings.stockManagementEnabled && (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3.5 text-sm text-amber-300 backdrop-blur-xs">
-          <AlertTriangle className="h-4.5 w-4.5 text-amber-400 shrink-0" />
+        <div className="relative z-10 flex items-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3.5 text-sm text-indigo-300 backdrop-blur-xs shadow-[0_0_14px_rgba(99,102,241,0.12)]">
+          <AlertTriangle className="h-4.5 w-4.5 text-indigo-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <span className="font-medium text-amber-200">{t('stockDisabledWarning')}</span>
+            <span className="font-medium text-indigo-200">
+              {t('stockDisabledWarning') || 'Stock Management is currently disabled globally. Quantities will not be automatically deducted when orders are confirmed.'}
+            </span>
           </div>
           {canSettings && (
             <button
+              type="button"
               onClick={() => setSettingsOpen(true)}
-              className="px-3 py-1 rounded-[8px] bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold text-xs transition-colors shrink-0"
+              className="px-3 py-1 rounded-[8px] bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-200 font-semibold text-xs transition-colors shrink-0"
             >
               {t('stockEnableBtn') || 'Enable'}
             </button>
@@ -275,7 +333,7 @@ export default function Stock() {
 
       {/* Attention Required Banner */}
       {hasAttentionItems && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/25 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent backdrop-blur-xs">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent backdrop-blur-xs shadow-[0_0_16px_rgba(245,166,35,0.15)]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
               <AlertCircle className="h-4 w-4" />
@@ -299,7 +357,7 @@ export default function Stock() {
               <button
                 type="button"
                 onClick={() => handleFilter('low-stock')}
-                className="px-3 py-1.5 rounded-[8px] bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-semibold transition-colors"
+                className="px-3 py-1.5 rounded-[8px] bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-semibold transition-colors cursor-pointer"
               >
                 {t('stockFilterLow')} ({summaryStats.lowStock})
               </button>
@@ -308,7 +366,7 @@ export default function Stock() {
               <button
                 type="button"
                 onClick={() => handleFilter('out-of-stock')}
-                className="px-3 py-1.5 rounded-[8px] bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-200 text-xs font-semibold transition-colors"
+                className="px-3 py-1.5 rounded-[8px] bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-200 text-xs font-semibold transition-colors cursor-pointer"
               >
                 {t('stockFilterOut')} ({summaryStats.outOfStock})
               </button>
@@ -317,22 +375,31 @@ export default function Stock() {
         </div>
       )}
 
-      {/* 5 Data-Driven Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      {/* 5 Data-Driven Interactive Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 relative z-10">
         {/* Card 1: Total Products */}
-        <div
+        <button
+          type="button"
           onClick={() => handleFilter('all')}
-          className={`p-3.5 rounded-xl border bg-[var(--card)] transition-all cursor-pointer group ${
+          aria-pressed={filter === 'all'}
+          style={{ animationDelay: '0ms' }}
+          className={`stock-card-anim text-start p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple)] hover:-translate-y-0.5 active:translate-y-0 ${
             filter === 'all'
-              ? 'border-[var(--purple)] ring-1 ring-[var(--purple)]/40 shadow-[0_0_12px_rgba(124,58,237,0.2)]'
-              : 'border-[var(--line)] hover:border-[var(--purple)]/40'
+              ? 'border-[var(--purple)] ring-1 ring-[var(--purple)]/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-[var(--purple)]/15 shadow-[0_0_14px_rgba(124,58,237,0.36),0_0_30px_rgba(124,58,237,0.16)]'
+              : 'border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-[var(--purple)]/5 hover:border-[var(--purple)]/40 hover:shadow-[0_0_14px_rgba(124,58,237,0.22)]'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[var(--ink-soft)] uppercase tracking-wider">
+            <span className="text-xs font-semibold text-[var(--ink-soft)] uppercase tracking-wider group-hover:text-[var(--ink)] transition-colors">
               {t('stockCardTotal') || 'Total Products'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-[var(--purple)]/10 text-[var(--purple)] flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                filter === 'all'
+                  ? 'bg-[var(--purple)] text-white shadow-[0_0_10px_rgba(124,58,237,0.4)]'
+                  : 'bg-[var(--purple)]/10 text-[var(--purple)]'
+              }`}
+            >
               <BookOpen className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -342,17 +409,31 @@ export default function Stock() {
           <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
             {t('stockCardTotalSub') || 'All catalog book titles'}
           </div>
-        </div>
+        </button>
 
         {/* Card 2: In Stock */}
-        <div
-          className="p-3.5 rounded-xl border border-[var(--line)] bg-[var(--card)] transition-all"
+        <button
+          type="button"
+          onClick={() => handleFilter('in-stock')}
+          aria-pressed={filter === 'in-stock'}
+          style={{ animationDelay: '35ms' }}
+          className={`stock-card-anim text-start p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 hover:-translate-y-0.5 active:translate-y-0 ${
+            filter === 'in-stock'
+              ? 'border-emerald-500 ring-1 ring-emerald-500/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.35),0_0_28px_rgba(16,185,129,0.15)]'
+              : 'border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-emerald-500/5 hover:border-emerald-500/40 hover:shadow-[0_0_14px_rgba(16,185,129,0.22)]'
+          }`}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
               {t('stockCardInStock') || 'In Stock'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                filter === 'in-stock'
+                  ? 'bg-emerald-500 text-slate-950 shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                  : 'bg-emerald-500/10 text-emerald-400'
+              }`}
+            >
               <CheckCircle2 className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -362,22 +443,31 @@ export default function Stock() {
           <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
             {t('stockCardInStockSub') || 'Healthy available inventory'}
           </div>
-        </div>
+        </button>
 
         {/* Card 3: Low Stock */}
-        <div
+        <button
+          type="button"
           onClick={() => handleFilter('low-stock')}
-          className={`p-3.5 rounded-xl border bg-[var(--card)] transition-all cursor-pointer group ${
+          aria-pressed={filter === 'low-stock'}
+          style={{ animationDelay: '70ms' }}
+          className={`stock-card-anim text-start p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 hover:-translate-y-0.5 active:translate-y-0 ${
             filter === 'low-stock'
-              ? 'border-amber-500 ring-1 ring-amber-500/40 shadow-[0_0_12px_rgba(245,166,35,0.2)]'
-              : 'border-[var(--line)] hover:border-amber-500/40'
+              ? 'border-amber-500 ring-1 ring-amber-500/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-amber-500/15 shadow-[0_0_14px_rgba(245,166,35,0.35),0_0_28px_rgba(245,166,35,0.15)]'
+              : 'border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-amber-500/5 hover:border-amber-500/40 hover:shadow-[0_0_14px_rgba(245,166,35,0.22)]'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
               {t('stockCardLowStock') || 'Low Stock'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                filter === 'low-stock'
+                  ? 'bg-amber-500 text-slate-950 shadow-[0_0_10px_rgba(245,166,35,0.4)]'
+                  : 'bg-amber-500/10 text-amber-400'
+              }`}
+            >
               <TrendingDown className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -387,22 +477,31 @@ export default function Stock() {
           <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
             {t('stockCardLowStockSub') || 'At or below alert threshold'}
           </div>
-        </div>
+        </button>
 
         {/* Card 4: Out of Stock */}
-        <div
+        <button
+          type="button"
           onClick={() => handleFilter('out-of-stock')}
-          className={`p-3.5 rounded-xl border bg-[var(--card)] transition-all cursor-pointer group ${
+          aria-pressed={filter === 'out-of-stock'}
+          style={{ animationDelay: '105ms' }}
+          className={`stock-card-anim text-start p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 hover:-translate-y-0.5 active:translate-y-0 ${
             filter === 'out-of-stock'
-              ? 'border-red-500 ring-1 ring-red-500/40 shadow-[0_0_12px_rgba(255,65,108,0.2)]'
-              : 'border-[var(--line)] hover:border-red-500/40'
+              ? 'border-red-500 ring-1 ring-red-500/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-red-500/15 shadow-[0_0_14px_rgba(239,68,68,0.35),0_0_28px_rgba(239,68,68,0.15)]'
+              : 'border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-red-500/5 hover:border-red-500/40 hover:shadow-[0_0_14px_rgba(239,68,68,0.22)]'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">
               {t('stockCardOutOfStock') || 'Out of Stock'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                filter === 'out-of-stock'
+                  ? 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.4)]'
+                  : 'bg-red-500/10 text-red-400'
+              }`}
+            >
               <XCircle className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -412,17 +511,31 @@ export default function Stock() {
           <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
             {t('stockCardOutOfStockSub') || 'Zero or negative inventory'}
           </div>
-        </div>
+        </button>
 
         {/* Card 5: Not Tracked */}
-        <div
-          className="p-3.5 rounded-xl border border-[var(--line)] bg-[var(--card)] transition-all"
+        <button
+          type="button"
+          onClick={() => handleFilter('not-tracked')}
+          aria-pressed={filter === 'not-tracked'}
+          style={{ animationDelay: '140ms' }}
+          className={`stock-card-anim text-start p-3.5 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 hover:-translate-y-0.5 active:translate-y-0 ${
+            filter === 'not-tracked'
+              ? 'border-slate-400 ring-1 ring-slate-400/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-slate-500/15 shadow-[0_0_14px_rgba(100,116,139,0.30),0_0_28px_rgba(100,116,139,0.12)]'
+              : 'border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-slate-500/5 hover:border-slate-400/40 hover:shadow-[0_0_14px_rgba(100,116,139,0.20)]'
+          }`}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               {t('stockCardNotTracked') || 'Not Tracked'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-500/10 text-slate-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                filter === 'not-tracked'
+                  ? 'bg-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.4)]'
+                  : 'bg-slate-500/10 text-slate-400'
+              }`}
+            >
               <EyeOff className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -432,13 +545,13 @@ export default function Stock() {
           <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
             {t('stockCardNotTrackedSub') || 'Inventory tracking disabled'}
           </div>
-        </div>
+        </button>
       </div>
 
       {error && <ErrorBanner message={error} />}
 
       {/* Main Stock Card & Toolbar */}
-      <Card padded={false} className="border border-[var(--line)] bg-[var(--card)] overflow-hidden shadow-sm">
+      <Card padded={false} className="relative z-10 border border-[var(--line)] bg-[var(--card)] overflow-hidden shadow-sm">
         {/* Toolbar Header */}
         <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-[var(--line)] bg-[var(--card)]">
           {/* Search Box */}
@@ -462,20 +575,21 @@ export default function Stock() {
             )}
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Filter Pills with full 5-state coverage and smooth micro-transitions */}
+          <div className="flex items-center gap-1.5 flex-wrap overflow-x-auto pb-1 sm:pb-0">
+            {/* All */}
             <button
               type="button"
               onClick={() => handleFilter('all')}
-              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-[var(--purple)] text-white shadow-[0_0_12px_rgba(124,58,237,0.35)]'
+                  ? 'bg-[var(--purple)] text-white shadow-[0_0_14px_rgba(124,58,237,0.36),0_0_30px_rgba(124,58,237,0.16)]'
                   : 'border border-[var(--line)] bg-[var(--bg)] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:border-[var(--purple)]/40'
               }`}
             >
               <span>{t('stockFilterAll') || 'All'}</span>
               <span
-                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
                   filter === 'all' ? 'bg-white/20 text-white' : 'bg-[var(--card)] text-[var(--ink-soft)]'
                 }`}
               >
@@ -483,19 +597,41 @@ export default function Stock() {
               </span>
             </button>
 
+            {/* In Stock */}
+            <button
+              type="button"
+              onClick={() => handleFilter('in-stock')}
+              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                filter === 'in-stock'
+                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-[0_0_14px_rgba(16,185,129,0.35),0_0_28px_rgba(16,185,129,0.15)]'
+                  : 'border border-[var(--line)] bg-[var(--bg)] text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-500/5'
+              }`}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>{t('stockFilterInStock') || 'In Stock'}</span>
+              <span
+                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
+                  filter === 'in-stock' ? 'bg-slate-950/20 text-slate-950' : 'bg-emerald-500/15 text-emerald-300'
+                }`}
+              >
+                {summaryStats.inStock}
+              </span>
+            </button>
+
+            {/* Low Stock */}
             <button
               type="button"
               onClick={() => handleFilter('low-stock')}
-              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                 filter === 'low-stock'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,166,35,0.4)]'
-                  : 'border border-[var(--line)] bg-[var(--bg)] text-amber-400 hover:border-amber-500/40'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-[0_0_14px_rgba(245,166,35,0.35),0_0_28px_rgba(245,166,35,0.15)]'
+                  : 'border border-[var(--line)] bg-[var(--bg)] text-amber-400 hover:border-amber-500/40 hover:bg-amber-500/5'
               }`}
             >
               <TrendingDown className="h-3.5 w-3.5" />
               <span>{t('stockFilterLow') || 'Low Stock'}</span>
               <span
-                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
                   filter === 'low-stock' ? 'bg-slate-950/20 text-slate-950' : 'bg-amber-500/15 text-amber-300'
                 }`}
               >
@@ -503,23 +639,45 @@ export default function Stock() {
               </span>
             </button>
 
+            {/* Out of Stock */}
             <button
               type="button"
               onClick={() => handleFilter('out-of-stock')}
-              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                 filter === 'out-of-stock'
-                  ? 'bg-red-500 text-white font-bold shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-                  : 'border border-[var(--line)] bg-[var(--bg)] text-red-400 hover:border-red-500/40'
+                  ? 'bg-red-500 text-white font-bold shadow-[0_0_14px_rgba(239,68,68,0.35),0_0_28px_rgba(239,68,68,0.15)]'
+                  : 'border border-[var(--line)] bg-[var(--bg)] text-red-400 hover:border-red-500/40 hover:bg-red-500/5'
               }`}
             >
               <XCircle className="h-3.5 w-3.5" />
               <span>{t('stockFilterOut') || 'Out of Stock'}</span>
               <span
-                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
                   filter === 'out-of-stock' ? 'bg-white/20 text-white' : 'bg-red-500/15 text-red-300'
                 }`}
               >
                 {summaryStats.outOfStock}
+              </span>
+            </button>
+
+            {/* Not Tracked */}
+            <button
+              type="button"
+              onClick={() => handleFilter('not-tracked')}
+              className={`flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                filter === 'not-tracked'
+                  ? 'bg-slate-500 text-white font-bold shadow-[0_0_14px_rgba(100,116,139,0.30),0_0_28px_rgba(100,116,139,0.12)]'
+                  : 'border border-[var(--line)] bg-[var(--bg)] text-slate-400 hover:border-slate-400/40 hover:bg-slate-500/5'
+              }`}
+            >
+              <EyeOff className="h-3.5 w-3.5" />
+              <span>{t('stockFilterNotTracked') || 'Not Tracked'}</span>
+              <span
+                className={`text-[10.5px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
+                  filter === 'not-tracked' ? 'bg-white/20 text-white' : 'bg-slate-500/15 text-slate-300'
+                }`}
+              >
+                {summaryStats.notTracked}
               </span>
             </button>
           </div>
@@ -562,7 +720,7 @@ export default function Stock() {
                   setFilter('all')
                   setPage(1)
                 }}
-                className="mt-1 px-3.5 py-1.5 rounded-[9px] border border-[var(--line)] bg-[var(--card)] hover:border-[var(--purple)] text-xs font-semibold text-[var(--purple)] transition-colors"
+                className="mt-1 px-3.5 py-1.5 rounded-[9px] border border-[var(--line)] bg-[var(--card)] hover:border-[var(--purple)] text-xs font-semibold text-[var(--purple)] transition-colors cursor-pointer"
               >
                 {t('stockClearFilters') || 'Clear Filters'}
               </button>
@@ -578,7 +736,7 @@ export default function Stock() {
                   <th className="px-4 py-3 text-center">{t('stockColThreshold') || 'Alert Threshold'}</th>
                   <th className="px-4 py-3 text-center">{t('stockColStatus') || 'Status'}</th>
                   <th className="px-4 py-3 text-center">
-                    {t('stockTrackingLabel') || 'Track Stock'}
+                    {t('stockColTracking') || t('stockTrackingLabel') || 'Tracking'}
                   </th>
                   <th className="px-4 py-3 text-end">{t('stockColActions') || 'Actions'}</th>
                 </tr>
@@ -593,7 +751,7 @@ export default function Stock() {
                   return (
                     <tr
                       key={p.id}
-                      className="hover:bg-[var(--bg)]/60 transition-colors group"
+                      className="hover:bg-[var(--bg)]/70 transition-colors duration-150 group"
                     >
                       {/* Product Thumbnail & Details */}
                       <td className="px-4 py-3">
@@ -685,7 +843,7 @@ export default function Stock() {
                           <button
                             type="button"
                             onClick={() => setMovementsTarget(p)}
-                            className="inline-flex items-center gap-1 rounded-[8px] px-2.5 py-1.5 text-xs font-medium text-[var(--ink-soft)] border border-[var(--line)] bg-[var(--card)] hover:text-[var(--ink)] hover:border-[var(--ink-soft)] transition-colors"
+                            className="inline-flex items-center gap-1 rounded-[8px] px-2.5 py-1.5 text-xs font-medium text-[var(--ink-soft)] border border-[var(--line)] bg-[var(--card)] hover:text-[var(--ink)] hover:border-[var(--ink-soft)] transition-colors cursor-pointer"
                             title={t('stockHistoryBtn') || 'History'}
                           >
                             <History className="h-3.5 w-3.5" />
@@ -696,7 +854,7 @@ export default function Stock() {
                             <button
                               type="button"
                               onClick={() => setAdjustTarget(p)}
-                              className="inline-flex items-center gap-1 rounded-[8px] px-2.5 py-1.5 text-xs font-semibold text-white bg-[var(--purple)] hover:bg-[#6d28d9] shadow-[0_0_12px_rgba(124,58,237,0.3)] transition-all"
+                              className="inline-flex items-center gap-1 rounded-[8px] px-2.5 py-1.5 text-xs font-semibold text-white bg-[var(--purple)] hover:bg-[#6d28d9] shadow-[0_0_14px_rgba(124,58,237,0.36)] hover:shadow-[0_0_18px_rgba(124,58,237,0.46)] transition-all cursor-pointer"
                             >
                               <Sliders className="h-3.5 w-3.5" />
                               <span>
@@ -887,7 +1045,11 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
           isRTL ? 'start-0' : 'end-0'
         } flex max-w-full z-50`}
       >
-        <div className="w-screen max-w-md bg-[var(--card)] border-inline-start border-[var(--line)] shadow-2xl flex flex-col justify-between overflow-y-auto">
+        <div
+          className={`w-screen max-w-md bg-[var(--card)] border-inline-start border-[var(--line)] shadow-2xl flex flex-col justify-between overflow-y-auto ${
+            isRTL ? 'stock-drawer-rtl' : 'stock-drawer-ltr'
+          }`}
+        >
           {/* Header */}
           <div className="p-5 border-b border-[var(--line)] bg-[var(--card)] flex items-start justify-between gap-3">
             <div>
@@ -905,7 +1067,7 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)] transition-colors"
+              className="p-1.5 rounded-lg border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)] transition-colors cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -937,23 +1099,23 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
                     {product.author}
                   </div>
                 )}
-                <div className="mt-1 flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-2">
                   <span className="text-[11px] text-[var(--ink-soft)]">
-                    {t('stockDrawerPreviewCurrent') || 'Current Stock'}:
+                    {t('stockDrawerCurrentBalance') || 'Current Available:'}
                   </span>
-                  <span className="font-mono font-bold text-xs text-[var(--ink)] px-1.5 py-0.2 rounded bg-[var(--card)] border border-[var(--line)]">
+                  <span className="font-mono font-bold text-xs text-[var(--ink)]">
                     {currentStock}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Mode Selector Segmented Pill */}
+            {/* Adjustment Mode Selector (Add / Remove / Set Exact) */}
             <div>
               <label className="block text-xs font-semibold text-[var(--ink-soft)] uppercase tracking-wider mb-2">
-                {t('stockAdjustmentMode') || 'Adjustment Mode'}
+                {t('stockDrawerModeLabel') || 'Operation Mode'}
               </label>
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl border border-[var(--line)] bg-[var(--bg)]">
+              <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-[var(--bg)] border border-[var(--line)]">
                 <button
                   type="button"
                   onClick={() => {
@@ -1023,7 +1185,7 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
                 <button
                   type="button"
                   onClick={() => handleQuickIncrement(-1)}
-                  className="w-10 h-10 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:border-[var(--purple)] transition-colors"
+                  className="w-10 h-10 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:border-[var(--purple)] transition-colors cursor-pointer"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
@@ -1039,7 +1201,7 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
                 <button
                   type="button"
                   onClick={() => handleQuickIncrement(1)}
-                  className="w-10 h-10 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:border-[var(--purple)] transition-colors"
+                  className="w-10 h-10 rounded-[10px] border border-[var(--line)] bg-[var(--bg)] flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--ink)] hover:border-[var(--purple)] transition-colors cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -1052,7 +1214,7 @@ function StockAdjustmentDrawer({ product, onClose, onDone }) {
                     key={step}
                     type="button"
                     onClick={() => setAmount(String(step))}
-                    className="px-2.5 py-1 rounded-[7px] border border-[var(--line)] bg-[var(--card)] hover:border-[var(--purple)] hover:text-[var(--purple)] text-[11px] font-mono text-[var(--ink-soft)] transition-colors"
+                    className="px-2.5 py-1 rounded-[7px] border border-[var(--line)] bg-[var(--card)] hover:border-[var(--purple)] hover:text-[var(--purple)] text-[11px] font-mono text-[var(--ink-soft)] transition-colors cursor-pointer"
                   >
                     {mode === 'set' ? `${step}` : `+${step}`}
                   </button>
@@ -1488,40 +1650,34 @@ function StockSettingsModal({ settings, onClose, onDone }) {
   )
 }
 
-/**
- * Toggle Switch Row Component.
- */
 function ToggleRow({ label, description, checked, onChange, isRTL }) {
   return (
-    <label className="flex items-start gap-3 cursor-pointer select-none">
-      <div className="relative mt-0.5 shrink-0">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onChange}
-          className="sr-only"
-        />
-        <div
-          className={`h-5 w-9 rounded-full transition-colors duration-200 ${
-            checked ? 'bg-[var(--purple)]' : 'bg-slate-700'
-          }`}
-        />
-        <div
-          className={`absolute top-0.5 start-0.5 h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
-            checked
-              ? isRTL
-                ? '-translate-x-4'
-                : 'translate-x-4'
-              : 'translate-x-0'
-          }`}
-        />
-      </div>
-      <div>
-        <div className="text-sm font-semibold text-[var(--ink)]">{label}</div>
+    <div className="flex items-center justify-between gap-4 py-2 border-b border-[var(--line)] last:border-b-0">
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-[var(--ink)]">{label}</div>
         {description && (
           <div className="text-xs text-[var(--ink-soft)] mt-0.5">{description}</div>
         )}
       </div>
-    </label>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--purple)] focus:ring-offset-2 ${
+          checked ? 'bg-[var(--purple)]' : 'bg-[var(--line)]'
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            checked
+              ? isRTL
+                ? '-translate-x-5'
+                : 'translate-x-5'
+              : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
   )
 }

@@ -22,7 +22,7 @@ export const getStockSummaryHandler = asyncHandler(async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1)
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50))
   const search = req.query.search?.trim() || ''
-  const filter = ['all', 'low-stock', 'out-of-stock'].includes(req.query.filter)
+  const filter = ['all', 'in-stock', 'low-stock', 'out-of-stock', 'not-tracked'].includes(req.query.filter)
     ? req.query.filter
     : 'all'
 
