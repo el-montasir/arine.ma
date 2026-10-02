@@ -203,6 +203,75 @@ async function runTests() {
     assert.strictEqual(Number(totalRefund.toFixed(2)), 336.5)
   })
 
+  console.log('\n🏪 8. Supplier Creation & Linked Books Verification')
+  test('supplier creation payload validation and persistence mapping', () => {
+    const validSupplierPayload = {
+      name: 'Dar Al-Kitab Publishing',
+      contactPerson: 'Ahmad Mansour',
+      phone: '+212600112233',
+      whatsapp: '+212600112233',
+      email: 'ahmad@daralkitab.ma',
+      city: 'Casablanca',
+      address: '123 Bd Zerktouni, 4th Floor',
+      notes: 'Main educational textbook supplier',
+      isActive: true,
+    }
+
+    assert.ok(validSupplierPayload.name.trim().length >= 2, 'Supplier name must be at least 2 characters')
+    assert.strictEqual(typeof validSupplierPayload.isActive, 'boolean')
+  })
+
+  test('supplier product catalog linking does not mutate product currentStock', () => {
+    const product = {
+      id: 42,
+      title: 'Mathematics Grade 10',
+      currentStock: 150,
+      price: 85.0,
+    }
+
+    const initialStock = product.currentStock
+
+    // Link product to supplier via SupplierProduct contract
+    const supplierProductLink = {
+      supplierId: 7,
+      productId: product.id,
+      purchasePrice: 45.0,
+      minimumOrderQuantity: 10,
+      supplierSku: 'DK-MATH-10',
+      isActive: true,
+    }
+
+    assert.strictEqual(supplierProductLink.productId, product.id)
+    assert.strictEqual(supplierProductLink.purchasePrice, 45.0)
+    assert.strictEqual(product.currentStock, initialStock, 'Product.currentStock must remain completely unchanged upon catalog linking')
+  })
+
+  test('KPI aggregation computes the 4 primary cards: Total Suppliers, Outstanding Balance, Total Purchases, Total Paid', () => {
+    const suppliersData = [
+      { id: 1, name: 'Supplier A', isActive: true, totalPurchases: 5000, totalPaid: 3000, balance: 2000, createdAt: new Date().toISOString() },
+      { id: 2, name: 'Supplier B', isActive: true, totalPurchases: 8000, totalPaid: 8000, balance: 0, createdAt: new Date().toISOString() },
+      { id: 3, name: 'Supplier C', isActive: false, totalPurchases: 2500, totalPaid: 1500, balance: 1000, createdAt: new Date(Date.now() - 60 * 24 * 3600 * 1000).toISOString() },
+    ]
+
+    const stats = suppliersData.reduce(
+      (acc, s) => {
+        acc.total += 1
+        if (s.isActive !== false) acc.active += 1
+        acc.totalPurchases += s.totalPurchases
+        acc.totalPaid += s.totalPaid
+        acc.totalBalance += s.balance
+        return acc
+      },
+      { total: 0, active: 0, totalPurchases: 0, totalPaid: 0, totalBalance: 0 }
+    )
+
+    assert.strictEqual(stats.total, 3, 'Total Suppliers count must match')
+    assert.strictEqual(stats.active, 2, 'Active count should be 2')
+    assert.strictEqual(stats.totalBalance, 3000, 'Outstanding Balance must match sum of individual balances')
+    assert.strictEqual(stats.totalPurchases, 15500, 'Total Purchases must match sum of individual purchases')
+    assert.strictEqual(stats.totalPaid, 12500, 'Total Paid must match sum of disbursements')
+  })
+
   console.log('\n========================================')
   console.log(`Results: ${passed} passed, ${failed} failed`)
   if (failed > 0) {

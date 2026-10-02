@@ -106,10 +106,11 @@ export default function Suppliers() {
   const stats = useMemo(() => {
     if (apiSummary) {
       return {
-        total: Number(responseData?.total ?? suppliers.length),
-        active: Number(apiSummary.activeCount ?? suppliers.filter((s) => s.isActive !== false).length),
+        total: Number(responseData?.total ?? apiSummary.totalSuppliers ?? suppliers.length),
+        active: Number(apiSummary.activeSuppliers ?? apiSummary.activeCount ?? suppliers.filter((s) => s.isActive !== false).length),
         totalPurchases: Number(apiSummary.totalPurchasesAmount ?? 0),
-        totalBalance: Number(apiSummary.totalOutstandingBalance ?? 0),
+        totalPaid: Number(apiSummary.totalPaid ?? 0),
+        totalBalance: Number(apiSummary.outstandingBalance ?? apiSummary.totalOutstandingBalance ?? 0),
       }
     }
 
@@ -118,16 +119,34 @@ export default function Suppliers() {
         acc.total += 1
         if (s.isActive !== false) acc.active += 1
         acc.totalPurchases += Number(s.totalPurchases || 0)
+        acc.totalPaid += Number(s.totalPaid || 0)
         acc.totalBalance += Number(s.balance || 0)
         return acc
       },
-      { total: 0, active: 0, totalPurchases: 0, totalBalance: 0 }
+      { total: 0, active: 0, totalPurchases: 0, totalPaid: 0, totalBalance: 0 }
     )
   }, [suppliers, apiSummary, responseData])
+
+  // Pill counts for recent and outstanding
+  const { recentCount, outstandingCount } = useMemo(() => {
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+    let rec = 0
+    let out = 0
+    for (const s of suppliers) {
+      if (s.createdAt && new Date(s.createdAt).getTime() >= thirtyDaysAgo) {
+        rec += 1
+      }
+      if (Number(s.balance || 0) > 0) {
+        out += 1
+      }
+    }
+    return { recentCount: rec, outstandingCount: out }
+  }, [suppliers])
 
   // Filtered suppliers based on search query and status pill
   const filteredSuppliers = useMemo(() => {
     if (!Array.isArray(suppliers)) return []
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
 
     return suppliers.filter((s) => {
       const q = search.toLowerCase().trim()
@@ -149,6 +168,8 @@ export default function Suppliers() {
         matchesFilter = isActive
       } else if (filter === 'OUTSTANDING') {
         matchesFilter = balance > 0
+      } else if (filter === 'RECENT') {
+        matchesFilter = Boolean(s.createdAt && new Date(s.createdAt).getTime() >= thirtyDaysAgo)
       } else if (filter === 'INACTIVE') {
         matchesFilter = !isActive
       }
@@ -332,72 +353,19 @@ export default function Suppliers() {
           <div className="text-2xl font-black text-[var(--ink)] font-mono">
             {formatNumber(stats.total)}
           </div>
-          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
-            {t('supplierCardTotalSub') || 'Registered vendors in system'}
+          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate flex items-center gap-1.5">
+            <span className="text-emerald-400 font-semibold">{stats.active} {t('supplierFilterActive') || 'Active'}</span>
+            <span className="opacity-40">•</span>
+            <span>{t('supplierCardTotalSub') || 'Registered vendors'}</span>
           </div>
         </button>
 
-        {/* Card 2: Active Suppliers */}
-        <button
-          type="button"
-          onClick={() => setFilter('ACTIVE')}
-          aria-pressed={filter === 'ACTIVE'}
-          style={{ animationDelay: '35ms' }}
-          className={`stock-card-anim text-start p-4 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 hover:-translate-y-0.5 active:translate-y-0 ${
-            filter === 'ACTIVE'
-              ? 'border-emerald-500 ring-1 ring-emerald-500/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.35),0_0_28px_rgba(16,185,129,0.15)]'
-              : 'border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-emerald-500/5 hover:border-emerald-500/40 hover:shadow-[0_0_14px_rgba(16,185,129,0.22)]'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-              {t('supplierCardActive') || 'Active Suppliers'}
-            </span>
-            <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-                filter === 'ACTIVE'
-                  ? 'bg-emerald-500 text-slate-950 shadow-[0_0_10px_rgba(16,185,129,0.4)]'
-                  : 'bg-emerald-500/10 text-emerald-400'
-              }`}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-emerald-400 font-mono">
-            {formatNumber(stats.active)}
-          </div>
-          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
-            {t('supplierCardActiveSub') || 'Available for purchase orders'}
-          </div>
-        </button>
-
-        {/* Card 3: Total Purchases */}
-        <div
-          style={{ animationDelay: '70ms' }}
-          className="stock-card-anim p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-indigo-500/5"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
-              {t('supplierCardPurchases') || 'Total Purchases'}
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-              <Receipt className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-indigo-300 font-mono">
-            {formatMoney(stats.totalPurchases, language)}
-          </div>
-          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
-            {t('supplierCardPurchasesSub') || 'Total procurement volume'}
-          </div>
-        </div>
-
-        {/* Card 4: Outstanding Balance */}
+        {/* Card 2: Outstanding Balance */}
         <button
           type="button"
           onClick={() => setFilter('OUTSTANDING')}
           aria-pressed={filter === 'OUTSTANDING'}
-          style={{ animationDelay: '105ms' }}
+          style={{ animationDelay: '35ms' }}
           className={`stock-card-anim text-start p-4 rounded-xl border transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 hover:-translate-y-0.5 active:translate-y-0 ${
             filter === 'OUTSTANDING'
               ? 'border-amber-500 ring-1 ring-amber-500/50 bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-amber-500/15 shadow-[0_0_14px_rgba(245,166,35,0.35),0_0_28px_rgba(245,166,35,0.15)]'
@@ -425,6 +393,48 @@ export default function Suppliers() {
             {t('supplierCardBalanceSub') || 'Pending vendor liabilities'}
           </div>
         </button>
+
+        {/* Card 3: Total Purchases */}
+        <div
+          style={{ animationDelay: '70ms' }}
+          className="stock-card-anim p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-indigo-500/5"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+              {t('supplierCardPurchases') || 'Total Purchases'}
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <Receipt className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-indigo-300 font-mono">
+            {formatMoney(stats.totalPurchases, language)}
+          </div>
+          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
+            {t('supplierCardPurchasesSub') || 'Total procurement volume'}
+          </div>
+        </div>
+
+        {/* Card 4: Total Paid */}
+        <div
+          style={{ animationDelay: '105ms' }}
+          className="stock-card-anim p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-emerald-500/5"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+              {t('supplierCardPaid') || 'Total Paid'}
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <CreditCard className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-emerald-400 font-mono">
+            {formatMoney(stats.totalPaid, language)}
+          </div>
+          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
+            {t('supplierCardPaidSub') || 'Settled vendor disbursements'}
+          </div>
+        </div>
       </div>
 
       {/* Main Table Card & Toolbar */}
@@ -485,18 +495,18 @@ export default function Suppliers() {
                   : 'bg-[var(--bg)] border border-[var(--line)] text-[var(--ink-soft)] hover:text-amber-400'
               }`}
             >
-              {t('supplierFilterOutstanding') || 'Outstanding'}
+              {t('supplierFilterOutstanding') || 'Outstanding'} ({outstandingCount})
             </button>
             <button
               type="button"
-              onClick={() => setFilter('INACTIVE')}
+              onClick={() => setFilter('RECENT')}
               className={`px-3 py-1.5 rounded-[8px] text-xs font-semibold transition-all cursor-pointer ${
-                filter === 'INACTIVE'
-                  ? 'bg-slate-500 text-white shadow-[0_0_10px_rgba(100,116,139,0.3)]'
-                  : 'bg-[var(--bg)] border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                filter === 'RECENT'
+                  ? 'bg-[var(--purple)] text-white shadow-[0_0_10px_rgba(124,58,237,0.3)]'
+                  : 'bg-[var(--bg)] border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--purple)]'
               }`}
             >
-              {t('supplierInactive') || 'Inactive'}
+              {t('supplierFilterRecent') || 'Recently Added'} ({recentCount})
             </button>
           </div>
         </div>
