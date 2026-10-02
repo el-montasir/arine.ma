@@ -710,7 +710,7 @@ export default function Suppliers() {
         {/* Table Footer */}
         <div className="p-3.5 border-t border-[var(--line)] bg-[var(--bg)]/30 flex items-center justify-between text-xs text-[var(--ink-soft)]">
           <span>
-            {t('showingCount', { count: filteredSuppliers.length }) || `Showing ${filteredSuppliers.length} suppliers`}
+            {t('showingCount', { shown: filteredSuppliers.length, total: suppliers.length }) || `Showing ${filteredSuppliers.length} of ${suppliers.length} suppliers`}
           </span>
           <span className="font-mono">
             {filter !== 'ALL' ? `${t('filter') || 'Filtered'}: ${filter}` : ''}
@@ -920,12 +920,12 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
       {/* Slide-Over Drawer Container */}
       <div className={`fixed inset-y-0 ${isRTL ? 'start-0' : 'end-0'} flex max-w-full z-[70] pointer-events-none`}>
         <div
-          className={`pointer-events-auto w-full md:w-[420px] max-w-[calc(100vw-24px)] md:max-w-[420px] h-full bg-[#0b1026]/95 backdrop-blur-2xl backdrop-saturate-150 border-inline-start border-violet-400/20 shadow-[-20px_0_60px_rgba(76,29,149,0.25)] flex flex-col justify-between overflow-hidden md:rounded-s-[24px] ${
+          className={`pointer-events-auto w-full md:w-[420px] max-w-[calc(100vw-24px)] md:max-w-[420px] h-full bg-[#0b1026]/70 backdrop-blur-2xl backdrop-saturate-150 border-inline-start border-violet-400/20 shadow-[-20px_0_60px_rgba(76,29,149,0.25)] flex flex-col justify-between overflow-hidden md:rounded-s-[24px] ${
             isRTL ? 'stock-drawer-rtl' : 'stock-drawer-ltr'
           }`}
         >
           {/* Sticky Drawer Header */}
-          <div className="p-4 sm:p-5 border-b border-violet-400/15 bg-[#0b1026]/95 backdrop-blur-md flex items-start justify-between gap-3 sticky top-0 z-10">
+          <div className="p-4 sm:p-5 border-b border-violet-400/15 bg-[#0b1026]/80 backdrop-blur-md flex items-start justify-between gap-3 sticky top-0 z-10">
             <div>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
@@ -1211,7 +1211,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
           </form>
 
           {/* Sticky Drawer Footer */}
-          <div className="p-4 border-t border-violet-400/15 bg-[#0b1026]/95 backdrop-blur-md flex items-center justify-end gap-3 sticky bottom-0 z-10">
+          <div className="p-4 border-t border-violet-400/15 bg-[#0b1026]/80 backdrop-blur-md flex items-center justify-end gap-3 sticky bottom-0 z-10">
             <Button variant="secondary" size="sm" onClick={onClose} disabled={submitting}>
               {t('cancel') || 'Cancel'}
             </Button>

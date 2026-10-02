@@ -12,19 +12,19 @@ function formatRelativeTime(dateString, t) {
   const diffInSeconds = Math.floor((now - date) / 1000)
 
   if (diffInSeconds < 60) {
-    return t('justNow')
+    return t('justNow') || 'Just now'
   }
   const diffInMinutes = Math.floor(diffInSeconds / 60)
   if (diffInMinutes < 60) {
-    return (t('minutesAgo') || '{n}m ago').replace('{n}', diffInMinutes)
+    return t('minutesAgo', { n: diffInMinutes }) || `${diffInMinutes}m ago`
   }
   const diffInHours = Math.floor(diffInMinutes / 60)
   if (diffInHours < 24) {
-    return (t('hoursAgo') || '{n}h ago').replace('{n}', diffInHours)
+    return t('hoursAgo', { n: diffInHours }) || `${diffInHours}h ago`
   }
   const diffInDays = Math.floor(diffInHours / 24)
   if (diffInDays < 7) {
-    return (t('daysAgo') || '{n}d ago').replace('{n}', diffInDays)
+    return t('daysAgo', { n: diffInDays }) || `${diffInDays}d ago`
   }
   return date.toLocaleDateString()
 }
