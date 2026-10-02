@@ -19,6 +19,8 @@ export function formatDate(iso, lang = 'ar') {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(d)
 }
 
+export const formatDateTime = formatDate
+
 export function formatDateShort(iso, lang = 'ar') {
   if (!iso) return '—'
   const d = new Date(iso)

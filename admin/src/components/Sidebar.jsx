@@ -20,6 +20,10 @@ import {
   Target,
   Database,
   Warehouse,
+  Building2,
+  FileText,
+  CreditCard,
+  RotateCcw,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -93,6 +97,35 @@ export function SidebarContent({ onNavigate }) {
           label: t('navFinance'),
           icon: Wallet,
           permission: 'FINANCE_VIEW',
+        },
+      ],
+    },
+    {
+      title: t('navProcurement') || 'Procurement',
+      items: [
+        {
+          to: '/suppliers',
+          label: t('navSuppliers'),
+          icon: Building2,
+          permission: 'SUPPLIERS_VIEW',
+        },
+        {
+          to: '/purchases',
+          label: t('navPurchases'),
+          icon: FileText,
+          permission: 'PURCHASES_VIEW',
+        },
+        {
+          to: '/payments',
+          label: t('navPayments'),
+          icon: CreditCard,
+          permission: 'PAYMENTS_VIEW',
+        },
+        {
+          to: '/purchase-returns',
+          label: t('navPurchaseReturns'),
+          icon: RotateCcw,
+          permission: 'RETURNS_VIEW',
         },
       ],
     },

@@ -227,7 +227,7 @@ async function _restoreStockInTx(tx, orderRow, actorAdminId) {
  * @param {Function} fn - async function executing the transaction
  * @param {number} maxRetries - maximum retry attempts (default: 3)
  */
-async function executeWithSerializationRetry(fn, maxRetries = 3) {
+export async function executeWithSerializationRetry(fn, maxRetries = 3) {
   let attempt = 0
   while (true) {
     try {
@@ -491,6 +491,147 @@ export async function getStockSummary({ page = 1, limit = 50, search = '', filte
   }
 
   return { items: products, total, page, limit, totalPages: Math.ceil(total / limit) }
+}
+
+/**
+ * Reduce stock for a confirmed purchase return within a Serializable transaction.
+ * Products are locked in ascending ID order to prevent deadlocks.
+ * Updates product currentStock and creates StockMovement records with reason MANUAL_ADJUSTMENT.
+ *
+ * @param {object} tx - Prisma transaction client
+ * @param {Array<{productId: number, quantity: number}>} items - items to return to supplier
+ * @param {string} returnNumber - e.g. RET-000001
+ * @param {string} supplierName - supplier name for movement note
+ * @param {number|null} actorAdminId - admin ID executing the return
+ * @returns {Promise<Array<object>>} created stock movements
+ */
+export async function returnStockInTx(tx, items, returnNumber, supplierName, actorAdminId = null) {
+  if (!items || items.length === 0) return []
+
+  const qtyMap = new Map()
+  for (const item of items) {
+    const qty = Number(item.quantity ?? 0)
+    if (qty > 0) {
+      qtyMap.set(item.productId, (qtyMap.get(item.productId) || 0) + qty)
+    }
+  }
+
+  const productIds = Array.from(qtyMap.keys()).sort((a, b) => a - b)
+  if (productIds.length === 0) return []
+
+  // Lock products in ascending order
+  const products = await tx.$queryRaw`
+    SELECT id, "currentStock"
+    FROM products
+    WHERE id = ANY(${productIds}::int[])
+    ORDER BY id ASC
+    FOR UPDATE
+  `
+  const stockMap = new Map(products.map((p) => [p.id, p.currentStock]))
+  const cycleId = randomUUID()
+  const movements = []
+
+  for (const productId of productIds) {
+    const returnQty = qtyMap.get(productId)
+    const previous = stockMap.get(productId) ?? 0
+    const delta = -returnQty
+    const next = previous + delta
+
+    await tx.product.update({
+      where: { id: productId },
+      data: {
+        currentStock: next,
+      },
+    })
+
+    const note = `Return ${returnNumber}${supplierName ? ` — ${supplierName}` : ''}`
+    const movement = await tx.stockMovement.create({
+      data: {
+        productId,
+        cycleId,
+        reason: 'MANUAL_ADJUSTMENT',
+        delta,
+        previousStock: previous,
+        newStock: next,
+        actorAdminId,
+        note,
+      },
+    })
+    movements.push(movement)
+  }
+
+  return movements
+}
+
+/**
+ * Receive stock for a purchase batch within a Serializable transaction.
+ * Products are locked in ascending ID order to prevent deadlocks.
+ * Updates product currentStock and creates StockMovement records with reason RESTOCK.
+ *
+ * @param {object} tx - Prisma transaction client
+ * @param {Array<{productId: number, quantity: number}>} items - items to receive
+ * @param {string} purchaseNumber - e.g. PUR-000001
+ * @param {string} supplierName - supplier name for movement note
+ * @param {number|null} actorAdminId - admin ID executing the receipt
+ * @returns {Promise<Array<object>>} created stock movements
+ */
+export async function receiveStockInTx(tx, items, purchaseNumber, supplierName, actorAdminId = null) {
+  if (!items || items.length === 0) return []
+
+  // Aggregate items by productId to avoid duplicate rows
+  const qtyMap = new Map()
+  for (const item of items) {
+    const qty = Number(item.quantity ?? item.quantityReceived ?? 0)
+    if (qty > 0) {
+      qtyMap.set(item.productId, (qtyMap.get(item.productId) || 0) + qty)
+    }
+  }
+
+  const productIds = Array.from(qtyMap.keys()).sort((a, b) => a - b)
+  if (productIds.length === 0) return []
+
+  // Lock products in ascending order
+  const products = await tx.$queryRaw`
+    SELECT id, "currentStock"
+    FROM products
+    WHERE id = ANY(${productIds}::int[])
+    ORDER BY id ASC
+    FOR UPDATE
+  `
+  const stockMap = new Map(products.map((p) => [p.id, p.currentStock]))
+  const cycleId = randomUUID()
+  const movements = []
+
+  for (const productId of productIds) {
+    const delta = qtyMap.get(productId)
+    const previous = stockMap.get(productId) ?? 0
+    const next = previous + delta
+
+    await tx.product.update({
+      where: { id: productId },
+      data: {
+        currentStock: next,
+        trackStock: true,
+      },
+    })
+
+    const note = `Purchase ${purchaseNumber}${supplierName ? ` — ${supplierName}` : ''}`
+    const movement = await tx.stockMovement.create({
+      data: {
+        productId,
+        cycleId,
+        reason: 'RESTOCK',
+        delta,
+        previousStock: previous,
+        newStock: next,
+        actorAdminId,
+        note,
+      },
+    })
+    movements.push(movement)
+  }
+
+  return movements
 }
 
 export class StockConflictError extends Error {

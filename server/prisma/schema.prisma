@@ -85,6 +85,9 @@ model Product {
   packageItems PackageItem[]
   marketingEvents MarketingEvent[]
   stockMovements  StockMovement[]
+  supplierProducts SupplierProduct[]
+  purchaseItems    PurchaseItem[]
+  purchaseReturnItems PurchaseReturnItem[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -283,6 +286,9 @@ model Admin {
   activityLogs ActivityLog[]
   notifications Notification[]
   stockMovements StockMovement[]
+  createdPurchases Purchase[] @relation("PurchaseCreatedBy")
+  createdPurchasePayments PurchasePayment[] @relation("PurchasePaymentCreatedBy")
+  createdPurchaseReturns PurchaseReturn[] @relation("PurchaseReturnCreatedBy")
 
   @@map("admins")
 }
@@ -660,3 +666,193 @@ model StockSettings {
 
   @@map("stock_settings")
 }
+
+// ---------------------------------------------------------
+// Suppliers & Procurement Models
+// ---------------------------------------------------------
+
+enum PurchaseStatus {
+  DRAFT
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum PurchasePaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+enum PurchaseReturnStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+model Supplier {
+  id            Int               @id @default(autoincrement())
+  name          String
+  contactPerson String?
+  phone         String?
+  whatsapp      String?
+  email         String?
+  city          String?
+  address       String?
+  notes         String?
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  products      SupplierProduct[]
+  purchases     Purchase[]
+  payments      PurchasePayment[]
+  returns       PurchaseReturn[]
+
+  @@index([name])
+  @@index([isActive])
+  @@map("suppliers")
+}
+
+model SupplierProduct {
+  id                   Int       @id @default(autoincrement())
+  supplierId           Int
+  productId            Int
+  purchasePrice        Decimal   @db.Decimal(10, 2)
+  minimumOrderQuantity Int?
+  supplierSku          String?
+  notes                String?
+  lastPurchasePrice    Decimal?  @db.Decimal(10, 2)
+  lastPurchasedAt      DateTime?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  supplier             Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  product              Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, productId])
+  @@index([supplierId])
+  @@index([productId])
+  @@map("supplier_products")
+}
+
+model Purchase {
+  id               Int               @id @default(autoincrement())
+  purchaseNumber   String            @unique
+  supplierId       Int
+  status           PurchaseStatus    @default(DRAFT)
+  purchaseDate     DateTime          @default(now())
+  expectedDate     DateTime?
+  receivedAt       DateTime?
+  subtotal         Decimal           @default(0) @db.Decimal(12, 2)
+  shippingCost     Decimal           @default(0) @db.Decimal(10, 2)
+  discount         Decimal           @default(0) @db.Decimal(10, 2)
+  otherCost        Decimal           @default(0) @db.Decimal(10, 2)
+  grandTotal       Decimal           @default(0) @db.Decimal(12, 2)
+  notes            String?
+  createdByAdminId Int?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  supplier         Supplier          @relation(fields: [supplierId], references: [id])
+  createdByAdmin   Admin?            @relation("PurchaseCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  items            PurchaseItem[]
+  payments         PurchasePayment[]
+  returns          PurchaseReturn[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([purchaseDate])
+  @@index([purchaseNumber])
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id               Int       @id @default(autoincrement())
+  purchaseId       Int
+  productId        Int
+  quantityOrdered  Int
+  quantityReceived Int       @default(0)
+  unitCost         Decimal   @db.Decimal(10, 2)
+  discount         Decimal?  @default(0) @db.Decimal(10, 2)
+  lineTotal        Decimal   @db.Decimal(12, 2)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  purchase         Purchase  @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product          Product   @relation(fields: [productId], references: [id])
+
+  @@index([purchaseId])
+  @@index([productId])
+  @@map("purchase_items")
+}
+
+model PurchasePayment {
+  id               Int                   @id @default(autoincrement())
+  purchaseId       Int
+  supplierId       Int
+  amount           Decimal               @db.Decimal(12, 2)
+  paymentMethod    PurchasePaymentMethod @default(CASH)
+  reference        String?
+  paymentDate      DateTime              @default(now())
+  note             String?
+  createdByAdminId Int?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  purchase         Purchase              @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  supplier         Supplier              @relation(fields: [supplierId], references: [id])
+  createdByAdmin   Admin?                @relation("PurchasePaymentCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([purchaseId])
+  @@index([supplierId])
+  @@index([paymentDate])
+  @@map("purchase_payments")
+}
+
+model PurchaseReturn {
+  id               Int                  @id @default(autoincrement())
+  returnNumber     String               @unique
+  supplierId       Int
+  purchaseId       Int?
+  status           PurchaseReturnStatus @default(DRAFT)
+  returnDate       DateTime             @default(now())
+  refundAmount     Decimal              @default(0) @db.Decimal(12, 2)
+  reason           String?
+  note             String?
+  createdByAdminId Int?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  supplier         Supplier             @relation(fields: [supplierId], references: [id])
+  purchase         Purchase?            @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  createdByAdmin   Admin?               @relation("PurchaseReturnCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  items            PurchaseReturnItem[]
+
+  @@index([supplierId])
+  @@index([purchaseId])
+  @@index([status])
+  @@index([returnNumber])
+  @@map("purchase_returns")
+}
+
+model PurchaseReturnItem {
+  id               Int            @id @default(autoincrement())
+  purchaseReturnId Int
+  productId        Int
+  quantity         Int
+  unitCost         Decimal        @db.Decimal(10, 2)
+  reason           String?
+  lineTotal        Decimal        @db.Decimal(12, 2)
+
+  purchaseReturn   PurchaseReturn @relation(fields: [purchaseReturnId], references: [id], onDelete: Cascade)
+  product          Product        @relation(fields: [productId], references: [id])
+
+  @@index([purchaseReturnId])
+  @@index([productId])
+  @@map("purchase_return_items")
+}
+

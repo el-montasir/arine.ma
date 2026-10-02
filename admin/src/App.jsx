@@ -31,6 +31,14 @@ import MarketingAttribution from './pages/MarketingAttribution.jsx'
 import MarketingCatalog from './pages/MarketingCatalog.jsx'
 import MarketingSettings from './pages/MarketingSettings.jsx'
 import Stock from './pages/Stock.jsx'
+import Suppliers from './pages/Suppliers.jsx'
+import SupplierDetails from './pages/SupplierDetails.jsx'
+import Purchases from './pages/Purchases.jsx'
+import CreatePurchase from './pages/CreatePurchase.jsx'
+import PurchaseDetails from './pages/PurchaseDetails.jsx'
+import Payments from './pages/Payments.jsx'
+import PurchaseReturns from './pages/PurchaseReturns.jsx'
+import PurchaseReturnDetails from './pages/PurchaseReturnDetails.jsx'
 
 function RequireAuth({ children }) {
   const { admin, loading } = useAuth()
@@ -153,6 +161,75 @@ export default function App() {
           element={
             <PermissionGate permission="STOCK_VIEW" showDeniedView>
               <Stock />
+            </PermissionGate>
+          }
+        />
+
+        {/* Procurement / Suppliers */}
+        <Route
+          path="suppliers"
+          element={
+            <PermissionGate permission="SUPPLIERS_VIEW" showDeniedView>
+              <Suppliers />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="suppliers/:id"
+          element={
+            <PermissionGate permission="SUPPLIERS_VIEW" showDeniedView>
+              <SupplierDetails />
+            </PermissionGate>
+          }
+        />
+
+        <Route
+          path="purchases"
+          element={
+            <PermissionGate permission="PURCHASES_VIEW" showDeniedView>
+              <Purchases />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="purchases/new"
+          element={
+            <PermissionGate permission="PURCHASES_MANAGE" showDeniedView>
+              <CreatePurchase />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="purchases/:id"
+          element={
+            <PermissionGate permission="PURCHASES_VIEW" showDeniedView>
+              <PurchaseDetails />
+            </PermissionGate>
+          }
+        />
+
+        <Route
+          path="payments"
+          element={
+            <PermissionGate permission="PAYMENTS_VIEW" showDeniedView>
+              <Payments />
+            </PermissionGate>
+          }
+        />
+
+        <Route
+          path="purchase-returns"
+          element={
+            <PermissionGate permission="RETURNS_VIEW" showDeniedView>
+              <PurchaseReturns />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="purchase-returns/:id"
+          element={
+            <PermissionGate permission="RETURNS_VIEW" showDeniedView>
+              <PurchaseReturnDetails />
             </PermissionGate>
           }
         />
