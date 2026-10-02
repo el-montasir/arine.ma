@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Building2,
@@ -221,11 +222,11 @@ export default function Suppliers() {
           to { transform: rotate(360deg); }
         }
         @keyframes stockDrawerSlideLTR {
-          from { opacity: 0; transform: translateX(18px); }
+          from { opacity: 0; transform: translateX(100%); }
           to { opacity: 1; transform: translateX(0); }
         }
         @keyframes stockDrawerSlideRTL {
-          from { opacity: 0; transform: translateX(-18px); }
+          from { opacity: 0; transform: translateX(-100%); }
           to { opacity: 1; transform: translateX(0); }
         }
 
@@ -240,10 +241,10 @@ export default function Suppliers() {
           animation: stockRefreshOnce 420ms cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
         }
         .stock-drawer-ltr {
-          animation: stockDrawerSlideLTR 220ms ease-out forwards;
+          animation: stockDrawerSlideLTR 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .stock-drawer-rtl {
-          animation: stockDrawerSlideRTL 220ms ease-out forwards;
+          animation: stockDrawerSlideRTL 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -394,47 +395,53 @@ export default function Suppliers() {
           </div>
         </button>
 
-        {/* Card 3: Total Purchases */}
-        <div
+        {/* Card 3: Total Purchases (Navigates to /purchases) */}
+        <button
+          type="button"
+          onClick={() => navigate('/purchases')}
           style={{ animationDelay: '70ms' }}
-          className="stock-card-anim p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-indigo-500/5"
+          className="stock-card-anim text-start p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-indigo-500/5 hover:border-indigo-500/40 hover:shadow-[0_0_14px_rgba(99,102,241,0.22)] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider group-hover:text-indigo-300 transition-colors">
               {t('supplierCardPurchases') || 'Total Purchases'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-colors">
               <Receipt className="h-3.5 w-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-indigo-300 font-mono">
             {formatMoney(stats.totalPurchases, language)}
           </div>
-          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
-            {t('supplierCardPurchasesSub') || 'Total procurement volume'}
+          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate flex items-center justify-between">
+            <span>{t('supplierCardPurchasesSub') || 'Total procurement volume'}</span>
+            <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
           </div>
-        </div>
+        </button>
 
-        {/* Card 4: Total Paid */}
-        <div
+        {/* Card 4: Total Paid (Navigates to /payments) */}
+        <button
+          type="button"
+          onClick={() => navigate('/payments')}
           style={{ animationDelay: '105ms' }}
-          className="stock-card-anim p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-emerald-500/5"
+          className="stock-card-anim text-start p-4 rounded-xl border border-[var(--line)] bg-gradient-to-br from-[var(--card)] to-emerald-500/5 hover:border-emerald-500/40 hover:shadow-[0_0_14px_rgba(16,185,129,0.22)] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 transition-all duration-200 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider group-hover:text-emerald-300 transition-colors">
               {t('supplierCardPaid') || 'Total Paid'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:text-emerald-300 transition-colors">
               <CreditCard className="h-3.5 w-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-emerald-400 font-mono">
             {formatMoney(stats.totalPaid, language)}
           </div>
-          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate">
-            {t('supplierCardPaidSub') || 'Settled vendor disbursements'}
+          <div className="text-[11px] text-[var(--ink-soft)] mt-1 truncate flex items-center justify-between">
+            <span>{t('supplierCardPaidSub') || 'Settled vendor disbursements'}</span>
+            <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 text-emerald-400 transition-opacity" />
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main Table Card & Toolbar */}
@@ -902,26 +909,26 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
-      {/* Backdrop */}
+  return createPortal(
+    <div className="fixed inset-0 z-[60] overflow-hidden" role="dialog" aria-modal="true">
+      {/* Lightweight Translucent Backdrop */}
       <div
         onClick={!submitting ? onClose : undefined}
-        className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity animate-fade-in"
+        className="fixed inset-0 bg-black/[0.08] backdrop-blur-[1px] transition-opacity animate-fade-in"
       />
 
       {/* Slide-Over Drawer Container */}
-      <div className={`fixed inset-y-0 ${isRTL ? 'start-0' : 'end-0'} flex max-w-full z-50`}>
+      <div className={`fixed inset-y-0 ${isRTL ? 'start-0' : 'end-0'} flex max-w-full z-[70] pointer-events-none`}>
         <div
-          className={`w-screen max-w-lg bg-[var(--card)] border-inline-start border-[var(--line)] shadow-2xl flex flex-col justify-between overflow-y-auto ${
+          className={`pointer-events-auto w-full md:w-[420px] max-w-[calc(100vw-24px)] md:max-w-[420px] h-full bg-[#0b1026]/95 backdrop-blur-2xl backdrop-saturate-150 border-inline-start border-violet-400/20 shadow-[-20px_0_60px_rgba(76,29,149,0.25)] flex flex-col justify-between overflow-hidden md:rounded-s-[24px] ${
             isRTL ? 'stock-drawer-rtl' : 'stock-drawer-ltr'
           }`}
         >
-          {/* Drawer Header */}
-          <div className="p-5 border-b border-[var(--line)] bg-[var(--card)] flex items-start justify-between gap-3 sticky top-0 z-10">
+          {/* Sticky Drawer Header */}
+          <div className="p-4 sm:p-5 border-b border-violet-400/15 bg-[#0b1026]/95 backdrop-blur-md flex items-start justify-between gap-3 sticky top-0 z-10">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[var(--purple)]" />
+                <span className="w-2 h-2 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
                 <h2 className="text-base font-bold text-[var(--ink)]">
                   {isEditing
                     ? t('supplierDrawerTitleEdit') || 'Edit Supplier'
@@ -938,20 +945,20 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="p-1.5 rounded-lg border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--bg)] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg border border-violet-400/20 text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-violet-500/10 transition-colors cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Drawer Body */}
-          <form id="supplier-drawer-form" onSubmit={handleSubmit} className="p-5 space-y-6 flex-1 overflow-y-auto">
+          {/* Drawer Body - Scrollable with 4 Colored Glass Cards */}
+          <form id="supplier-drawer-form" onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 flex-1 min-h-0 overflow-y-auto">
             {error && <ErrorBanner message={error} />}
 
-            {/* Section 1: Basic Information */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[var(--purple)] uppercase tracking-wider">
-                <Building2 className="h-3.5 w-3.5" />
+            {/* Card 1: Basic Information (Violet Glass) */}
+            <div className="bg-violet-500/[0.045] border border-violet-400/15 rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-violet-300 uppercase tracking-wider">
+                <Building2 className="h-3.5 w-3.5 text-violet-400" />
                 <span>{t('supplierSectionBasic') || 'Basic Information'}</span>
               </div>
 
@@ -966,7 +973,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('supplierNamePlaceholder') || 'e.g. Moroccan Publishing House'}
-                  className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]/40"
+                  className="w-full rounded-xl border border-violet-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/40"
                 />
               </div>
 
@@ -980,12 +987,12 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                   value={formData.contactPerson}
                   onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                   placeholder={t('supplierContactPersonPlaceholder') || 'e.g. Abdellah El Alami'}
-                  className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]/40"
+                  className="w-full rounded-xl border border-violet-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/40"
                 />
               </div>
 
               {/* Status Toggle */}
-              <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--line)] bg-[var(--bg)]/50">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-violet-400/15 bg-violet-500/[0.03]">
                 <div>
                   <div className="text-xs font-semibold text-[var(--ink)]">
                     {t('supplierStatus') || 'Supplier Active Status'}
@@ -1003,15 +1010,15 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--purple)]" />
+                  <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600" />
                 </label>
               </div>
             </div>
 
-            {/* Section 2: Contact Details & Location */}
-            <div className="space-y-4 pt-2 border-t border-[var(--line)]">
-              <div className="flex items-center gap-2 text-xs font-bold text-[var(--purple)] uppercase tracking-wider">
-                <Phone className="h-3.5 w-3.5" />
+            {/* Card 2: Contact Details & Location (Blue Glass) */}
+            <div className="bg-blue-500/[0.04] border border-blue-400/15 rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-300 uppercase tracking-wider">
+                <Phone className="h-3.5 w-3.5 text-blue-400" />
                 <span>{t('supplierSectionContact') || 'Contact & Location'}</span>
               </div>
 
@@ -1027,7 +1034,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder={t('supplierPhonePlaceholder') || '06XXXXXXXX'}
-                    className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]"
+                    className="w-full rounded-xl border border-blue-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40"
                   />
                 </div>
 
@@ -1043,7 +1050,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                     value={formData.whatsapp}
                     onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                     placeholder={t('supplierWhatsappPlaceholder') || '06XXXXXXXX'}
-                    className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]"
+                    className="w-full rounded-xl border border-blue-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40"
                   />
                 </div>
               </div>
@@ -1060,7 +1067,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder={t('supplierEmailPlaceholder') || 'supplier@example.com'}
-                    className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]"
+                    className="w-full rounded-xl border border-blue-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40"
                   />
                 </div>
 
@@ -1074,7 +1081,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder={t('supplierCityPlaceholder') || 'Casablanca, Rabat...'}
-                    className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]"
+                    className="w-full rounded-xl border border-blue-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40"
                   />
                 </div>
               </div>
@@ -1089,30 +1096,30 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder={t('supplierAddressPlaceholder') || 'Street, District, Postal Code...'}
-                  className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]"
+                  className="w-full rounded-xl border border-blue-400/20 bg-[#0b1026]/80 px-3.5 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40"
                 />
               </div>
             </div>
 
-            {/* Section 3: Optional Initial Catalog Product Linking (Available on Creation) */}
+            {/* Card 3: Optional Initial Catalog Product Linking (Indigo Glass) */}
             {!isEditing && (
-              <div className="space-y-4 pt-2 border-t border-[var(--line)]">
+              <div className="bg-indigo-500/[0.045] border border-indigo-400/15 rounded-2xl p-4 space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[var(--purple)] uppercase tracking-wider">
-                    <BookOpen className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                    <BookOpen className="h-3.5 w-3.5 text-indigo-400" />
                     <span>{t('supplierSectionCatalog') || 'Link Catalog Book (Optional)'}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIncludeProduct(!includeProduct)}
-                    className="text-xs text-[var(--purple)] font-semibold hover:underline cursor-pointer"
+                    className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold hover:underline cursor-pointer"
                   >
                     {includeProduct ? t('remove') || 'Remove' : `+ ${t('add') || 'Add'}`}
                   </button>
                 </div>
 
                 {includeProduct && (
-                  <div className="p-4 rounded-xl border border-[var(--purple)]/30 bg-gradient-to-br from-[var(--bg)] to-[var(--purple)]/5 space-y-3.5 animate-fade-in">
+                  <div className="space-y-3.5 pt-2 border-t border-indigo-400/15 animate-fade-in">
                     <div className="text-xs text-[var(--ink-soft)]">
                       {t('supplierInitialProductPrompt') ||
                         'Associate a catalog title with negotiated purchase cost and supplier SKU immediately.'}
@@ -1126,7 +1133,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                       <select
                         value={productForm.productId}
                         onChange={(e) => setProductForm({ ...productForm, productId: e.target.value })}
-                        className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--purple)]"
+                        className="w-full rounded-xl border border-indigo-400/20 bg-[#0b1026]/80 px-3 py-2 text-xs text-[var(--ink)] focus:outline-none focus:border-indigo-400"
                       >
                         <option value="">-- {t('selectProductPlaceholder') || 'Select a product'} --</option>
                         {catalogProducts.map((p) => (
@@ -1150,7 +1157,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                           value={productForm.purchasePrice}
                           onChange={(e) => setProductForm({ ...productForm, purchasePrice: e.target.value })}
                           placeholder="0.00"
-                          className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--purple)]"
+                          className="w-full rounded-xl border border-indigo-400/20 bg-[#0b1026]/80 px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-indigo-400"
                         />
                       </div>
 
@@ -1164,7 +1171,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                           value={productForm.minimumOrderQuantity}
                           onChange={(e) => setProductForm({ ...productForm, minimumOrderQuantity: e.target.value })}
                           placeholder="1"
-                          className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--purple)]"
+                          className="w-full rounded-xl border border-indigo-400/20 bg-[#0b1026]/80 px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-indigo-400"
                         />
                       </div>
                     </div>
@@ -1179,7 +1186,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
                         value={productForm.supplierSku}
                         onChange={(e) => setProductForm({ ...productForm, supplierSku: e.target.value })}
                         placeholder="e.g. SUP-REF-992"
-                        className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--purple)]"
+                        className="w-full rounded-xl border border-indigo-400/20 bg-[#0b1026]/80 px-3 py-2 text-xs text-[var(--ink)] focus:outline-none focus:border-indigo-400"
                       />
                     </div>
                   </div>
@@ -1187,23 +1194,24 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Section 4: Internal Notes */}
-            <div className="space-y-3 pt-2 border-t border-[var(--line)]">
-              <label className="block text-xs font-bold text-[var(--purple)] uppercase tracking-wider">
-                {t('supplierNotes') || 'Internal Notes'}
-              </label>
+            {/* Card 4: Internal Notes (Violet Glass) */}
+            <div className="bg-violet-500/[0.035] border border-violet-400/15 rounded-2xl p-4 space-y-2.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-violet-300 uppercase tracking-wider">
+                <Info className="h-3.5 w-3.5 text-violet-400" />
+                <span>{t('supplierNotes') || 'Internal Notes'}</span>
+              </div>
               <textarea
                 rows={3}
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder={t('supplierNotesPlaceholder') || 'Payment agreement details, delivery schedule, discount terms...'}
-                className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2.5 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-[var(--purple)] focus:ring-1 focus:ring-[var(--purple)]/40 leading-relaxed"
+                className="w-full rounded-xl border border-violet-400/20 bg-[#0b1026]/80 px-3.5 py-2.5 text-xs text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/40 leading-relaxed"
               />
             </div>
           </form>
 
-          {/* Drawer Footer */}
-          <div className="p-5 border-t border-[var(--line)] bg-[var(--card)] flex items-center justify-end gap-3 sticky bottom-0 z-10">
+          {/* Sticky Drawer Footer */}
+          <div className="p-4 border-t border-violet-400/15 bg-[#0b1026]/95 backdrop-blur-md flex items-center justify-end gap-3 sticky bottom-0 z-10">
             <Button variant="secondary" size="sm" onClick={onClose} disabled={submitting}>
               {t('cancel') || 'Cancel'}
             </Button>
@@ -1213,7 +1221,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
               type="submit"
               form="supplier-drawer-form"
               disabled={submitting}
-              className="shadow-[0_0_14px_rgba(124,58,237,0.35)]"
+              className="shadow-[0_0_16px_rgba(124,58,237,0.4)]"
             >
               {submitting ? (
                 <>
@@ -1234,6 +1242,7 @@ function SupplierDrawer({ supplier, catalogProducts, onClose, onSuccess }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
