@@ -115,8 +115,6 @@ export async function getPurchaseReturnById(id) {
               id: true,
               title: true,
               author: true,
-              sku: true,
-              isbn: true,
               price: true,
               currentStock: true,
               image: true,
@@ -153,9 +151,35 @@ export async function createPurchaseReturn(data, actor = null, req = null) {
     throw new PurchaseReturnError(404, 'SUPPLIER_NOT_FOUND', 'المورد غير موجود')
   }
 
+  // Validate items
+  let totalRefund = 0
+  const computedItems = (data.items || []).map((item) => {
+    const qty = Number(item.quantity)
+    const cost = Number(item.unitCost)
+    if (qty <= 0) {
+      throw new PurchaseReturnError(400, 'INVALID_QUANTITY', 'كمية المرتجع يجب أن تكون أكبر من صفر')
+    }
+    const lineTotal = Number((qty * cost).toFixed(2))
+    totalRefund += lineTotal
+    return {
+      productId: item.productId,
+      quantity: qty,
+      unitCost: cost,
+      lineTotal,
+      reason: item.reason || null,
+    }
+  })
+
   if (purchaseId) {
     const purchase = await prisma.purchase.findUnique({
       where: { id: purchaseId },
+      include: {
+        items: true,
+        returns: {
+          where: { status: { not: 'CANCELLED' } },
+          include: { items: true },
+        },
+      },
     })
     if (!purchase) {
       throw new PurchaseReturnError(404, 'PURCHASE_NOT_FOUND', 'طلب الشراء غير موجود')
@@ -163,24 +187,34 @@ export async function createPurchaseReturn(data, actor = null, req = null) {
     if (purchase.supplierId !== supplierId) {
       throw new PurchaseReturnError(400, 'PURCHASE_SUPPLIER_MISMATCH', 'طلب الشراء لا ينتمي إلى هذا المورد')
     }
-  }
 
-  // Validate items
-  let totalRefund = 0
-  const computedItems = data.items.map((item) => {
-    const qty = Number(item.quantity)
-    const cost = Number(item.unitCost)
-    if (qty <= 0) {
-      throw new PurchaseReturnError(400, 'INVALID_QUANTITY', 'كمية المرتجع يجب أن تكون أكبر من صفر')
+    // Validate returnable quantities per product against what was received on this purchase
+    for (const item of computedItems) {
+      const purchaseItem = purchase.items.find((pi) => pi.productId === item.productId)
+      if (!purchaseItem) {
+        throw new PurchaseReturnError(
+          400,
+          'PRODUCT_NOT_IN_PURCHASE',
+          `المنتج #${item.productId} غير موجود في طلب الشراء هذا`
+        )
+      }
+
+      // Calculate previously returned quantity for this product on non-cancelled returns of this purchase
+      const previouslyReturned = purchase.returns.reduce((sum, ret) => {
+        const retItem = ret.items.find((ri) => ri.productId === item.productId)
+        return sum + (retItem ? retItem.quantity : 0)
+      }, 0)
+
+      const returnableQuantity = purchaseItem.quantityReceived - previouslyReturned
+      if (item.quantity > returnableQuantity) {
+        throw new PurchaseReturnError(
+          400,
+          'EXCEEDS_RECEIVED_QUANTITY',
+          `كمية المرتجع للمنتج #${item.productId} (${item.quantity}) تتجاوز الكمية المستلمة القابلة للإرجاع (${returnableQuantity})`
+        )
+      }
     }
-    totalRefund += qty * cost
-    return {
-      productId: item.productId,
-      quantity: qty,
-      unitCost: cost,
-      reason: item.reason || null,
-    }
-  })
+  }
 
   return executeWithSerializationRetry(async () => {
     return prisma.$transaction(
@@ -257,7 +291,7 @@ export async function confirmPurchaseReturn(id, actor = null, req = null) {
     return prisma.$transaction(
       async (tx) => {
         const returnRows = await tx.$queryRaw`
-          SELECT id, "returnNumber", "supplierId", status, "refundAmount"
+          SELECT id, "returnNumber", "supplierId", "purchaseId", status, "refundAmount"
           FROM purchase_returns
           WHERE id = ${id}
           FOR UPDATE
@@ -275,13 +309,43 @@ export async function confirmPurchaseReturn(id, actor = null, req = null) {
           throw new PurchaseReturnError(400, 'RETURN_CANCELLED', 'لا يمكن تأكيد مرتجع ملغي')
         }
 
+        const items = await tx.purchaseReturnItem.findMany({
+          where: { purchaseReturnId: id },
+        })
+
+        if (existing.purchaseId) {
+          const purchase = await tx.purchase.findUnique({
+            where: { id: existing.purchaseId },
+            include: {
+              items: true,
+              returns: {
+                where: { status: 'CONFIRMED', id: { not: id } },
+                include: { items: true },
+              },
+            },
+          })
+          if (purchase) {
+            for (const item of items) {
+              const pItem = purchase.items.find((pi) => pi.productId === item.productId)
+              const previouslyConfirmed = purchase.returns.reduce((sum, ret) => {
+                const ri = ret.items.find((it) => it.productId === item.productId)
+                return sum + (ri ? ri.quantity : 0)
+              }, 0)
+              const maxReturnable = (pItem?.quantityReceived ?? 0) - previouslyConfirmed
+              if (item.quantity > maxReturnable) {
+                throw new PurchaseReturnError(
+                  400,
+                  'EXCEEDS_RECEIVED_QUANTITY',
+                  `الكمية المراد إرجاعها تتجاوز الكمية المستلمة المتبقية في طلب الشراء`
+                )
+              }
+            }
+          }
+        }
+
         const supplier = await tx.supplier.findUnique({
           where: { id: existing.supplierId },
           select: { name: true },
-        })
-
-        const items = await tx.purchaseReturnItem.findMany({
-          where: { purchaseReturnId: id },
         })
 
         // Deduct inventory stock

@@ -173,6 +173,36 @@ async function runTests() {
     }
   })
 
+  console.log('\n🛡️  7. Payload Normalization & Field Mapping Regressions')
+  test('receive payload handles both raw array and object with items property', () => {
+    const rawArray = [{ productId: 1, quantityReceived: 5 }]
+    const objWithItems = { items: [{ productId: 1, quantityReceived: 5 }], note: 'Received batch' }
+
+    const extractItems = (data) => (Array.isArray(data) ? data : data?.items || [])
+    assert.deepStrictEqual(extractItems(rawArray), rawArray)
+    assert.deepStrictEqual(extractItems(objWithItems), objWithItems.items)
+  })
+
+  test('return item line totals and quantities compute correctly', () => {
+    const rawItems = [
+      { productId: 1, quantity: 3, unitCost: 45.5 },
+      { productId: 2, quantity: 2, unitCost: 100.0 },
+    ]
+    let totalRefund = 0
+    const computed = rawItems.map((item) => {
+      const qty = Number(item.quantity)
+      const cost = Number(item.unitCost)
+      assert.ok(qty > 0, 'Quantity must be positive')
+      const lineTotal = Number((qty * cost).toFixed(2))
+      totalRefund += lineTotal
+      return { productId: item.productId, quantity: qty, unitCost: cost, lineTotal }
+    })
+
+    assert.strictEqual(computed[0].lineTotal, 136.5)
+    assert.strictEqual(computed[1].lineTotal, 200.0)
+    assert.strictEqual(Number(totalRefund.toFixed(2)), 336.5)
+  })
+
   console.log('\n========================================')
   console.log(`Results: ${passed} passed, ${failed} failed`)
   if (failed > 0) {

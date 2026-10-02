@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { getSupplierFinancials } from './supplier.service.js'
+import { executeWithSerializationRetry } from '../stock/stock.service.js'
 import { logActivity } from '../admin/activity-log.service.js'
 
 export class PaymentError extends Error {
@@ -87,6 +88,7 @@ export async function listPayments({
 
 /**
  * Record a new payment to a supplier with strict validation against overpayment.
+ * Uses atomic Serializable transaction with FOR UPDATE locks to prevent concurrent overpayments.
  */
 export async function createPayment(data, actor = null, req = null) {
   const supplierId = Number(data.supplierId)
@@ -97,98 +99,114 @@ export async function createPayment(data, actor = null, req = null) {
     throw new PaymentError(400, 'INVALID_AMOUNT', 'مبلغ الدفعة يجب أن يكون أكبر من صفر')
   }
 
-  // Verify supplier exists
-  const supplier = await prisma.supplier.findUnique({
-    where: { id: supplierId },
-  })
-  if (!supplier) {
-    throw new PaymentError(404, 'SUPPLIER_NOT_FOUND', 'المورد غير موجود')
-  }
+  return executeWithSerializationRetry(async () => {
+    return prisma.$transaction(
+      async (tx) => {
+        // Lock supplier row for update to serialize payments for this supplier
+        const supplierRows = await tx.$queryRaw`
+          SELECT id, name FROM suppliers WHERE id = ${supplierId} FOR UPDATE
+        `
+        const supplier = supplierRows[0]
+        if (!supplier) {
+          throw new PaymentError(404, 'SUPPLIER_NOT_FOUND', 'المورد غير موجود')
+        }
 
-  // If tied to a specific purchase
-  if (purchaseId) {
-    const purchase = await prisma.purchase.findUnique({
-      where: { id: purchaseId },
-      include: {
-        payments: true,
+        // If tied to a specific purchase, lock purchase row for update
+        if (purchaseId) {
+          const purchaseRows = await tx.$queryRaw`
+            SELECT id, "supplierId", "grandTotal", status, "purchaseNumber"
+            FROM purchases
+            WHERE id = ${purchaseId}
+            FOR UPDATE
+          `
+          const purchase = purchaseRows[0]
+
+          if (!purchase) {
+            throw new PaymentError(404, 'PURCHASE_NOT_FOUND', 'طلب الشراء غير موجود')
+          }
+
+          if (purchase.supplierId !== supplierId) {
+            throw new PaymentError(400, 'PURCHASE_SUPPLIER_MISMATCH', 'طلب الشراء لا ينتمي إلى هذا المورد')
+          }
+
+          if (purchase.status === 'CANCELLED') {
+            throw new PaymentError(400, 'PURCHASE_CANCELLED', 'لا يمكن سداد دفعة لطلب شراء ملغي')
+          }
+
+          const existingPayments = await tx.purchasePayment.findMany({
+            where: { purchaseId },
+          })
+
+          const grandTotal = Number(purchase.grandTotal)
+          const paidSoFar = existingPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+          const remainingBalance = Number(Math.max(0, grandTotal - paidSoFar).toFixed(2))
+
+          if (amount > remainingBalance) {
+            throw new PaymentError(
+              400,
+              'OVERPAYMENT_NOT_ALLOWED',
+              `مبلغ الدفعة (${amount} د.م) يتجاوز الرصيد المتبقي لطلب الشراء (${remainingBalance} د.م)`
+            )
+          }
+        } else {
+          // General supplier payment - check against overall supplier outstanding balance
+          const financials = await getSupplierFinancials(supplierId, tx)
+          if (financials.balance <= 0) {
+            throw new PaymentError(400, 'NO_OUTSTANDING_BALANCE', 'المورد ليس لديه أي مستحقات مالية متبقية')
+          }
+
+          if (amount > financials.balance) {
+            throw new PaymentError(
+              400,
+              'OVERPAYMENT_NOT_ALLOWED',
+              `مبلغ الدفعة (${amount} د.م) يتجاوز إجمالي الرصيد المستحق للمورد (${financials.balance} د.م)`
+            )
+          }
+        }
+
+        const payment = await tx.purchasePayment.create({
+          data: {
+            supplierId,
+            purchaseId,
+            amount,
+            paymentMethod: data.paymentMethod,
+            paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
+            reference: data.reference || data.referenceNumber || null,
+            note: data.note || data.notes || null,
+            createdByAdminId: actor?.id ?? null,
+          },
+          include: {
+            supplier: true,
+            purchase: true,
+            createdByAdmin: {
+              select: { id: true, name: true, username: true },
+            },
+          },
+        })
+
+        await logActivity({
+          actor,
+          action: 'PURCHASE_PAYMENT_CREATED',
+          resourceType: 'PURCHASE_PAYMENT',
+          resourceId: payment.id,
+          details: {
+            supplierName: supplier.name,
+            amount,
+            paymentMethod: data.paymentMethod,
+            purchaseNumber: payment.purchase?.purchaseNumber || null,
+          },
+          req,
+        })
+
+        return {
+          ...payment,
+          amount: Number(payment.amount),
+        }
       },
-    })
-
-    if (!purchase) {
-      throw new PaymentError(404, 'PURCHASE_NOT_FOUND', 'طلب الشراء غير موجود')
-    }
-
-    if (purchase.supplierId !== supplierId) {
-      throw new PaymentError(400, 'PURCHASE_SUPPLIER_MISMATCH', 'طلب الشراء لا ينتمي إلى هذا المورد')
-    }
-
-    if (purchase.status === 'CANCELLED') {
-      throw new PaymentError(400, 'PURCHASE_CANCELLED', 'لا يمكن سداد دفعة لطلب شراء ملغي')
-    }
-
-    const grandTotal = Number(purchase.grandTotal)
-    const paidSoFar = purchase.payments.reduce((sum, p) => sum + Number(p.amount), 0)
-    const remainingBalance = Number(Math.max(0, grandTotal - paidSoFar).toFixed(2))
-
-    if (amount > remainingBalance) {
-      throw new PaymentError(
-        400,
-        'OVERPAYMENT_NOT_ALLOWED',
-        `مبلغ الدفعة (${amount} د.م) يتجاوز الرصيد المتبقي لطلب الشراء (${remainingBalance} د.م)`
-      )
-    }
-  } else {
-    // General supplier payment - check against overall supplier outstanding balance
-    const financials = await getSupplierFinancials(supplierId)
-    if (financials.balance <= 0) {
-      throw new PaymentError(400, 'NO_OUTSTANDING_BALANCE', 'المورد ليس لديه أي مستحقات مالية متبقية')
-    }
-
-    if (amount > financials.balance) {
-      throw new PaymentError(
-        400,
-        'OVERPAYMENT_NOT_ALLOWED',
-        `مبلغ الدفعة (${amount} د.م) يتجاوز إجمالي الرصيد المستحق للمورد (${financials.balance} د.م)`
-      )
-    }
-  }
-
-  const payment = await prisma.purchasePayment.create({
-    data: {
-      supplierId,
-      purchaseId,
-      amount,
-      paymentMethod: data.paymentMethod,
-      paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
-      referenceNumber: data.referenceNumber || null,
-      notes: data.notes || null,
-      createdByAdminId: actor?.id ?? null,
-    },
-    include: {
-      supplier: true,
-      purchase: true,
-      createdByAdmin: {
-        select: { id: true, name: true, username: true },
-      },
-    },
+      {
+        isolationLevel: 'Serializable',
+        timeout: 15000,
+      }
+    )
   })
-
-  await logActivity({
-    actor,
-    action: 'PURCHASE_PAYMENT_CREATED',
-    resourceType: 'PURCHASE_PAYMENT',
-    resourceId: payment.id,
-    details: {
-      supplierName: supplier.name,
-      amount,
-      paymentMethod: data.paymentMethod,
-      purchaseNumber: payment.purchase?.purchaseNumber || null,
-    },
-    req,
-  })
-
-  return {
-    ...payment,
-    amount: Number(payment.amount),
-  }
 }

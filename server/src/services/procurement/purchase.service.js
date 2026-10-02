@@ -238,8 +238,6 @@ export async function getPurchaseById(id) {
               id: true,
               title: true,
               author: true,
-              sku: true,
-              isbn: true,
               price: true,
               currentStock: true,
               image: true,
@@ -570,7 +568,8 @@ export async function updatePurchaseStatus(id, newStatus, actor = null, req = nu
  * 7. Update supplier product last prices.
  */
 export async function receivePurchaseItems(id, receiveData, actor = null, req = null) {
-  const { items, note } = receiveData
+  const items = Array.isArray(receiveData) ? receiveData : receiveData?.items || []
+  const note = Array.isArray(receiveData) ? null : receiveData?.note
 
   return executeWithSerializationRetry(async () => {
     return prisma.$transaction(
