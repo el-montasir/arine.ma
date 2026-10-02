@@ -668,6 +668,7 @@ export const translations = {
     emailField: 'البريد الإلكتروني',
     emailOrUsernameField: 'البريد الإلكتروني أو اسم المستخدم',
     passwordField: 'كلمة المرور',
+    rememberMe: 'تذكرني',
     loginBtn: 'دخول للوحة التحكم',
     loginError: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
 
@@ -2172,6 +2173,7 @@ export const translations = {
     emailField: 'Adresse email',
     emailOrUsernameField: 'Email ou nom d\'utilisateur',
     passwordField: 'Mot de passe',
+    rememberMe: 'Se souvenir de moi',
     loginBtn: 'Se connecter',
     loginError: 'Email ou mot de passe incorrect',
 
@@ -3638,6 +3640,7 @@ export const translations = {
     emailField: 'Email Address',
     emailOrUsernameField: 'Email or Username',
     passwordField: 'Password',
+    rememberMe: 'Remember me',
     loginBtn: 'Sign In',
     loginError: 'Invalid email or password',
 
