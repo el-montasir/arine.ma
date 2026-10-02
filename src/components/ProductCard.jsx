@@ -4,6 +4,7 @@ import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { hexToRgba } from '../utils/color'
 import { getCardImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
 export default function ProductCard({ book }) {
@@ -15,6 +16,8 @@ export default function ProductCard({ book }) {
   const fav = isFavorite(book.id)
   const outOfStock = book.availability === 'out-of-stock' || book.canPurchase === false
   const isPreOrder = book.availability === 'pre-order'
+  const categoryColor = book.categoryColor || '#8b2f9e'
+  const categoryName = book.category || 'عام'
 
   // Extract primary image from book.images array or fallback to book.image
   const primaryImage = (() => {
@@ -26,7 +29,7 @@ export default function ProductCard({ book }) {
   })()
 
   return (
-    <article className="group bg-white rounded-[18px] border border-[#ece5f2] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_34px_-20px_rgba(76,22,96,0.35)] overflow-hidden flex flex-col justify-between relative">
+    <article className="group bg-white rounded-[18px] border border-[#ece5f2] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_34px_-20px_rgba(76,22,96,0.35)] overflow-hidden flex flex-col justify-between relative h-full">
       <div>
         {/* Cover image area */}
         <div className="relative overflow-hidden bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd] aspect-[3/4]">
@@ -151,16 +154,35 @@ export default function ProductCard({ book }) {
 
         {/* Info Area */}
         <div className="p-3.5 sm:p-4">
-          <div className="text-[11px] font-bold text-[#8b2f9e] mb-1 truncate">
-            {book.category || 'عام'}
+          {/* Curved Glass Category Pill Badge */}
+          <div className="mb-2 flex items-center">
+            <span
+              style={{
+                backgroundColor: hexToRgba(categoryColor, 0.14),
+                borderColor: hexToRgba(categoryColor, 0.35),
+                color: categoryColor,
+                boxShadow: `0 2px 8px -2px ${hexToRgba(categoryColor, 0.18)}`,
+              }}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-tight border backdrop-blur-sm max-w-full truncate"
+            >
+              {categoryName}
+            </span>
           </div>
 
+          {/* Title */}
           <Link
             to={`/book/${book.id}`}
-            className="block text-[13.5px] sm:text-14px font-bold text-[#161616] leading-[1.45] line-clamp-2 min-h-[40px] hover:text-[#8b2f9e] transition-colors"
+            className="block text-[13.5px] sm:text-[14px] font-bold text-[#161616] leading-[1.45] line-clamp-2 min-h-[40px] hover:text-[#8b2f9e] transition-colors"
           >
             {book.title}
           </Link>
+
+          {/* Author */}
+          {book.author && book.author.trim() ? (
+            <p className="text-[12px] text-[#6b6577] mt-1 line-clamp-1 truncate font-medium">
+              {book.author.trim()}
+            </p>
+          ) : null}
 
           {/* Price row */}
           <div className="flex items-baseline gap-2 mt-2 pt-1">
