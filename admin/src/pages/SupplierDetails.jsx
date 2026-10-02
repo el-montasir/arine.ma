@@ -21,6 +21,9 @@ import {
   User,
   Calendar,
   ExternalLink,
+  MessageCircle,
+  X,
+  Check,
 } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
@@ -57,17 +60,17 @@ export default function SupplierDetails() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false)
   const [deleteProductTarget, setDeleteProductTarget] = useState(null)
 
-  // Edit Supplier Form
+  // Edit Supplier Form (strictly aligned with Zod schema)
   const [supplierForm, setSupplierForm] = useState({
     name: '',
     contactPerson: '',
     phone: '',
+    whatsapp: '',
     email: '',
+    city: '',
     address: '',
-    taxNumber: '',
-    paymentTerms: '',
     notes: '',
-    status: 'ACTIVE',
+    isActive: true,
   })
 
   // Add Product Form
@@ -75,8 +78,7 @@ export default function SupplierDetails() {
     productId: '',
     purchasePrice: '',
     supplierSku: '',
-    minOrderQuantity: '',
-    leadTimeDays: '',
+    minimumOrderQuantity: '',
     notes: '',
   })
 
@@ -91,7 +93,9 @@ export default function SupplierDetails() {
 
   // Products fetch for dropdown
   const { data: catalogData } = useFetch('/products?limit=500')
-  const allProducts = Array.isArray(catalogData) ? catalogData : catalogData?.data || []
+  const allProducts = Array.isArray(catalogData)
+    ? catalogData
+    : catalogData?.items || catalogData?.data || []
 
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
@@ -108,12 +112,12 @@ export default function SupplierDetails() {
       name: supplier.name || '',
       contactPerson: supplier.contactPerson || '',
       phone: supplier.phone || '',
+      whatsapp: supplier.whatsapp || '',
       email: supplier.email || '',
+      city: supplier.city || '',
       address: supplier.address || '',
-      taxNumber: supplier.taxNumber || '',
-      paymentTerms: supplier.paymentTerms || '',
       notes: supplier.notes || '',
-      status: supplier.status || 'ACTIVE',
+      isActive: supplier.isActive !== false,
     })
     setFormError('')
     setIsEditOpen(true)
@@ -124,7 +128,17 @@ export default function SupplierDetails() {
     setBusy(true)
     setFormError('')
     try {
-      await api.put(`/suppliers/${id}`, supplierForm)
+      await api.put(`/suppliers/${id}`, {
+        name: supplierForm.name.trim(),
+        contactPerson: supplierForm.contactPerson.trim() || null,
+        phone: supplierForm.phone.trim() || null,
+        whatsapp: supplierForm.whatsapp.trim() || null,
+        email: supplierForm.email.trim() || null,
+        city: supplierForm.city.trim() || null,
+        address: supplierForm.address.trim() || null,
+        notes: supplierForm.notes.trim() || null,
+        isActive: Boolean(supplierForm.isActive),
+      })
       showToast(t('supplierUpdatedSuccess') || 'Supplier updated successfully')
       setIsEditOpen(false)
       reload()
@@ -152,10 +166,12 @@ export default function SupplierDetails() {
       await api.post(`/suppliers/${id}/products`, {
         productId: Number(productForm.productId),
         purchasePrice: Number(productForm.purchasePrice),
-        supplierSku: productForm.supplierSku || undefined,
-        minOrderQuantity: productForm.minOrderQuantity ? Number(productForm.minOrderQuantity) : undefined,
-        leadTimeDays: productForm.leadTimeDays ? Number(productForm.leadTimeDays) : undefined,
-        notes: productForm.notes || undefined,
+        supplierSku: productForm.supplierSku?.trim() || undefined,
+        minimumOrderQuantity: productForm.minimumOrderQuantity
+          ? Number(productForm.minimumOrderQuantity)
+          : undefined,
+        notes: productForm.notes?.trim() || undefined,
+        isActive: true,
       })
       showToast(t('productAddedSuccess') || 'Product mapped to supplier successfully')
       setIsAddProductOpen(false)
@@ -163,8 +179,7 @@ export default function SupplierDetails() {
         productId: '',
         purchasePrice: '',
         supplierSku: '',
-        minOrderQuantity: '',
-        leadTimeDays: '',
+        minimumOrderQuantity: '',
         notes: '',
       })
       reload()
@@ -204,9 +219,11 @@ export default function SupplierDetails() {
         supplierId: Number(id),
         amount: Number(paymentForm.amount),
         paymentMethod: paymentForm.paymentMethod,
-        reference: paymentForm.reference || undefined,
-        paymentDate: paymentForm.paymentDate ? new Date(paymentForm.paymentDate).toISOString() : new Date().toISOString(),
-        note: paymentForm.note || undefined,
+        reference: paymentForm.reference?.trim() || undefined,
+        paymentDate: paymentForm.paymentDate
+          ? new Date(paymentForm.paymentDate).toISOString()
+          : new Date().toISOString(),
+        note: paymentForm.note?.trim() || undefined,
       })
       showToast(t('paymentSavedSuccess') || 'Payment recorded successfully')
       setIsPaymentOpen(false)
@@ -249,7 +266,8 @@ export default function SupplierDetails() {
   const payments = supplier.payments || []
   const returns = supplier.returns || []
 
-  const balance = Number(supplier.currentBalance || 0)
+  const balance = Number(supplier.balance ?? supplier.currentBalance ?? 0)
+  const isSupplierActive = supplier.isActive !== false
 
   // Columns for Products Table
   const productColumns = [
@@ -259,8 +277,12 @@ export default function SupplierDetails() {
       render: (sp) => (
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-[8px] bg-[var(--bg)] border border-[var(--line)] flex items-center justify-center shrink-0 overflow-hidden">
-            {sp.product?.thumbnailUrl ? (
-              <img src={sp.product.thumbnailUrl} alt={sp.product?.title} className="w-full h-full object-cover" />
+            {sp.product?.thumbnailUrl || sp.product?.image ? (
+              <img
+                src={sp.product.thumbnailUrl || sp.product.image}
+                alt={sp.product?.title}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <Package className="h-4 w-4 text-[var(--ink-soft)]" />
             )}
@@ -308,20 +330,11 @@ export default function SupplierDetails() {
       ),
     },
     {
-      key: 'minOrderQuantity',
+      key: 'minimumOrderQuantity',
       label: t('supplierMoq') || 'MOQ',
       render: (sp) => (
         <span className="text-xs text-[var(--ink-soft)] tabular-nums">
-          {sp.minOrderQuantity ? formatNumber(sp.minOrderQuantity) : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'leadTime',
-      label: t('supplierLeadTime') || 'Lead Time',
-      render: (sp) => (
-        <span className="text-xs text-[var(--ink-soft)]">
-          {sp.leadTimeDays ? `${sp.leadTimeDays} ${t('days') || 'days'}` : '—'}
+          {sp.minimumOrderQuantity || sp.minOrderQuantity ? formatNumber(sp.minimumOrderQuantity || sp.minOrderQuantity) : '—'}
         </span>
       ),
     },
@@ -389,7 +402,7 @@ export default function SupplierDetails() {
       label: t('paidLabel') || 'Paid',
       render: (p) => (
         <span className="text-xs font-semibold text-[var(--ink-soft)] tabular-nums">
-          {formatMoney(p.amountPaid || 0, language)}
+          {formatMoney(p.paidAmount ?? p.amountPaid ?? 0, language)}
         </span>
       ),
     },
@@ -410,6 +423,15 @@ export default function SupplierDetails() {
   // Columns for Payments Table
   const paymentColumns = [
     {
+      key: 'paymentNumber',
+      label: t('paymentNumber') || 'Payment #',
+      render: (pay) => (
+        <span className="text-xs font-bold text-[var(--ink)] font-mono">
+          {pay.paymentNumber || `#${pay.id}`}
+        </span>
+      ),
+    },
+    {
       key: 'date',
       label: t('paymentDate') || 'Payment Date',
       render: (pay) => (
@@ -422,7 +444,7 @@ export default function SupplierDetails() {
       key: 'amount',
       label: t('paymentAmount') || 'Amount',
       render: (pay) => (
-        <span className="text-xs font-bold text-[var(--green)] tabular-nums">
+        <span className="text-xs font-bold text-emerald-400 tabular-nums">
           {formatMoney(pay.amount || 0, language)}
         </span>
       ),
@@ -460,15 +482,6 @@ export default function SupplierDetails() {
           <span className="text-xs text-[var(--ink-soft)]">{t('supplierAccountPayment') || 'General Balance'}</span>
         ),
     },
-    {
-      key: 'creator',
-      label: t('recordedBy') || 'Recorded By',
-      render: (pay) => (
-        <span className="text-xs text-[var(--ink-soft)]">
-          {pay.createdByUser?.fullName || pay.createdByUser?.email || '—'}
-        </span>
-      ),
-    },
   ]
 
   // Columns for Returns Table
@@ -496,11 +509,11 @@ export default function SupplierDetails() {
       ),
     },
     {
-      key: 'totalAmount',
+      key: 'refundAmount',
       label: t('grandTotal') || 'Amount Credited',
       render: (ret) => (
         <span className="text-xs font-bold text-[var(--ink)] tabular-nums">
-          {formatMoney(ret.totalAmount || 0, language)}
+          {formatMoney(ret.refundAmount ?? ret.totalAmount ?? 0, language)}
         </span>
       ),
     },
@@ -521,7 +534,7 @@ export default function SupplierDetails() {
       {toastMessage ? (
         <div
           className={`fixed bottom-5 end-5 z-50 flex items-center gap-2 px-4 py-3 rounded-[12px] shadow-lg text-xs font-semibold text-white transition-all ${
-            toastMessage.type === 'error' ? 'bg-[var(--red)]' : 'bg-[var(--green)]'
+            toastMessage.type === 'error' ? 'bg-[var(--red)]' : 'bg-emerald-600'
           }`}
         >
           <CheckCircle2 className="h-4 w-4" />
@@ -544,8 +557,8 @@ export default function SupplierDetails() {
                 <Building2 className="h-5 w-5 text-[var(--purple)]" />
                 <span>{supplier.name}</span>
               </h1>
-              <Badge kind={supplier.status === 'ACTIVE' ? 'ok' : 'neutral'}>
-                {supplier.status === 'ACTIVE' ? t('supplierActive') || 'Active' : t('supplierInactive') || 'Inactive'}
+              <Badge kind={isSupplierActive ? 'ok' : 'neutral'}>
+                {isSupplierActive ? t('supplierActive') || 'Active' : t('supplierInactive') || 'Inactive'}
               </Badge>
             </div>
             {supplier.contactPerson ? (
@@ -568,7 +581,7 @@ export default function SupplierDetails() {
 
           {canManagePayments ? (
             <Button variant="secondary" onClick={() => setIsPaymentOpen(true)}>
-              <Coins className="h-4 w-4 text-[var(--green)]" />
+              <Coins className="h-4 w-4 text-emerald-400" />
               {t('recordPaymentBtn') || 'Record Payment'}
             </Button>
           ) : null}
@@ -621,29 +634,40 @@ export default function SupplierDetails() {
               <Phone className="h-3.5 w-3.5 text-[var(--ink-soft)] shrink-0" />
               <span className="font-mono" dir="ltr">{supplier.phone || '—'}</span>
             </div>
+            {supplier.whatsapp && (
+              <div className="flex items-center gap-2 text-emerald-400">
+                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-mono" dir="ltr">{supplier.whatsapp}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-[var(--ink)]">
               <Mail className="h-3.5 w-3.5 text-[var(--ink-soft)] shrink-0" />
               <span>{supplier.email || '—'}</span>
             </div>
-            <div className="flex items-start gap-2 text-[var(--ink)]">
-              <MapPin className="h-3.5 w-3.5 text-[var(--ink-soft)] shrink-0 mt-0.5" />
-              <span>{supplier.address || '—'}</span>
-            </div>
+            {supplier.city && (
+              <div className="flex items-center gap-2 text-[var(--ink)]">
+                <MapPin className="h-3.5 w-3.5 text-[var(--ink-soft)] shrink-0" />
+                <span>{supplier.city}</span>
+              </div>
+            )}
+            {supplier.address && (
+              <div className="flex items-start gap-2 text-[var(--ink-soft)]">
+                <span className="text-[11px]">{supplier.address}</span>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="text-[11px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">
-            {t('businessTerms') || 'Business & Tax'}
+            {t('businessTerms') || 'Account & Activity'}
           </div>
           <div className="space-y-1.5">
             <div>
-              <span className="text-[var(--ink-soft)]">{t('supplierTaxNumber') || 'Tax ID / ICE'}: </span>
-              <span className="font-semibold text-[var(--ink)]">{supplier.taxNumber || '—'}</span>
-            </div>
-            <div>
-              <span className="text-[var(--ink-soft)]">{t('supplierPaymentTerms') || 'Terms'}: </span>
-              <span className="font-semibold text-[var(--ink)]">{supplier.paymentTerms || 'Standard'}</span>
+              <span className="text-[var(--ink-soft)]">{t('supplierStatus') || 'Status'}: </span>
+              <span className="font-semibold text-[var(--ink)]">
+                {isSupplierActive ? t('supplierActive') || 'Active' : t('supplierInactive') || 'Inactive'}
+              </span>
             </div>
             <div>
               <span className="text-[var(--ink-soft)]">{t('createdAt') || 'Joined'}: </span>
@@ -844,16 +868,24 @@ export default function SupplierDetails() {
             />
 
             <Input
+              label={t('supplierWhatsapp') || 'WhatsApp'}
+              value={supplierForm.whatsapp}
+              onChange={(e) => setSupplierForm({ ...supplierForm, whatsapp: e.target.value })}
+              dir="ltr"
+            />
+
+            <Input
               label={t('supplierEmail') || 'Email'}
               type="email"
               value={supplierForm.email}
               onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })}
+              dir="ltr"
             />
 
             <Input
-              label={t('supplierTaxNumber') || 'Tax ID / ICE'}
-              value={supplierForm.taxNumber}
-              onChange={(e) => setSupplierForm({ ...supplierForm, taxNumber: e.target.value })}
+              label={t('supplierCity') || 'City'}
+              value={supplierForm.city}
+              onChange={(e) => setSupplierForm({ ...supplierForm, city: e.target.value })}
             />
 
             <div className="sm:col-span-2">
@@ -864,20 +896,27 @@ export default function SupplierDetails() {
               />
             </div>
 
-            <Input
-              label={t('supplierPaymentTerms') || 'Payment Terms'}
-              value={supplierForm.paymentTerms}
-              onChange={(e) => setSupplierForm({ ...supplierForm, paymentTerms: e.target.value })}
-            />
-
-            <Select
-              label={t('supplierStatus') || 'Status'}
-              value={supplierForm.status}
-              onChange={(e) => setSupplierForm({ ...supplierForm, status: e.target.value })}
-            >
-              <option value="ACTIVE">{t('supplierActive') || 'Active'}</option>
-              <option value="INACTIVE">{t('supplierInactive') || 'Inactive'}</option>
-            </Select>
+            <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-xl border border-[var(--line)] bg-[var(--bg)]/50">
+              <div>
+                <div className="text-xs font-semibold text-[var(--ink)]">
+                  {t('supplierStatus') || 'Supplier Active Status'}
+                </div>
+                <div className="text-[11px] text-[var(--ink-soft)] mt-0.5">
+                  {supplierForm.isActive
+                    ? t('supplierActiveDesc') || 'Supplier is enabled and available for purchases'
+                    : t('supplierInactiveDesc') || 'Supplier is inactive'}
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={supplierForm.isActive}
+                  onChange={(e) => setSupplierForm({ ...supplierForm, isActive: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--purple)]" />
+              </label>
+            </div>
 
             <div className="sm:col-span-2">
               <Textarea
@@ -961,23 +1000,16 @@ export default function SupplierDetails() {
               onChange={(e) => setProductForm({ ...productForm, supplierSku: e.target.value })}
             />
 
-            <Input
-              label={t('supplierMoq') || 'Min Order Quantity (MOQ)'}
-              type="number"
-              min="1"
-              placeholder="e.g. 10"
-              value={productForm.minOrderQuantity}
-              onChange={(e) => setProductForm({ ...productForm, minOrderQuantity: e.target.value })}
-            />
-
-            <Input
-              label={t('supplierLeadTime') || 'Lead Time (Days)'}
-              type="number"
-              min="0"
-              placeholder="e.g. 7"
-              value={productForm.leadTimeDays}
-              onChange={(e) => setProductForm({ ...productForm, leadTimeDays: e.target.value })}
-            />
+            <div className="sm:col-span-2">
+              <Input
+                label={t('supplierMoq') || 'Min Order Quantity (MOQ)'}
+                type="number"
+                min="1"
+                placeholder="e.g. 10"
+                value={productForm.minimumOrderQuantity}
+                onChange={(e) => setProductForm({ ...productForm, minimumOrderQuantity: e.target.value })}
+              />
+            </div>
           </div>
 
           <Textarea
@@ -1016,7 +1048,7 @@ export default function SupplierDetails() {
 
           <div className="p-3 rounded-[10px] bg-[var(--bg)] border border-[var(--line)] text-xs flex justify-between items-center">
             <span className="text-[var(--ink-soft)]">{t('supplierCurrentBalance') || 'Current Balance'}:</span>
-            <span className={`font-bold tabular-nums ${balance > 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+            <span className={`font-bold tabular-nums ${balance > 0 ? 'text-[var(--red)]' : 'text-emerald-400'}`}>
               {formatMoney(balance, language)}
             </span>
           </div>
