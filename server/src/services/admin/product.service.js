@@ -14,6 +14,13 @@ const INCLUDE = {
   images: {
     orderBy: { sortOrder: 'asc' },
   },
+  supplierProducts: {
+    include: {
+      supplier: {
+        select: { id: true, name: true },
+      },
+    },
+  },
 }
 
 // Admin-only product shape — includes costPrice, per-unit profit, images, and shipping settings.
@@ -56,6 +63,21 @@ export function serializeAdminProduct(product) {
     year: product.year,
     shippingMode: product.shippingMode ?? null,
     customShipping: product.customShipping ?? null,
+    currentStock: product.currentStock ?? 0,
+    trackStock: product.trackStock ?? false,
+    lowStockThreshold: product.lowStockThreshold ?? 5,
+    supplierProducts: (product.supplierProducts || []).map((sp) => ({
+      id: sp.id,
+      supplierId: sp.supplierId,
+      supplierName: sp.supplier?.name || null,
+      purchasePrice: Number(sp.purchasePrice),
+      minimumOrderQuantity: sp.minimumOrderQuantity,
+      supplierSku: sp.supplierSku,
+      notes: sp.notes,
+      lastPurchasePrice: sp.lastPurchasePrice ? Number(sp.lastPurchasePrice) : null,
+      lastPurchasedAt: sp.lastPurchasedAt,
+      isActive: sp.isActive,
+    })),
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   }
