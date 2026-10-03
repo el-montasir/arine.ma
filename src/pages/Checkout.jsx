@@ -1,43 +1,25 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { MapPin, CreditCard, ArrowRight, ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
-import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
+import { useCheckout } from '../hooks/useCheckout'
 import { formatPrice } from '../utils/format'
-import { trackInitiateCheckout, generateClientEventId, getAttributionData } from '../utils/tracking'
-import api from '../utils/api'
-
-const INITIAL_FORM = {
-  fullName: '',
-  phone: '',
-  city: '',
-  address: '',
-  note: '',
-  paymentMethod: 'CASH_ON_DELIVERY',
-}
 
 export default function Checkout() {
-  const { items, subtotal, shipping, total, shippingConfig, clearCart } = useCart()
+  const {
+    form,
+    fieldErrors,
+    formError,
+    submitting,
+    update,
+    handleSubmit,
+    items,
+    subtotal,
+    shipping,
+    total,
+  } = useCheckout()
   const { t, isRTL } = useLanguage()
-  const navigate = useNavigate()
-
-  const [form, setForm] = useState(INITIAL_FORM)
-  const [fieldErrors, setFieldErrors] = useState({})
-  const [formError, setFormError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (items.length > 0) {
-      trackInitiateCheckout(items, total)
-    }
-  }, [])
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
-
-  const update = (key) => (e) => {
-    setForm((f) => ({ ...f, [key]: e.target.value }))
-    setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev))
-  }
 
   const inputClass = (hasError) =>
     `w-full px-3.5 sm:px-4 py-3 sm:py-3.5 bg-[#F5F1F7] border rounded-[12px] sm:rounded-[14px] text-[0.85rem] sm:text-[0.88rem] text-[#1C1220] placeholder:text-[#7A6D80]/50 outline-none focus:bg-white focus:ring-2 focus:ring-[#EBDCF1] transition-all ${
@@ -45,88 +27,6 @@ export default function Checkout() {
         ? 'border-red-300 focus:border-red-500'
         : 'border-[#EFE8F2] focus:border-[#8F3AA1]'
     }`
-
-  function validate() {
-    const errors = {}
-    if (!form.fullName.trim()) errors.fullName = t('reqFullName')
-    if (!form.phone.trim()) {
-      errors.phone = t('reqPhone')
-    } else if (form.phone.replace(/\D/g, '').length < 8) {
-      errors.phone = t('invalidPhone')
-    }
-    if (!form.city.trim()) errors.city = t('reqCity')
-    if (!form.address.trim()) errors.address = t('reqAddress')
-    return errors
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-
-    if (items.length === 0) {
-      setFormError(t('emptyCartError'))
-      return
-    }
-
-    const errors = validate()
-    setFieldErrors(errors)
-    if (Object.keys(errors).length > 0) {
-      setFormError(t('reqFullName'))
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-
-    setSubmitting(true)
-    setFormError('')
-
-    try {
-      const bookItems = items
-        .filter((i) => !i.isPackage)
-        .map((i) => ({ productId: typeof i.id === 'number' ? i.id : Number(String(i.id).replace('book-', '')), quantity: i.quantity }))
-
-      const packageItems = items
-        .filter((i) => i.isPackage)
-        .map((i) => ({ packageId: i.packageId || Number(String(i.id).replace('pkg-', '')), quantity: i.quantity }))
-
-      const eventId = generateClientEventId('pur')
-      const attribution = getAttributionData()
-
-      const res = await api.post('/orders', {
-        fullName: form.fullName.trim(),
-        phone: form.phone.trim(),
-        city: form.city.trim(),
-        address: form.address.trim(),
-        note: form.note.trim() || undefined,
-        paymentMethod: form.paymentMethod,
-        items: bookItems,
-        packages: packageItems,
-        attribution,
-        eventId,
-      })
-
-      // Success: the server confirmed the order.
-      const order = res.order
-      const receipt = {
-        orderNumber: order.orderNumber,
-        total: order.total,
-        fullName: form.fullName.trim(),
-        city: form.city.trim(),
-        paymentMethod: form.paymentMethod,
-        items: items,
-        eventId: eventId,
-      }
-      try {
-        sessionStorage.setItem('arine-last-order', JSON.stringify(receipt))
-      } catch {
-        /* storage unavailable — receipt still works via router state */
-      }
-      clearCart()
-      navigate('/order-success', { state: receipt })
-    } catch (err) {
-      // Failure: keep the cart AND the form data intact so the user can retry.
-      setFormError(err.message || t('orderFailed'))
-      setSubmitting(false)
-    }
-  }
 
   if (items.length === 0) {
     return (
