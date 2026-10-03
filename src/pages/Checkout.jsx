@@ -130,20 +130,14 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center px-4 py-12 sm:py-16">
-        <div className="w-full max-w-[420px] rounded-[24px] bg-white border border-[#EFE8F2] shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-[#F6EDF9] border border-[#EBDCF1] rounded-[20px] flex items-center justify-center mx-auto mb-4 shadow-2xs">
-            <CreditCard className="w-8 h-8 text-[#8F3AA1]" />
-          </div>
-          <h2 className="text-xl font-tajawal font-extrabold text-[#1C1220] mb-2">{t('emptyCartTitle')}</h2>
-          <p className="text-xs text-[#7A6D80] mb-6">{t('emptyCartSubtitle')}</p>
-          <Link
-            to="/shop"
-            className="inline-flex items-center justify-center gap-2 w-full py-3.5 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 text-white font-bold rounded-[14px] shadow-md shadow-[#6B2178]/20 transition-all text-sm"
-          >
-            {t('backToStore')}
-          </Link>
-        </div>
+      <div className="max-w-[1440px] mx-auto px-4 py-16 text-center">
+        <h2 className="text-2xl font-tajawal font-extrabold text-[#1C1220] mb-2">{t('emptyCartTitle')}</h2>
+        <Link
+          to="/shop"
+          className="mt-4 inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 text-white font-bold rounded-[14px] shadow-md shadow-[#6B2178]/20 transition-all"
+        >
+          {t('backToStore')}
+        </Link>
       </div>
     )
   }
@@ -331,17 +325,12 @@ export default function Checkout() {
                     {shipping === 0 ? t('free') : formatPrice(shipping)}
                   </span>
                 </div>
-                {shipping === 0 && subtotal > 0 && (
+                {shipping === 0 && (
                   <div className="text-[0.75rem] sm:text-[0.78rem] text-[#0F6E51] bg-[#E8F7F1] border border-[#0F6E51]/15 px-3 py-2 rounded-[12px] font-semibold">
                     {items.some((i) => i.shippingMode === 'free' || i.shippingMode === 'FREE')
                       ? t('freeShippingProductQualified')
                       : t('freeShippingQualified')}
                   </div>
-                )}
-                {shipping > 0 && shippingConfig?.freeEnabled && (
-                  <p className="text-[0.75rem] sm:text-[0.78rem] text-[#7A6D80] bg-white lg:bg-[#F5F1F7] border border-[#EFE8F2] px-3 py-2 rounded-[12px]">
-                    توصيل مجاني للطلبات فوق {shippingConfig?.freeThreshold} د.م
-                  </p>
                 )}
                 <div className="border-t border-[#EFE8F2] pt-3.5 sm:pt-4 flex justify-between items-baseline">
                   <span className="font-bold text-base text-[#1C1220]">{t('total')}</span>
