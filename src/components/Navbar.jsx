@@ -169,45 +169,121 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {isMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white">
-            <div className="px-4 py-4 space-y-1">
-              {NAV_LINKS.map((link) => (
+      </nav>
+
+      {/* Mobile Floating Menu */}
+      {isMenuOpen && (
+        <div className="lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-xs fade-in"
+            onClick={() => setIsMenuOpen(false)}
+          />
+
+          {/* Floating Menu Container */}
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="pointer-events-auto w-full max-w-[380px] max-h-[calc(100dvh-32px)] bg-white border border-[#EBDCF1] rounded-[26px] shadow-[0_8px_32px_-8px_rgba(107,33,120,0.12),0_4px_20px_-4px_rgba(143,58,161,0.08),0_1px_3px_rgba(62,17,71,0.04)] flex flex-col overflow-hidden fade-in"
+              role="dialog"
+              aria-label={t('menu') || 'القائمة'}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[#EFE8F2] bg-white shrink-0">
                 <Link
-                  key={link.key}
-                  to={link.to}
+                  to="/"
                   onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] transition-colors ${
-                    pathname === link.to
-                      ? 'bg-purple-50 text-purple-800 font-bold'
-                      : 'text-gray-700 hover:text-purple-800 hover:bg-purple-50 font-medium'
+                  className="flex items-center select-none"
+                >
+                  {showLogoImage ? (
+                    (() => {
+                      const logoImg = getThumbnailImageProps(config?.store?.logo)
+                      return (
+                        <img
+                          key={resolvedLogoUrl}
+                          src={logoImg.src}
+                          srcSet={logoImg.srcSet}
+                          sizes={logoImg.sizes}
+                          alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
+                          className="h-8 w-auto object-contain shrink-0"
+                          loading="eager"
+                          decoding="async"
+                          onError={(e) => {
+                            createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                            setErroredLogoUrl(resolvedLogoUrl)
+                          }}
+                        />
+                      )
+                    })()
+                  ) : (
+                    <img
+                      src="/logo.png"
+                      alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
+                      className="h-8 w-auto object-contain shrink-0"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  )}
+                </Link>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 rounded-xl text-[#7A6D80] hover:text-[#1C1220] hover:bg-[#F5F1F7] transition-colors"
+                  aria-label={t('close') || 'إغلاق'}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Menu Items */}
+              <div className="p-4 space-y-2.5 overflow-y-auto max-h-[calc(100dvh-120px)]">
+                {NAV_LINKS.map((link) => {
+                  const isActive = pathname === link.to
+                  return (
+                    <Link
+                      key={link.key}
+                      to={link.to}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`flex items-center justify-between px-4 py-3.5 rounded-[16px] border text-[0.92rem] font-tajawal transition-all shadow-2xs ${
+                        isActive
+                          ? 'bg-[#F6EDF9] text-[#6B2178] border-[#EBDCF1] font-bold shadow-xs'
+                          : 'bg-white text-[#1C1220] border-[#EFE8F2] hover:bg-[#FBF7FC] hover:border-[#EBDCF1] hover:text-[#6B2178] font-semibold'
+                      }`}
+                    >
+                      <span>{link.label}</span>
+                      <ChevronIcon
+                        className={`w-4 h-4 transition-transform ${
+                          isActive ? 'text-[#6B2178] opacity-80' : 'text-[#7A6D80] opacity-40'
+                        }`}
+                      />
+                    </Link>
+                  )
+                })}
+
+                <Link
+                  to="/favorites"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center justify-between px-4 py-3.5 rounded-[16px] border text-[0.92rem] font-tajawal transition-all shadow-2xs ${
+                    pathname === '/favorites'
+                      ? 'bg-[#F6EDF9] text-[#6B2178] border-[#EBDCF1] font-bold shadow-xs'
+                      : 'bg-white text-[#1C1220] border-[#EFE8F2] hover:bg-[#FBF7FC] hover:border-[#EBDCF1] hover:text-[#6B2178] font-semibold'
                   }`}
                 >
-                  <span>{link.label}</span>
-                  <ChevronIcon className="w-4 h-4 opacity-30" />
+                  <div className="flex items-center gap-2.5">
+                    <Heart className="w-4 h-4 text-rose-500 fill-rose-50 shrink-0" />
+                    <span>{t('favorites') || 'المفضلة'}</span>
+                  </div>
+                  {favorites.length > 0 ? (
+                    <span className="px-2 py-0.5 bg-rose-50 border border-rose-200/60 text-rose-600 rounded-full text-xs font-bold">
+                      {favorites.length}
+                    </span>
+                  ) : (
+                    <ChevronIcon className="w-4 h-4 text-[#7A6D80] opacity-40" />
+                  )}
                 </Link>
-              ))}
-
-              <Link
-                to="/favorites"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center justify-between px-4 py-3 rounded-xl text-[0.92rem] font-medium text-gray-700 hover:text-purple-800 hover:bg-purple-50 transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Heart className="w-4 h-4 text-red-500" />
-                  <span>{t('favorites') || 'المفضلة'}</span>
-                </div>
-                {favorites.length > 0 && (
-                  <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-bold">
-                    {favorites.length}
-                  </span>
-                )}
-              </Link>
+              </div>
             </div>
           </div>
-        )}
-      </nav>
+        </div>
+      )}
 
       {/* Search overlay */}
       {searchOpen && (
