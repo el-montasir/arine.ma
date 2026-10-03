@@ -40,8 +40,10 @@ export default function Payments() {
   const { data: responseData, loading, error, reload } = useFetch('/payments?limit=200')
   const payments = Array.isArray(responseData) ? responseData : responseData?.data || []
 
-  const { data: suppliersData } = useFetch('/suppliers')
-  const suppliers = Array.isArray(suppliersData) ? suppliersData : suppliersData?.data || []
+  const { data: suppliersData } = useFetch('/suppliers?limit=100')
+  const suppliers = Array.isArray(suppliersData)
+    ? suppliersData
+    : suppliersData?.items || suppliersData?.data || []
 
   // Create payment modal state
   const [isModalOpen, setIsModalOpen] = useState(false)

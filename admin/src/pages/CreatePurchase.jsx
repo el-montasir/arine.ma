@@ -47,9 +47,11 @@ export default function CreatePurchase() {
   const preselectedSupplierId = searchParams.get('supplierId')
 
   // --- Fetch Base Data ---
-  const { data: suppliersData, loading: loadingSuppliers } = useFetch('/suppliers')
+  const { data: suppliersData, loading: loadingSuppliers } = useFetch('/suppliers?limit=100')
   const suppliers = useMemo(() => {
-    const raw = Array.isArray(suppliersData) ? suppliersData : suppliersData?.data || []
+    const raw = Array.isArray(suppliersData)
+      ? suppliersData
+      : (suppliersData?.items || suppliersData?.data || [])
     return raw.filter((s) => s.isActive !== false)
   }, [suppliersData])
 

@@ -63,7 +63,7 @@ export const updateSupplierSchema = z
   .refine((v) => Object.keys(v).length > 0, { message: 'لا توجد بيانات للتعديل' })
 
 export const supplierProductSchema = z.object({
-  productId: z.number().int().positive('معرف المنتج غير صحيح'),
+  productId: z.number().int().positive('معرف المنتج غير صحيح').optional(),
   purchasePrice: z.number().min(0, 'سعر الشراء غير صحيح').max(1_000_000, 'سعر الشراء كبير جداً'),
   minimumOrderQuantity: z.number().int().min(1, 'الحد الأدنى للطلب يجب أن يكون 1 على الأقل').nullable().optional(),
   supplierSku: z

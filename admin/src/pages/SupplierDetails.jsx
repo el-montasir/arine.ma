@@ -261,7 +261,7 @@ export default function SupplierDetails() {
     )
   }
 
-  const supplierProducts = supplier.supplierProducts || []
+  const supplierProducts = supplier.products || supplier.supplierProducts || []
   const purchases = supplier.purchases || []
   const payments = supplier.payments || []
   const returns = supplier.returns || []

@@ -42,8 +42,10 @@ export default function Purchases() {
   const purchases = Array.isArray(responseData) ? responseData : responseData?.data || []
 
   // Fetch suppliers for filter dropdown
-  const { data: suppliersData } = useFetch('/suppliers')
-  const suppliers = Array.isArray(suppliersData) ? suppliersData : suppliersData?.data || []
+  const { data: suppliersData } = useFetch('/suppliers?limit=100')
+  const suppliers = Array.isArray(suppliersData)
+    ? suppliersData
+    : suppliersData?.items || suppliersData?.data || []
 
   // Filtering
   const filteredPurchases = useMemo(() => {
