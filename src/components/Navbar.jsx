@@ -54,9 +54,9 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-xs">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-[72px] gap-4">
+      <nav className="sticky top-0 z-50 px-3 sm:px-4 pt-2.5 pb-1 lg:p-0 bg-transparent lg:bg-white lg:border-b lg:border-gray-100 lg:shadow-xs pointer-events-none lg:pointer-events-auto">
+        <div className="max-w-[1440px] mx-auto lg:px-8 pointer-events-auto">
+          <div className="flex items-center justify-between h-14 sm:h-15 lg:h-[72px] gap-4 px-3.5 sm:px-4 lg:px-0 rounded-[22px] lg:rounded-none bg-white/75 lg:bg-transparent backdrop-blur-[18px] backdrop-saturate-[140%] border border-white/70 lg:border-none shadow-[0_8px_24px_-6px_rgba(76,22,96,0.08),0_2px_8px_rgba(0,0,0,0.04)] lg:shadow-none">
 
             {/* Mobile menu toggle */}
             <button
