@@ -65,11 +65,13 @@ export default function Banners() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [formError, setFormError] = useState('')
   const [imageError, setImageError] = useState('')
+  const [imageMode, setImageMode] = useState('upload') // 'upload' | 'url'
   const [filterType, setFilterType] = useState('all')
 
   const openCreateModal = () => {
     setEditingBanner(null)
     setForm(EMPTY_BANNER)
+    setImageMode('upload')
     setFormError('')
     setImageError('')
     setModalOpen(true)
@@ -77,6 +79,12 @@ export default function Banners() {
 
   const openEditModal = (banner) => {
     setEditingBanner(banner)
+    const isExternalUrl = Boolean(
+      banner.image &&
+      (banner.image.startsWith('http://') || banner.image.startsWith('https://')) &&
+      !banner.image.includes('/uploads/')
+    )
+    setImageMode(isExternalUrl ? 'url' : 'upload')
     setForm({
       title: banner.title || '',
       description: banner.description || '',
@@ -454,15 +462,43 @@ export default function Banners() {
           </div>
 
           {/* Image Upload & Preview Section */}
-          <div className="space-y-2 rounded-[12px] border border-[var(--line)] bg-[var(--bg)] p-3.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[var(--ink)] flex items-center gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5 text-[var(--purple)]" />
-                <span>{t('bannerImage')}</span>
-              </label>
-              <span className="text-[10px] text-[var(--ink-soft)]">
-                {t('bannerImageUploadHint')}
-              </span>
+          <div className="space-y-3 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-3.5 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <label className="text-xs font-bold text-[var(--ink)] flex items-center gap-1.5">
+                  <ImageIcon className="h-4 w-4 text-[var(--purple)]" />
+                  <span>{t('bannerImageSource')}</span>
+                </label>
+                <p className="text-[11px] text-[var(--ink-soft)] mt-0.5">
+                  {t('bannerImageSourceHint')}
+                </p>
+              </div>
+
+              {/* Mode Toggle Tabs */}
+              <div className="inline-flex rounded-[10px] border border-[var(--line)] bg-[var(--card)] p-0.5 shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setImageMode('upload')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-[8px] transition-colors cursor-pointer ${
+                    imageMode === 'upload'
+                      ? 'bg-[var(--purple)] text-white shadow-xs'
+                      : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  {t('bannerImageModeUpload')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageMode('url')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-[8px] transition-colors cursor-pointer ${
+                    imageMode === 'url'
+                      ? 'bg-[var(--purple)] text-white shadow-xs'
+                      : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  {t('bannerImageModeUrl')}
+                </button>
+              </div>
             </div>
 
             {imageError && (
@@ -480,72 +516,90 @@ export default function Banners() {
               className="hidden"
             />
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-1">
               {/* Image Preview Box */}
-              <div className="h-16 w-28 rounded-[8px] bg-[var(--card)] border border-[var(--line)] flex items-center justify-center overflow-hidden shrink-0">
+              <div className="h-20 w-32 rounded-[10px] bg-[var(--card)] border border-[var(--line)] flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
                 {form.image ? (
                   <img
                     src={getImageUrl(form.image)}
                     alt="Banner Preview"
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://placehold.co/100x60/211839/a78bfa?text=No+Image'
+                      e.currentTarget.src = 'https://placehold.co/128x80/211839/a78bfa?text=No+Image'
                     }}
                   />
                 ) : (
-                  <Megaphone className="h-5 w-5 text-[var(--ink-soft)]" />
+                  <div className="flex flex-col items-center gap-1 text-[var(--ink-soft)] p-2 text-center">
+                    <ImageIcon className="h-6 w-6 opacity-40" />
+                    <span className="text-[10px] opacity-70">{t('noImagePlaceholder')}</span>
+                  </div>
                 )}
               </div>
 
-              {/* Upload & Remove Buttons */}
-              <div className="flex flex-wrap items-center gap-2 flex-1 w-full">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImage}
-                >
-                  {uploadingImage ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>{t('uploading')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <UploadCloud className="h-3.5 w-3.5" />
-                      <span>{form.image ? t('bannerChangeImageBtn') : t('bannerUploadImageBtn')}</span>
-                    </>
-                  )}
-                </Button>
+              {/* Upload Controls or URL Input based on Mode */}
+              <div className="flex-1 w-full space-y-2">
+                {imageMode === 'upload' ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImage}
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <span>{t('uploading')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="h-3.5 w-3.5" />
+                            <span>{form.image ? t('bannerChangeImageBtn') : t('bannerUploadImageBtn')}</span>
+                          </>
+                        )}
+                      </Button>
 
-                {form.image && (
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={handleRemoveImage}
-                    disabled={uploadingImage}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>{t('bannerRemoveImageBtn')}</span>
-                  </Button>
+                      {form.image && (
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                          disabled={uploadingImage}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>{t('bannerRemoveImageBtn')}</span>
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[var(--ink-soft)] leading-relaxed">
+                      {t('bannerImageUploadHint')}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Input
+                      label={t('bannerImageUrlLabel')}
+                      hint={t('bannerImageUrlHelp')}
+                      dir="ltr"
+                      value={form.image}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, image: e.target.value, imageVariantWidths: [] }))
+                      }
+                      placeholder={t('bannerImagePlaceholder')}
+                    />
+                  </div>
                 )}
-
-                <div className="w-full mt-1">
-                  <Input
-                    dir="ltr"
-                    value={form.image}
-                    onChange={(e) => setForm((f) => ({ ...f, image: e.target.value }))}
-                    placeholder={t('bannerImagePlaceholder')}
-                  />
-                </div>
               </div>
             </div>
           </div>
 
+          {/* Target Destination URL Section */}
           <Input
-            label={t('bannerLink')}
+            label={t('bannerTargetLinkLabel')}
+            hint={t('bannerTargetLinkHelp')}
             dir="ltr"
             value={form.link}
             onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))}
