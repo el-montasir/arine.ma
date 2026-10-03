@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
-import { getImageUrl } from '../lib/images.js'
 
 export default function Login() {
   const { login } = useAuth()
@@ -19,35 +18,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [storeConfig, setStoreConfig] = useState(null)
-  const [logoError, setLogoError] = useState(false)
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/admin'
-  let serverOrigin = 'http://localhost:4000'
-  try {
-    const parsed = new URL(apiUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4000')
-    serverOrigin = parsed.origin
-  } catch {
-    serverOrigin = 'http://localhost:4000'
-  }
-
-  useEffect(() => {
-    let active = true
-    fetch(`${serverOrigin}/api/store-config`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (active && json?.data?.store) {
-          setStoreConfig(json.data.store)
-        }
-      })
-      .catch(() => {})
-    return () => {
-      active = false
-    }
-  }, [serverOrigin])
-
-  const storeLogo = storeConfig?.logo
-  const storeName = storeConfig?.name || t('appName') || 'Arine'
   const redirectTo = location.state?.from?.pathname || '/dashboard'
 
   async function onSubmit(e) {
@@ -86,22 +57,11 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-[420px] rounded-[24px] border border-white/10 bg-[#101323]/80 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl">
         {/* Store Branding Header */}
         <div className="flex flex-col items-center text-center mb-7">
-          {storeLogo && !logoError ? (
-            <img
-              src={getImageUrl(storeLogo)}
-              alt={storeName}
-              onError={() => setLogoError(true)}
-              className="h-14 w-auto object-contain mb-3 drop-shadow-md"
-            />
-          ) : (
-            <img
-              src="/logo.png"
-              alt={storeName}
-              className="h-14 w-auto object-contain mb-3 drop-shadow-md"
-            />
-          )}
-          <h1 className="text-xl font-bold text-white tracking-tight">{storeName}</h1>
-          <p className="text-xs text-white/50 mt-1">{t('loginSubtitle') || 'Enter your credentials to continue'}</p>
+          <img
+            src="/logo.png"
+            alt="Arine"
+            className="h-14 w-auto object-contain drop-shadow-md"
+          />
         </div>
 
         {/* Error Alert */}

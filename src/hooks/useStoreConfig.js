@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
-import { getImageUrl } from '../utils/images'
 import { registerImageVariantsFromPayload } from '../lib/image-metadata'
 
-export function updateFavicon(logoPath) {
+export function updateFavicon() {
   if (typeof document === 'undefined') return
 
   // Enforce consistent title across the storefront
   document.title = 'arine.ma'
 
-  const targetHref = logoPath ? getImageUrl(logoPath) : '/logo.png'
+  const targetHref = '/logo.png'
 
   const rels = ['icon', 'shortcut icon', 'apple-touch-icon']
   rels.forEach((rel) => {
@@ -20,9 +19,7 @@ export function updateFavicon(logoPath) {
       document.head.appendChild(link)
     }
     link.href = targetHref
-    if (targetHref.endsWith('.png')) {
-      link.type = 'image/png'
-    }
+    link.type = 'image/png'
   })
 }
 
@@ -40,17 +37,13 @@ export function useStoreConfig() {
           // BEFORE setConfig, so the logo's srcset is correct on first paint.
           registerImageVariantsFromPayload(res.data)
           setConfig(res.data)
-          if (res.data.store?.logo) {
-            updateFavicon(res.data.store.logo)
-          } else {
-            updateFavicon(null)
-          }
+          updateFavicon()
         }
       })
       .catch((err) => {
         if (mounted) {
           setError(err)
-          updateFavicon(null)
+          updateFavicon()
         }
       })
       .finally(() => {

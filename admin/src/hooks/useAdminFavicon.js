@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
-import { getImageUrl } from '../lib/images.js'
+import { useEffect } from 'react'
 
-function applyFavicon(iconUrl) {
+export function applyFavicon() {
   if (typeof document === 'undefined') return
 
-  const href = iconUrl || '/logo.png'
+  const href = '/logo.png'
 
   // Update or create standard icon link
   let iconLink = document.querySelector("link[rel~='icon']")
@@ -14,9 +13,7 @@ function applyFavicon(iconUrl) {
     document.head.appendChild(iconLink)
   }
   iconLink.href = href
-  if (href.endsWith('.png')) {
-    iconLink.type = 'image/png'
-  }
+  iconLink.type = 'image/png'
 
   // Update or create shortcut icon link
   let shortcutLink = document.querySelector("link[rel='shortcut icon']")
@@ -38,62 +35,11 @@ function applyFavicon(iconUrl) {
 }
 
 export function useAdminFavicon() {
-  const [logoUrl, setLogoUrl] = useState('')
-
-  const updateFromLogo = (rawLogo) => {
-    if (rawLogo && typeof rawLogo === 'string' && rawLogo.trim()) {
-      const fullUrl = getImageUrl(rawLogo.trim())
-      setLogoUrl(fullUrl)
-      applyFavicon(fullUrl)
-    } else {
-      setLogoUrl('')
-      applyFavicon('/logo.png')
-    }
-  }
-
   useEffect(() => {
-    let mounted = true
-
-    async function loadLogo() {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/admin'
-        let serverOrigin = 'http://localhost:4000'
-        try {
-          const parsed = new URL(apiUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4000')
-          serverOrigin = parsed.origin
-        } catch {
-          serverOrigin = 'http://localhost:4000'
-        }
-
-        const res = await fetch(`${serverOrigin}/api/store-config`)
-        if (!res.ok) return
-        const json = await res.json()
-        if (mounted && json?.data?.store?.logo) {
-          updateFromLogo(json.data.store.logo)
-        }
-      } catch {
-        // Fallback gracefully to default favicon on network or config errors
-        if (mounted) {
-          applyFavicon('/logo.png')
-        }
-      }
-    }
-
-    loadLogo()
-
-    const handleConfigEvent = (e) => {
-      const updatedLogo = e?.detail?.logo !== undefined ? e.detail.logo : null
-      updateFromLogo(updatedLogo)
-    }
-
-    window.addEventListener('store-config-updated', handleConfigEvent)
-    return () => {
-      mounted = false
-      window.removeEventListener('store-config-updated', handleConfigEvent)
-    }
+    applyFavicon()
   }, [])
 
-  return { logoUrl, updateFromLogo }
+  return { logoUrl: '/logo.png', updateFromLogo: () => applyFavicon() }
 }
 
 export default useAdminFavicon
