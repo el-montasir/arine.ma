@@ -239,7 +239,7 @@ export default function CartDrawer() {
             )}
             {shipping > 0 && shippingConfig?.freeEnabled && (
               <p className="text-[0.75rem] text-[#7A6D80] bg-white border border-[#EFE8F2] px-2.5 py-1.5 rounded-lg">
-                {t('freeShippingThresholdHint', { amount: Math.max(0, shippingConfig.freeThreshold - subtotal) })}
+                توصيل مجاني للطلبات فوق {shippingConfig?.freeThreshold} د.م
               </p>
             )}
             <div className="border-t border-[#EFE8F2] pt-3 flex justify-between items-baseline">
