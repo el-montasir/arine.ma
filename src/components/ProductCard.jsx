@@ -130,89 +130,74 @@ export default function ProductCard({ book }) {
               strokeWidth={fav ? 0 : 1.8}
             />
           </button>
+        </div>
 
-          {/* Quick add overlay on hover (outside Link) */}
-          {outOfStock ? (
-            <div className="absolute bottom-2.5 inset-x-2.5 z-10 py-2 rounded-xl text-[11px] font-medium text-white/90 bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center gap-1.5 pointer-events-none">
-              {t('outOfStockDesc') || 'غير متوفر حالياً'}
+        {/* Info Area */}
+        <div className="p-3 sm:p-3.5 flex flex-col justify-between">
+          <div>
+            {/* Curved Glass Category Pill Badge */}
+            <div className="mb-1.5 flex items-center">
+              <span
+                style={{
+                  backgroundColor: hexToRgba(categoryColor, 0.14),
+                  borderColor: hexToRgba(categoryColor, 0.35),
+                  color: categoryColor,
+                  boxShadow: `0 2px 8px -2px ${hexToRgba(categoryColor, 0.18)}`,
+                }}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10.5px] font-bold tracking-tight border backdrop-blur-sm max-w-full truncate"
+              >
+                {categoryName}
+              </span>
             </div>
-          ) : (
+
+            {/* Title */}
+            <Link
+              to={`/book/${book.id}`}
+              className="block text-[13px] sm:text-[13.5px] font-bold text-[#161616] leading-[1.35] line-clamp-2 min-h-[36px] hover:text-[#8b2f9e] transition-colors"
+            >
+              {book.title}
+            </Link>
+
+            {/* Author */}
+            {book.author && book.author.trim() ? (
+              <p className="text-[11.5px] text-[#6b6577] mt-0.5 line-clamp-1 truncate font-medium">
+                {book.author.trim()}
+              </p>
+            ) : null}
+          </div>
+
+          {/* Bottom Row: Price & Persistent Cart Button */}
+          <div className="flex items-center justify-between gap-2 mt-2.5 pt-1">
+            <div className="flex flex-col">
+              <span className="font-tajawal font-extrabold text-[15px] sm:text-base text-[#161616] leading-tight">
+                {formatPrice(book.price)}
+              </span>
+              {book.oldPrice && book.oldPrice > book.price ? (
+                <span className="text-[11px] text-[#6b6577] line-through leading-tight">
+                  {formatPrice(book.oldPrice)}
+                </span>
+              ) : null}
+            </div>
+
             <button
               type="button"
+              disabled={outOfStock}
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
                 addToCart(book)
               }}
-              className="absolute bottom-2.5 inset-x-2.5 z-20 py-2.5 bg-gradient-to-r from-[#8b2f9e] to-[#4c1660] hover:from-[#7c288d] hover:to-[#3e1150] text-white text-xs font-bold rounded-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+              aria-label={t('addToCart') || 'أضف للسلة'}
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 shadow-2xs cursor-pointer ${
+                outOfStock
+                  ? 'bg-[#F3F4F6] text-[#9ca3af] cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#8b2f9e] to-[#4c1660] hover:from-[#7c288d] hover:to-[#3e1150] text-white hover:shadow-md hover:scale-105'
+              }`}
             >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              <span>{t('addToCart') || 'أضف للسلة'}</span>
+              <ShoppingCart className="w-4 h-4" />
             </button>
-          )}
-        </div>
-
-        {/* Info Area */}
-        <div className="p-3.5 sm:p-4">
-          {/* Curved Glass Category Pill Badge */}
-          <div className="mb-2 flex items-center">
-            <span
-              style={{
-                backgroundColor: hexToRgba(categoryColor, 0.14),
-                borderColor: hexToRgba(categoryColor, 0.35),
-                color: categoryColor,
-                boxShadow: `0 2px 8px -2px ${hexToRgba(categoryColor, 0.18)}`,
-              }}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-tight border backdrop-blur-sm max-w-full truncate"
-            >
-              {categoryName}
-            </span>
-          </div>
-
-          {/* Title */}
-          <Link
-            to={`/book/${book.id}`}
-            className="block text-[13.5px] sm:text-[14px] font-bold text-[#161616] leading-[1.45] line-clamp-2 min-h-[40px] hover:text-[#8b2f9e] transition-colors"
-          >
-            {book.title}
-          </Link>
-
-          {/* Author */}
-          {book.author && book.author.trim() ? (
-            <p className="text-[12px] text-[#6b6577] mt-1 line-clamp-1 truncate font-medium">
-              {book.author.trim()}
-            </p>
-          ) : null}
-
-          {/* Price row */}
-          <div className="flex items-baseline gap-2 mt-2 pt-1">
-            <span className="font-tajawal font-extrabold text-[15.5px] sm:text-base text-[#161616]">
-              {formatPrice(book.price)}
-            </span>
-            {book.oldPrice && book.oldPrice > book.price ? (
-              <span className="text-[11.5px] sm:text-xs text-[#6b6577] line-through">
-                {formatPrice(book.oldPrice)}
-              </span>
-            ) : null}
           </div>
         </div>
-      </div>
-
-      {/* Add to cart (visible on mobile screens) */}
-      <div className="p-3 pt-0 sm:hidden">
-        <button
-          type="button"
-          onClick={() => addToCart(book)}
-          disabled={outOfStock}
-          className={`w-full py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer ${
-            outOfStock
-              ? 'bg-[#F3F4F6] text-[#6b6577] cursor-not-allowed'
-              : 'bg-gradient-to-r from-[#8b2f9e] to-[#4c1660] text-white active:scale-95 shadow-xs'
-          }`}
-        >
-          <ShoppingCart className="w-3.5 h-3.5" />
-          <span>{outOfStock ? (t('outOfStock') || 'غير متوفر') : (t('addToCart') || 'أضف للسلة')}</span>
-        </button>
       </div>
     </article>
   )
