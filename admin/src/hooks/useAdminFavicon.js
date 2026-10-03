@@ -23,6 +23,7 @@ export function applyFavicon() {
     document.head.appendChild(shortcutLink)
   }
   shortcutLink.href = href
+  shortcutLink.type = 'image/png'
 
   // Update or create apple-touch-icon link
   let appleLink = document.querySelector("link[rel='apple-touch-icon']")

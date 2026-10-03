@@ -175,10 +175,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="lg:hidden">
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-xs fade-in"
-            onClick={() => setIsMenuOpen(false)}
-          />
+          <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-xs fade-in" />
 
           {/* Floating Menu Container */}
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 pointer-events-none">
@@ -194,35 +191,13 @@ export default function Navbar() {
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center select-none"
                 >
-                  {showLogoImage ? (
-                    (() => {
-                      const logoImg = getThumbnailImageProps(config?.store?.logo)
-                      return (
-                        <img
-                          key={resolvedLogoUrl}
-                          src={logoImg.src}
-                          srcSet={logoImg.srcSet}
-                          sizes={logoImg.sizes}
-                          alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
-                          className="h-8 w-auto object-contain shrink-0"
-                          loading="eager"
-                          decoding="async"
-                          onError={(e) => {
-                            createVariantFallbackHandler(logoImg.fallbackSrc)(e)
-                            setErroredLogoUrl(resolvedLogoUrl)
-                          }}
-                        />
-                      )
-                    })()
-                  ) : (
-                    <img
-                      src="/logo.png"
-                      alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
-                      className="h-8 w-auto object-contain shrink-0"
-                      loading="eager"
-                      decoding="async"
-                    />
-                  )}
+                  <img
+                    src="/logo.png"
+                    alt="Arine"
+                    className="h-8 w-auto object-contain shrink-0"
+                    loading="eager"
+                    decoding="async"
+                  />
                 </Link>
                 <button
                   onClick={() => setIsMenuOpen(false)}
