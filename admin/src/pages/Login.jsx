@@ -40,10 +40,10 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-[#0a0714]">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-[var(--bg)] text-[var(--ink)] transition-colors duration-200">
       {/* Ambient background glow */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute top-1/4 start-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 start-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/10 dark:bg-purple-600/15 rounded-full blur-[120px]" />
         <div className="absolute bottom-10 end-1/4 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px]" />
       </div>
 
@@ -54,7 +54,7 @@ export default function Login() {
       </div>
 
       {/* Centered Glass Card */}
-      <div className="relative z-10 w-full max-w-[420px] rounded-[24px] border border-white/10 bg-[#101323]/80 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl">
+      <div className="relative z-10 w-full max-w-[420px] rounded-[24px] border border-[var(--line)] bg-[var(--card)]/80 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl transition-colors duration-200">
         {/* Store Branding Header */}
         <div className="flex flex-col items-center text-center mb-7">
           <img
@@ -66,7 +66,7 @@ export default function Login() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-5 flex items-center gap-2.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium animate-in fade-in duration-200">
+          <div className="mb-5 flex items-center gap-2.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-400 text-xs font-medium animate-in fade-in duration-200">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -75,11 +75,11 @@ export default function Login() {
         {/* Login Form */}
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-1.5">
+            <label className="block text-xs font-medium text-[var(--ink-soft)] mb-1.5">
               {t('emailOrUsernameField') || 'Email or Username'}
             </label>
             <div className="relative flex items-center">
-              <div className="absolute start-3.5 text-white/40 pointer-events-none">
+              <div className="absolute start-3.5 text-[var(--ink-soft)] pointer-events-none">
                 <User className="w-4 h-4" />
               </div>
               <input
@@ -90,17 +90,17 @@ export default function Login() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder={t('emailOrUsernameField') || 'admin@arine.ma'}
-                className="w-full h-11 ps-10 pe-4 rounded-xl bg-white/[0.05] border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                className="w-full h-11 ps-10 pe-4 rounded-xl bg-[var(--bg)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-soft)]/50 text-sm focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-white/70 mb-1.5">
+            <label className="block text-xs font-medium text-[var(--ink-soft)] mb-1.5">
               {t('passwordField') || 'Password'}
             </label>
             <div className="relative flex items-center">
-              <div className="absolute start-3.5 text-white/40 pointer-events-none">
+              <div className="absolute start-3.5 text-[var(--ink-soft)] pointer-events-none">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -111,12 +111,12 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-11 ps-10 pe-10 rounded-xl bg-white/[0.05] border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                className="w-full h-11 ps-10 pe-10 rounded-xl bg-[var(--bg)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-soft)]/50 text-sm focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute end-3 text-white/40 hover:text-white/80 transition-colors p-1 cursor-pointer"
+                className="absolute end-3 text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors p-1 cursor-pointer"
                 aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -130,9 +130,9 @@ export default function Login() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-white/20 bg-white/5 text-purple-600 focus:ring-purple-500/30 cursor-pointer"
+                className="w-4 h-4 rounded border-[var(--line)] bg-[var(--bg)] text-purple-600 focus:ring-purple-500/30 cursor-pointer"
               />
-              <span className="text-xs text-white/60 hover:text-white/80 transition-colors">
+              <span className="text-xs text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors">
                 {t('rememberMe') || 'Remember me'}
               </span>
             </label>
@@ -155,7 +155,7 @@ export default function Login() {
         </form>
 
         {/* Footer notice */}
-        <p className="text-center text-[11px] text-white/40 mt-6">
+        <p className="text-center text-[11px] text-[var(--ink-soft)] mt-6">
           {t('secureSession') || 'Secure administrative session'}
         </p>
       </div>

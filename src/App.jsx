@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
 import { CartProvider } from './context/CartContext'
 import { initMetaPixel, trackPageView, captureAttribution } from './utils/tracking'
+import { updateFavicon } from './hooks/useStoreConfig'
 import AnnouncementBar from './components/AnnouncementBar'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -46,6 +47,7 @@ function Layout({ children }) {
 
 export default function App() {
   useEffect(() => {
+    updateFavicon()
     initMetaPixel()
   }, [])
 
