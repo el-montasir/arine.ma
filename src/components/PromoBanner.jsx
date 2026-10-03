@@ -53,8 +53,8 @@ export function resolveBannerLink(rawLink) {
   if (UNSAFE_SCHEME.test(href)) return null
   if (/^https?:\/\//i.test(href)) return { href, external: true }
   if (href.startsWith('//')) return null
-  if (!href.startsWith('/')) return null
-  return { href, external: false }
+  const normalizedHref = href.startsWith('/') ? href : `/${href}`
+  return { href: normalizedHref, external: false }
 }
 
 export default function PromoBanner({ banner, onNavigate }) {
@@ -81,13 +81,32 @@ export default function PromoBanner({ banner, onNavigate }) {
       // `window.opener`. Internal destinations use the router so navigation
       // stays client-side and no full page reload happens.
       window.open(target.href, '_blank', 'noopener,noreferrer')
-    } else {
+    } else if (typeof onNavigate === 'function') {
       onNavigate(target.href)
+    } else {
+      window.location.href = target.href
     }
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#4c1660] to-[#8b2f9e] border border-[#8b2f9e]/30 p-4 sm:p-5 text-white flex flex-col sm:flex-row items-center gap-4 justify-between shadow-md">
+    <section
+      onClick={target ? handleCta : undefined}
+      onKeyDown={
+        target
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleCta()
+              }
+            }
+          : undefined
+      }
+      role={target ? 'button' : undefined}
+      tabIndex={target ? 0 : undefined}
+      className={`relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#4c1660] to-[#8b2f9e] border border-[#8b2f9e]/30 p-4 sm:p-5 text-white flex flex-col sm:flex-row items-center gap-4 justify-between shadow-md ${
+        target ? 'cursor-pointer select-none transition-transform active:scale-[0.99]' : ''
+      }`}
+    >
       {imageProps.src && (
         <img
           src={imageProps.src}
@@ -124,8 +143,11 @@ export default function PromoBanner({ banner, onNavigate }) {
       {target && (
         <button
           type="button"
-          onClick={handleCta}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-[#4c1660] hover:bg-[#FAF9F7] text-xs font-bold rounded-xl transition-all shrink-0 shadow-sm"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleCta()
+          }}
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-[#4c1660] hover:bg-[#FAF9F7] text-xs font-bold rounded-xl transition-all shrink-0 shadow-sm cursor-pointer"
         >
           <span>استفد من العرض</span>
           <ArrowIcon className="h-3.5 w-3.5" />
