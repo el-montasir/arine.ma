@@ -21,6 +21,7 @@ import {
   Mail,
   Star,
   Tag,
+  BookOpen,
 } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
