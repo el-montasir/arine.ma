@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BookOpen,
   Mail,
   Phone,
   MapPin,
@@ -195,24 +194,28 @@ export default function Footer() {
                 (() => {
                   const logoImg = getThumbnailImageProps(store.logo)
                   return (
-                <img
-                  src={logoImg.src}
-                  srcSet={logoImg.srcSet}
-                  sizes={logoImg.sizes}
-                  alt={store.name || t('appName') || 'مكتبة أرين'}
-                  className="max-h-10 max-w-[160px] w-10 h-10 rounded-full object-cover border border-white/20 shadow-md shrink-0"
-                  onError={(e) => {
-                    createVariantFallbackHandler(logoImg.fallbackSrc)(e)
-                    setFooterLogoError(true)
-                  }}
-                />
+                    <img
+                      src={logoImg.src}
+                      srcSet={logoImg.srcSet}
+                      sizes={logoImg.sizes}
+                      alt={store.name || t('appName') || 'مكتبة أرين'}
+                      className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
+                      onError={(e) => {
+                        createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                        setFooterLogoError(true)
+                      }}
+                    />
                   )
                 })()
               ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#8b2f9e]/30 border border-[#c25fd6]/40 flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-[#c25fd6]" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="/logo.png"
+                    alt={store.name || t('appName') || 'مكتبة أرين'}
+                    className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <b className="font-tajawal font-extrabold text-[17px] text-white">
                     {store.name || t('appName') || 'مكتبة أرين'}
                   </b>

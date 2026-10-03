@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Store,
   Sparkles,
-  BookOpen,
   Save,
   CheckCircle2,
   RefreshCw,
@@ -362,9 +361,11 @@ export default function StoreSettings() {
                     />
                   ) : (
                     <div className="flex items-center gap-2 mt-3">
-                      <div className="bg-[#7c3aed] w-8 h-8 rounded-[8px] flex items-center justify-center shadow-sm">
-                        <BookOpen className="w-4 h-4 text-white" strokeWidth={2} />
-                      </div>
+                      <img
+                        src="/logo.png"
+                        alt="Brand Logo"
+                        className="w-8 h-8 object-contain shrink-0"
+                      />
                       <div className="leading-tight">
                         <div className="text-[0.85rem] font-bold text-[#5b21b6]">{form.storeName || t('defaultStoreName')}</div>
                         <div className="text-[0.55rem] text-gray-700">{t('defaultStoreTagline')}</div>
@@ -389,9 +390,11 @@ export default function StoreSettings() {
                     />
                   ) : (
                     <div className="flex items-center gap-2 mt-3">
-                      <div className="bg-[#7c3aed] w-8 h-8 rounded-[8px] flex items-center justify-center">
-                        <BookOpen className="w-4 h-4 text-white" />
-                      </div>
+                      <img
+                        src="/logo.png"
+                        alt="Brand Logo"
+                        className="w-8 h-8 object-contain shrink-0"
+                      />
                       <div className="leading-tight">
                         <div className="text-[0.85rem] font-bold text-white">{form.storeName || t('defaultStoreName')}</div>
                         <div className="text-[0.55rem] text-white/50">{t('defaultStoreTagline')}</div>

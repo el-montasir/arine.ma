@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, ShoppingCart, Heart, Menu, X, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, ShoppingCart, Heart, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
@@ -70,35 +70,37 @@ export default function Navbar() {
             {/* Logo */}
             <Link
               to="/"
-              className="flex flex-none shrink-0 items-center select-none min-w-[36px] min-h-[36px] lg:min-w-[40px] lg:min-h-[40px]"
+              className="flex flex-none shrink-0 items-center select-none"
             >
-              {/* Fixed circular brand area: the image and the fallback occupy
-                  the exact same box, so the navbar never has an empty brand. */}
-              <span className="flex flex-none shrink-0 items-center justify-center w-9 h-9 lg:w-10 lg:h-10 min-w-[36px] min-h-[36px] lg:min-w-[40px] lg:min-h-[40px] rounded-full overflow-hidden bg-purple-800 shadow-sm border border-gray-100">
-                {showLogoImage ? (
-                  (() => {
-                    const logoImg = getThumbnailImageProps(config?.store?.logo)
-                    return (
-                  <img
-                    key={resolvedLogoUrl}
-                    src={logoImg.src}
-                    srcSet={logoImg.srcSet}
-                    sizes={logoImg.sizes}
-                    alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
-                    className="w-full h-full object-cover shrink-0"
-                    loading="eager"
-                    decoding="async"
-                    onError={(e) => {
-                      createVariantFallbackHandler(logoImg.fallbackSrc)(e)
-                      setErroredLogoUrl(resolvedLogoUrl)
-                    }}
-                  />
-                    )
-                  })()
-                ) : (
-                  <BookOpen className="w-5 h-5 text-white" strokeWidth={2} aria-hidden="true" />
-                )}
-              </span>
+              {showLogoImage ? (
+                (() => {
+                  const logoImg = getThumbnailImageProps(config?.store?.logo)
+                  return (
+                    <img
+                      key={resolvedLogoUrl}
+                      src={logoImg.src}
+                      srcSet={logoImg.srcSet}
+                      sizes={logoImg.sizes}
+                      alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
+                      className="w-9 h-9 lg:w-10 lg:h-10 object-contain shrink-0"
+                      loading="eager"
+                      decoding="async"
+                      onError={(e) => {
+                        createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                        setErroredLogoUrl(resolvedLogoUrl)
+                      }}
+                    />
+                  )
+                })()
+              ) : (
+                <img
+                  src="/logo.png"
+                  alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
+                  className="w-9 h-9 lg:w-10 lg:h-10 object-contain shrink-0"
+                  loading="eager"
+                  decoding="async"
+                />
+              )}
             </Link>
 
             {/* Desktop nav */}

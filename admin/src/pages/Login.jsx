@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { BookMarked, Eye, EyeOff, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
@@ -94,9 +94,11 @@ export default function Login() {
               className="h-14 w-auto object-contain mb-3 drop-shadow-md"
             />
           ) : (
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/25 mb-3">
-              <BookMarked className="w-7 h-7" />
-            </div>
+            <img
+              src="/logo.png"
+              alt={storeName}
+              className="h-14 w-auto object-contain mb-3 drop-shadow-md"
+            />
           )}
           <h1 className="text-xl font-bold text-white tracking-tight">{storeName}</h1>
           <p className="text-xs text-white/50 mt-1">{t('loginSubtitle') || 'Enter your credentials to continue'}</p>

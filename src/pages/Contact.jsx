@@ -161,23 +161,25 @@ export default function Contact() {
                 (() => {
                   const logoImg = getThumbnailImageProps(store.logo)
                   return (
-                  <img
-                    src={logoImg.src}
-                    srcSet={logoImg.srcSet}
-                    sizes={logoImg.sizes}
-                    alt={store.name || t('appName') || 'مكتبة أرين'}
-                    className="w-10 h-10 rounded-full object-cover shadow-sm border border-white/20 shrink-0"
-                    onError={(e) => {
-                      createVariantFallbackHandler(logoImg.fallbackSrc)(e)
-                      setLogoError(true)
-                    }}
-                  />
+                    <img
+                      src={logoImg.src}
+                      srcSet={logoImg.srcSet}
+                      sizes={logoImg.sizes}
+                      alt={store.name || t('appName') || 'مكتبة أرين'}
+                      className="w-10 h-10 object-contain shrink-0"
+                      onError={(e) => {
+                        createVariantFallbackHandler(logoImg.fallbackSrc)(e)
+                        setLogoError(true)
+                      }}
+                    />
                   )
                 })()
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 text-white" />
-                </div>
+                <img
+                  src="/logo.png"
+                  alt={store.name || t('appName') || 'مكتبة أرين'}
+                  className="w-10 h-10 object-contain shrink-0"
+                />
               )}
               <b className="font-tajawal font-extrabold text-lg text-white">
                 {store.name || t('appName') || 'مكتبة أرين'}

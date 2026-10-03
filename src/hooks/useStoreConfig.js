@@ -9,7 +9,7 @@ export function updateFavicon(logoPath) {
   // Enforce consistent title across the storefront
   document.title = 'arine.ma'
 
-  const targetHref = logoPath ? getImageUrl(logoPath) : '/favicon.svg'
+  const targetHref = logoPath ? getImageUrl(logoPath) : '/logo.png'
 
   const rels = ['icon', 'shortcut icon', 'apple-touch-icon']
   rels.forEach((rel) => {
@@ -20,6 +20,9 @@ export function updateFavicon(logoPath) {
       document.head.appendChild(link)
     }
     link.href = targetHref
+    if (targetHref.endsWith('.png')) {
+      link.type = 'image/png'
+    }
   })
 }
 

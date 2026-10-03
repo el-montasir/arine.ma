@@ -4,7 +4,7 @@ import { getImageUrl } from '../lib/images.js'
 function applyFavicon(iconUrl) {
   if (typeof document === 'undefined') return
 
-  const href = iconUrl || '/favicon.svg'
+  const href = iconUrl || '/logo.png'
 
   // Update or create standard icon link
   let iconLink = document.querySelector("link[rel~='icon']")
@@ -14,6 +14,9 @@ function applyFavicon(iconUrl) {
     document.head.appendChild(iconLink)
   }
   iconLink.href = href
+  if (href.endsWith('.png')) {
+    iconLink.type = 'image/png'
+  }
 
   // Update or create shortcut icon link
   let shortcutLink = document.querySelector("link[rel='shortcut icon']")
@@ -44,7 +47,7 @@ export function useAdminFavicon() {
       applyFavicon(fullUrl)
     } else {
       setLogoUrl('')
-      applyFavicon('/favicon.svg')
+      applyFavicon('/logo.png')
     }
   }
 
@@ -71,7 +74,7 @@ export function useAdminFavicon() {
       } catch {
         // Fallback gracefully to default favicon on network or config errors
         if (mounted) {
-          applyFavicon('/favicon.svg')
+          applyFavicon('/logo.png')
         }
       }
     }

@@ -11,7 +11,6 @@ import {
   Store,
   Truck,
   Settings,
-  BookMarked,
   X,
   UserCog,
   History,
@@ -326,9 +325,11 @@ function Brand() {
 
   return (
     <div className="flex items-center gap-2.5 px-4 py-4.5 mb-1 bg-[var(--card)]">
-      <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] flex items-center justify-center text-white shrink-0 shadow-sm">
-        <BookMarked className="h-4.5 w-4.5" aria-hidden="true" />
-      </div>
+      <img
+        src="/logo.png"
+        alt={t('appName') || 'مكتبة أرين'}
+        className="w-8 h-8 object-contain shrink-0"
+      />
       <div className="min-w-0">
         <div className="text-base font-extrabold text-[var(--ink)] leading-tight tracking-tight">
           {t('appName')}
