@@ -56,7 +56,7 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-50 px-3 sm:px-4 pt-2.5 pb-1 lg:p-0 bg-transparent lg:bg-white lg:border-b lg:border-gray-100 lg:shadow-xs pointer-events-none lg:pointer-events-auto">
         <div className="max-w-[1440px] mx-auto lg:px-8 pointer-events-auto">
-          <div className="flex items-center justify-between h-14 sm:h-15 lg:h-[72px] gap-4 px-3.5 sm:px-4 lg:px-0 rounded-[22px] lg:rounded-none bg-white/75 lg:bg-transparent backdrop-blur-[18px] backdrop-saturate-[140%] border border-white/70 lg:border-none shadow-[0_8px_24px_-6px_rgba(76,22,96,0.08),0_2px_8px_rgba(0,0,0,0.04)] lg:shadow-none">
+          <div className="flex items-center justify-between h-14 sm:h-15 lg:h-[72px] gap-4 px-3.5 sm:px-4 lg:px-0 rounded-[22px] lg:rounded-none bg-white/55 lg:bg-transparent backdrop-blur-[18px] backdrop-saturate-[140%] border border-white/70 lg:border-none shadow-[0_8px_24px_-6px_rgba(76,22,96,0.08),0_2px_8px_rgba(0,0,0,0.04)] lg:shadow-none">
 
             {/* Mobile menu toggle */}
             <button
@@ -175,17 +175,20 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="lg:hidden">
           {/* Backdrop */}
-          <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-xs fade-in" />
+          <div
+            className="fixed inset-0 z-[80] bg-black/25 backdrop-blur-xs fade-in"
+            onClick={() => setIsMenuOpen(false)}
+          />
 
           {/* Floating Menu Container */}
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 pointer-events-none">
             <div
-              className="pointer-events-auto w-full max-w-[380px] max-h-[calc(100dvh-32px)] bg-white border border-[#EBDCF1] rounded-[26px] shadow-[0_8px_32px_-8px_rgba(107,33,120,0.12),0_4px_20px_-4px_rgba(143,58,161,0.08),0_1px_3px_rgba(62,17,71,0.04)] flex flex-col overflow-hidden fade-in"
+              className="pointer-events-auto w-full max-w-[380px] max-h-[calc(100dvh-32px)] bg-white/60 backdrop-blur-[20px] backdrop-saturate-[140%] border border-white/75 rounded-[26px] shadow-[0_12px_40px_-8px_rgba(62,17,71,0.12),0_4px_16px_-4px_rgba(143,58,161,0.06),0_1px_3px_rgba(62,17,71,0.04)] flex flex-col overflow-hidden fade-in"
               role="dialog"
               aria-label={t('menu') || 'القائمة'}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#EFE8F2] bg-white shrink-0">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-white/30 shrink-0">
                 <Link
                   to="/"
                   onClick={() => setIsMenuOpen(false)}
@@ -201,7 +204,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 rounded-xl text-[#7A6D80] hover:text-[#1C1220] hover:bg-[#F5F1F7] transition-colors"
+                  className="p-2 rounded-xl text-[#7A6D80] hover:text-[#1C1220] hover:bg-white/40 transition-colors"
                   aria-label={t('close') || 'إغلاق'}
                 >
                   <X className="w-5 h-5" />
@@ -219,8 +222,8 @@ export default function Navbar() {
                       onClick={() => setIsMenuOpen(false)}
                       className={`flex items-center justify-between px-4 py-3.5 rounded-[16px] border text-[0.92rem] font-tajawal transition-all shadow-2xs ${
                         isActive
-                          ? 'bg-[#F6EDF9] text-[#6B2178] border-[#EBDCF1] font-bold shadow-xs'
-                          : 'bg-white text-[#1C1220] border-[#EFE8F2] hover:bg-[#FBF7FC] hover:border-[#EBDCF1] hover:text-[#6B2178] font-semibold'
+                          ? 'bg-[#F6EDF9]/90 text-[#6B2178] border-[#EBDCF1] font-bold shadow-xs'
+                          : 'bg-white/50 text-[#1C1220] border-white/70 hover:bg-white/75 hover:border-[#EBDCF1] hover:text-[#6B2178] font-semibold'
                       }`}
                     >
                       <span>{link.label}</span>
@@ -238,8 +241,8 @@ export default function Navbar() {
                   onClick={() => setIsMenuOpen(false)}
                   className={`flex items-center justify-between px-4 py-3.5 rounded-[16px] border text-[0.92rem] font-tajawal transition-all shadow-2xs ${
                     pathname === '/favorites'
-                      ? 'bg-[#F6EDF9] text-[#6B2178] border-[#EBDCF1] font-bold shadow-xs'
-                      : 'bg-white text-[#1C1220] border-[#EFE8F2] hover:bg-[#FBF7FC] hover:border-[#EBDCF1] hover:text-[#6B2178] font-semibold'
+                      ? 'bg-[#F6EDF9]/90 text-[#6B2178] border-[#EBDCF1] font-bold shadow-xs'
+                      : 'bg-white/50 text-[#1C1220] border-white/70 hover:bg-white/75 hover:border-[#EBDCF1] hover:text-[#6B2178] font-semibold'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
