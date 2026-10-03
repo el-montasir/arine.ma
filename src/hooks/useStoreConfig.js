@@ -8,7 +8,7 @@ export function updateFavicon() {
   // Enforce consistent title across the storefront
   document.title = 'arine.ma'
 
-  const targetHref = '/logo.png'
+  const targetHref = '/logo.png?v=4'
 
   const rels = ['icon', 'shortcut icon', 'apple-touch-icon']
   rels.forEach((rel) => {
