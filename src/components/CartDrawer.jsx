@@ -43,51 +43,56 @@ export default function CartDrawer() {
         onClick={() => setIsCartOpen(false)}
       />
 
-      {/* Drawer */}
+      {/* Cart Container: Centered floating panel on mobile, side drawer on desktop */}
       <div
-        className={`fixed inset-y-0 ${isRTL ? 'left-0' : 'right-0'} z-[90] w-full max-w-[420px] bg-white shadow-2xl flex flex-col drawer-in`}
-        role="dialog"
-        aria-label={t('cart')}
+        className={`fixed inset-0 z-[90] flex items-center justify-center p-4 pointer-events-none lg:p-0 lg:block lg:inset-y-0 ${
+          isRTL ? 'lg:left-0 lg:right-auto' : 'lg:right-0 lg:left-auto'
+        } lg:w-full lg:max-w-[420px]`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#EFE8F2] bg-white">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-[#6B2178]" />
-            <h2 className="text-lg font-tajawal font-extrabold text-[#1C1220]">{t('cart')}</h2>
-            {count > 0 && (
-              <span className="px-2.5 py-0.5 bg-[#F6EDF9] text-[#6B2178] text-[0.75rem] font-bold rounded-full">
-                {t('itemsCount', { count })}
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => setIsCartOpen(false)}
-            className="p-2 rounded-xl text-[#7A6D80] hover:text-[#1C1220] hover:bg-[#F5F1F7] transition-colors"
-            aria-label={t('close')}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Items */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {items.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center">
-              <div className="w-20 h-20 bg-[#F6EDF9] border border-[#EBDCF1] rounded-[20px] flex items-center justify-center mb-4 shadow-xs">
-                <ShoppingBag className="w-10 h-10 text-[#8F3AA1]" />
-              </div>
-              <p className="text-[#1C1220] font-bold text-base mb-1">{t('emptyCartTitle')}</p>
-              <p className="text-[#7A6D80] text-xs">{t('emptyCartSubtitle')}</p>
+        <div
+          className="pointer-events-auto w-full max-w-[420px] max-h-[calc(100dvh-32px)] rounded-[24px] bg-white shadow-2xl flex flex-col overflow-hidden fade-in lg:h-full lg:max-h-none lg:rounded-none lg:drawer-in"
+          role="dialog"
+          aria-label={t('cart')}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#EFE8F2] bg-white shrink-0">
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-[#6B2178]" />
+              <h2 className="text-lg font-tajawal font-extrabold text-[#1C1220]">{t('cart')}</h2>
+              {count > 0 && (
+                <span className="px-2.5 py-0.5 bg-[#F6EDF9] text-[#6B2178] text-[0.75rem] font-bold rounded-full">
+                  {t('itemsCount', { count })}
+                </span>
+              )}
             </div>
-          ) : (
-            <div className="space-y-3.5">
-              {items.map((item) => {
-                const itemKey = item.key || item.id
-                return (
-                  <div
-                    key={itemKey}
-                    className="flex gap-3.5 p-3.5 bg-white rounded-[16px] border border-[#EFE8F2] shadow-2xs hover:border-[#EBDCF1] transition-all"
-                  >
+            <button
+              onClick={() => setIsCartOpen(false)}
+              className="p-2 rounded-xl text-[#7A6D80] hover:text-[#1C1220] hover:bg-[#F5F1F7] transition-colors"
+              aria-label={t('close')}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Items */}
+          <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+            {items.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center py-8">
+                <div className="w-20 h-20 bg-[#F6EDF9] border border-[#EBDCF1] rounded-[20px] flex items-center justify-center mb-4 shadow-xs">
+                  <ShoppingBag className="w-10 h-10 text-[#8F3AA1]" />
+                </div>
+                <p className="text-[#1C1220] font-bold text-base mb-1">{t('emptyCartTitle')}</p>
+                <p className="text-[#7A6D80] text-xs">{t('emptyCartSubtitle')}</p>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {items.map((item) => {
+                  const itemKey = item.key || item.id
+                  return (
+                    <div
+                      key={itemKey}
+                      className="flex gap-3.5 p-3.5 bg-white rounded-[16px] border border-[#EFE8F2] shadow-2xs hover:border-[#EBDCF1] transition-all"
+                    >
                     <div className="flex-shrink-0 w-16">
                       {item.isPackage ? (
                         item.image ? (
@@ -219,7 +224,7 @@ export default function CartDrawer() {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-[#EFE8F2] px-6 py-4 space-y-3 bg-[#FCFAFD]">
+          <div className="border-t border-[#EFE8F2] px-6 py-4 space-y-3 bg-[#FCFAFD] shrink-0">
             <div className="flex justify-between items-center text-[0.85rem]">
               <span className="text-[#7A6D80] font-medium">{t('subtotal')}</span>
               <span className="font-bold text-[#1C1220]">{formatPrice(subtotal)}</span>
@@ -257,6 +262,7 @@ export default function CartDrawer() {
           </div>
         )}
       </div>
-    </>
+    </div>
+  </>
   )
 }

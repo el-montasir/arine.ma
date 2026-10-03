@@ -93,7 +93,6 @@ export function CartProvider({ children }) {
         },
       ]
     })
-    setIsCartOpen(true)
     showToast(`تمت إضافة «${book.title}» إلى السلة`)
     trackAddToCart(book, qty)
   }
@@ -121,7 +120,6 @@ export function CartProvider({ children }) {
         },
       ]
     })
-    setIsCartOpen(true)
     showToast(`تمت إضافة الباقة «${pkg.title}» إلى السلة`)
     trackAddToCart({ ...pkg, isPackage: true }, qty)
   }
