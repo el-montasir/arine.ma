@@ -5,6 +5,7 @@ import ProductGrid from '../components/ProductGrid'
 import useCategories from '../hooks/useCategories'
 import useProducts from '../hooks/useProducts'
 import { useLanguage } from '../context/LanguageContext'
+import { hexToRgba, getContrastTextColor } from '../utils/color'
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -80,27 +81,37 @@ export default function Shop() {
               onClick={() => setFilter('category', '')}
               style={
                 !category
-                  ? { backgroundColor: '#6366f1', borderColor: '#6366f1', color: '#ffffff' }
-                  : { color: '#6366f1', borderColor: '#6366f1', backgroundColor: 'transparent' }
+                  ? { backgroundColor: '#8b2f9e', borderColor: '#8b2f9e', color: '#ffffff', boxShadow: '0 2px 8px -2px rgba(139, 47, 158, 0.4)' }
+                  : { color: '#6b6577', borderColor: '#ece5f2', backgroundColor: 'transparent' }
               }
-              className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
-                !category ? 'shadow-sm' : ''
+              className={`px-3.5 py-1.5 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
+                !category ? 'shadow-sm' : 'hover:border-[#8b2f9e]/40 hover:text-[#161616]'
               }`}
             >
               {t('all')}
             </button>
             {categories.map((cat) => {
               const isSelected = category === cat.slug
+              const color = cat.color || '#8b2f9e'
               return (
                 <button
                   key={cat.id}
                   onClick={() => setFilter('category', cat.slug)}
                   style={
                     isSelected
-                      ? { backgroundColor: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', color: '#ffffff' }
-                      : { color: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', backgroundColor: 'transparent' }
+                      ? {
+                          backgroundColor: color,
+                          borderColor: color,
+                          color: getContrastTextColor(color),
+                          boxShadow: `0 2px 8px -2px ${hexToRgba(color, 0.4)}`,
+                        }
+                      : {
+                          backgroundColor: hexToRgba(color, 0.08),
+                          borderColor: hexToRgba(color, 0.35),
+                          color: color,
+                        }
                   }
-                  className={`px-3.5 py-1.5 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
+                  className={`px-3.5 py-1.5 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
                     isSelected ? 'shadow-sm' : ''
                   }`}
                 >
@@ -154,27 +165,37 @@ export default function Shop() {
               onClick={() => setFilter('category', '')}
               style={
                 !category
-                  ? { backgroundColor: '#6366f1', borderColor: '#6366f1', color: '#ffffff' }
-                  : { color: '#6366f1', borderColor: '#6366f1', backgroundColor: 'transparent' }
+                  ? { backgroundColor: '#8b2f9e', borderColor: '#8b2f9e', color: '#ffffff', boxShadow: '0 2px 8px -2px rgba(139, 47, 158, 0.4)' }
+                  : { color: '#6b6577', borderColor: '#ece5f2', backgroundColor: 'transparent' }
               }
-              className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
-                !category ? 'shadow-sm' : ''
+              className={`px-3.5 py-2 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
+                !category ? 'shadow-sm' : 'hover:border-[#8b2f9e]/40 hover:text-[#161616]'
               }`}
             >
               {t('all')}
             </button>
             {categories.map((cat) => {
               const isSelected = category === cat.slug
+              const color = cat.color || '#8b2f9e'
               return (
                 <button
                   key={cat.id}
                   onClick={() => setFilter('category', cat.slug)}
                   style={
                     isSelected
-                      ? { backgroundColor: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', color: '#ffffff' }
-                      : { color: cat.color || '#6366f1', borderColor: cat.color || '#6366f1', backgroundColor: 'transparent' }
+                      ? {
+                          backgroundColor: color,
+                          borderColor: color,
+                          color: getContrastTextColor(color),
+                          boxShadow: `0 2px 8px -2px ${hexToRgba(color, 0.4)}`,
+                        }
+                      : {
+                          backgroundColor: hexToRgba(color, 0.08),
+                          borderColor: hexToRgba(color, 0.35),
+                          color: color,
+                        }
                   }
-                  className={`px-3.5 py-2 text-[0.82rem] font-medium rounded-full border transition-colors hover:opacity-90 ${
+                  className={`px-3.5 py-2 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
                     isSelected ? 'shadow-sm' : ''
                   }`}
                 >

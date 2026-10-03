@@ -5,6 +5,7 @@ import BookCover from '../components/BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { formatPrice } from '../utils/format'
+import { hexToRgba } from '../utils/color'
 import api from '../utils/api'
 import { trackViewContent } from '../utils/tracking'
 import { getDetailImageProps, getCardImageProps, getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
@@ -219,7 +220,14 @@ export default function BookDetails() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {book.category && (
-              <span className="px-2.5 py-1 bg-brand-100 text-brand-700 text-[0.75rem] font-semibold rounded-full">
+              <span
+                style={{
+                  backgroundColor: hexToRgba(book.categoryColor || '#8b2f9e', 0.12),
+                  borderColor: hexToRgba(book.categoryColor || '#8b2f9e', 0.35),
+                  color: book.categoryColor || '#8b2f9e',
+                }}
+                className="px-2.5 py-1 text-[0.75rem] font-bold rounded-full border"
+              >
                 {book.category}
               </span>
             )}

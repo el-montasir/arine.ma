@@ -1,56 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
 import useCategories from '../hooks/useCategories'
-
-// Deterministic 2D color palettes matching the design reference tokens
-const CATEGORY_PALETTES = [
-  {
-    border: 'border-[rgba(31,157,132,0.4)]',
-    text: 'text-[#1f9d84]',
-    hover: 'hover:border-[#1f9d84] hover:bg-[#e4f6f1]/40',
-    activeBg: 'bg-[#1f9d84]',
-    activeBorder: 'border-[#1f9d84]',
-  },
-  {
-    border: 'border-[rgba(214,70,127,0.35)]',
-    text: 'text-[#d6467f]',
-    hover: 'hover:border-[#d6467f] hover:bg-[#fbe7ef]/40',
-    activeBg: 'bg-[#d6467f]',
-    activeBorder: 'border-[#d6467f]',
-  },
-  {
-    border: 'border-[rgba(139,47,158,0.3)]',
-    text: 'text-[#8b2f9e]',
-    hover: 'hover:border-[#8b2f9e] hover:bg-[#f3ebfa]/60',
-    activeBg: 'bg-[#8b2f9e]',
-    activeBorder: 'border-[#8b2f9e]',
-  },
-  {
-    border: 'border-[rgba(201,147,47,0.4)]',
-    text: 'text-[#c9932f]',
-    hover: 'hover:border-[#c9932f] hover:bg-[#faf0da]/40',
-    activeBg: 'bg-[#c9932f]',
-    activeBorder: 'border-[#c9932f]',
-  },
-  {
-    border: 'border-[rgba(76,22,96,0.35)]',
-    text: 'text-[#4c1660]',
-    hover: 'hover:border-[#4c1660] hover:bg-[#f3ebfa]/40',
-    activeBg: 'bg-[#4c1660]',
-    activeBorder: 'border-[#4c1660]',
-  },
-]
-
-function getCategoryPalette(key) {
-  const str = String(key || '')
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i)
-    hash |= 0
-  }
-  const index = Math.abs(hash) % CATEGORY_PALETTES.length
-  return CATEGORY_PALETTES[index]
-}
+import { hexToRgba, getContrastTextColor } from '../utils/color'
 
 export default function CategoryPills({ onSelect, includeAll = false }) {
   const [active, setActive] = useState(includeAll ? 'all' : null)
@@ -93,17 +44,27 @@ export default function CategoryPills({ onSelect, includeAll = false }) {
         )}
         {categories.map((cat) => {
           const isSelected = active === cat.slug
-          const palette = getCategoryPalette(cat.slug || cat.id || cat.name)
+          const color = cat.color || '#8b2f9e'
           return (
             <button
               key={cat.id}
               type="button"
               onClick={() => handleSelect(cat.slug)}
-              className={`flex-none px-5 py-2.5 rounded-[20px] text-[13px] font-bold border-[1.5px] cursor-pointer whitespace-nowrap transition-all duration-150 active:scale-95 ${
+              style={
                 isSelected
-                  ? `${palette.activeBg} text-white ${palette.activeBorder} shadow-sm`
-                  : `bg-white ${palette.text} ${palette.border} ${palette.hover}`
-              }`}
+                  ? {
+                      backgroundColor: color,
+                      borderColor: color,
+                      color: getContrastTextColor(color),
+                      boxShadow: `0 2px 10px -2px ${hexToRgba(color, 0.4)}`,
+                    }
+                  : {
+                      backgroundColor: hexToRgba(color, 0.08),
+                      borderColor: hexToRgba(color, 0.35),
+                      color: color,
+                    }
+              }
+              className="flex-none px-5 py-2.5 rounded-[20px] text-[13px] font-bold border-[1.5px] cursor-pointer whitespace-nowrap transition-all duration-150 active:scale-95 hover:opacity-90"
             >
               {cat.name}
             </button>
