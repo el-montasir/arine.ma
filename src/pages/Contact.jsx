@@ -368,7 +368,7 @@ export default function Contact() {
                         dir="ltr"
                         value={formData.email}
                         onChange={handleFormChange('email')}
-                        placeholder="mohamed@example.com"
+                        placeholder={t('emailPlaceholder') || 'البريد الإلكتروني'}
                         className="w-full border-[1.5px] border-[#ece5f2] bg-[#faf8fc] rounded-xl ps-3.5 pe-10.5 py-3 text-[13.5px] text-[#161616] placeholder:text-[#b7b0c2] outline-none focus:border-[#8b2f9e] focus:bg-white transition-all"
                       />
                     </div>
@@ -387,7 +387,7 @@ export default function Contact() {
                         required
                         value={formData.name}
                         onChange={handleFormChange('name')}
-                        placeholder={t('namePlaceholder') || 'محمد أمين'}
+                        placeholder={t('namePlaceholder') || 'الاسم الكامل'}
                         className="w-full border-[1.5px] border-[#ece5f2] bg-[#faf8fc] rounded-xl ps-3.5 pe-10.5 py-3 text-[13.5px] text-[#161616] placeholder:text-[#b7b0c2] outline-none focus:border-[#8b2f9e] focus:bg-white transition-all"
                       />
                     </div>
@@ -409,7 +409,7 @@ export default function Contact() {
                         required
                         value={formData.subject}
                         onChange={handleFormChange('subject')}
-                        placeholder={t('subjectPlaceholder') || 'استفسار عن كتاب، باقة، أو حالة طلب…'}
+                        placeholder={t('subjectPlaceholder') || 'اكتب موضوع الرسالة...'}
                         className="w-full border-[1.5px] border-[#ece5f2] bg-[#faf8fc] rounded-xl ps-3.5 pe-10.5 py-3 text-[13.5px] text-[#161616] placeholder:text-[#b7b0c2] outline-none focus:border-[#8b2f9e] focus:bg-white transition-all"
                       />
                     </div>
@@ -427,7 +427,7 @@ export default function Contact() {
                         dir="ltr"
                         value={formData.phone}
                         onChange={handleFormChange('phone')}
-                        placeholder="0665128821"
+                        placeholder={t('phonePlaceholder') || 'رقم الهاتف'}
                         className="w-full border-[1.5px] border-[#ece5f2] bg-[#faf8fc] rounded-xl ps-3.5 pe-10.5 py-3 text-[13.5px] text-[#161616] placeholder:text-[#b7b0c2] outline-none focus:border-[#8b2f9e] focus:bg-white transition-all"
                       />
                     </div>
@@ -446,7 +446,7 @@ export default function Contact() {
                       rows={5}
                       value={formData.message}
                       onChange={handleFormChange('message')}
-                      placeholder={t('messagePlaceholder') || 'اكتب استفسارك أو طلبك هنا بكل وضوح…'}
+                      placeholder={t('messagePlaceholder') || 'اكتب رسالتك هنا...'}
                       className="w-full border-[1.5px] border-[#ece5f2] bg-[#faf8fc] rounded-xl px-3.5 py-3 text-[13.5px] text-[#161616] placeholder:text-[#b7b0c2] outline-none focus:border-[#8b2f9e] focus:bg-white transition-all resize-none min-h-[130px]"
                     />
                   </div>
