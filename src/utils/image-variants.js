@@ -253,7 +253,7 @@ export function getCardImageProps(path, explicitWidths, options = {}) {
   return {
     src: data.src,
     srcSet: data.srcset,
-    sizes: '(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 226px',
+    sizes: '(max-width: 639px) calc(50vw - 24px), (max-width: 768px) 50vw, (max-width: 1200px) 25vw, 226px',
     loading: isPriority ? 'eager' : 'lazy',
     ...(isPriority ? { fetchPriority: 'high' } : {}),
     decoding: 'async',
