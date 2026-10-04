@@ -94,7 +94,7 @@ export default function Navbar() {
                 })()
               ) : (
                 <img
-                  src="/logo.png"
+                  src="/logo-display.webp"
                   alt={config?.store?.name || t('appName') || 'مكتبة أرين'}
                   className="w-9 h-9 lg:w-10 lg:h-10 object-contain shrink-0"
                   loading="eager"
@@ -195,7 +195,7 @@ export default function Navbar() {
                   className="flex items-center select-none"
                 >
                   <img
-                    src="/logo.png"
+                    src="/logo-display.webp"
                     alt="Arine"
                     className="h-8 w-auto object-contain shrink-0"
                     loading="eager"
