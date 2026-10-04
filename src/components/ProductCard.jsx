@@ -7,7 +7,7 @@ import { formatPrice } from '../utils/format'
 import { hexToRgba } from '../utils/color'
 import { getCardImageProps, createVariantFallbackHandler } from '../utils/image-variants'
 
-export default function ProductCard({ book }) {
+export default function ProductCard({ book, isPriority = false }) {
   const { addToCart, toggleFavorite, isFavorite } = useCart()
   const { t } = useLanguage()
 
@@ -40,7 +40,7 @@ export default function ProductCard({ book }) {
             {primaryImage ? (
               <div className="h-full w-full overflow-hidden">
                 {(() => {
-                  const imgProps = getCardImageProps(primaryImage)
+                  const imgProps = getCardImageProps(primaryImage, undefined, { isPriority })
                   const retryWithOriginal = createVariantFallbackHandler(imgProps.fallbackSrc)
                   return (
                     <img
@@ -51,6 +51,7 @@ export default function ProductCard({ book }) {
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading={imgProps.loading}
                       decoding={imgProps.decoding}
+                      fetchPriority={imgProps.fetchPriority}
                       onError={(e) => {
                         // First failure: a variant srcset URL 404s. Retry with the
                         // original, which is always valid. If that also fails,

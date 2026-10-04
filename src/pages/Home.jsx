@@ -104,7 +104,7 @@ export default function Home() {
                       : ''
                   }
                 >
-                  <ProductCard book={book} />
+                  <ProductCard book={book} isPriority={index === 0} />
                 </div>
               )
             })}

@@ -238,14 +238,23 @@ export function createVariantFallbackHandler(fallbackSrc) {
 /**
  * Returns srcset + sizes configured for card thumbnails (226x301 display).
  * Suitable for: product cards, package cards, search results, favorites.
+ *
+ * @param {string} path - Media path or URL
+ * @param {number[]} [explicitWidths] - Explicit variant widths if already known
+ * @param {boolean|{priority?: boolean, isPriority?: boolean}} [options] - Loading priority options
  */
-export function getCardImageProps(path, explicitWidths) {
+export function getCardImageProps(path, explicitWidths, options = {}) {
+  const isPriority =
+    typeof options === 'boolean'
+      ? options
+      : Boolean(options?.priority || options?.isPriority)
   const data = getImageVariants(path, explicitWidths)
   return {
     src: data.src,
     srcSet: data.srcset,
     sizes: '(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 226px',
-    loading: 'lazy',
+    loading: isPriority ? 'eager' : 'lazy',
+    ...(isPriority ? { fetchPriority: 'high' } : {}),
     decoding: 'async',
     fallbackSrc: data.src,
   }
