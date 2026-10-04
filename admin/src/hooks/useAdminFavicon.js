@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 export function applyFavicon() {
   if (typeof document === 'undefined') return
 
-  const href = '/logo.png?v=4'
+  const href = '/logo.png?v=5'
 
   // Update or create standard icon link
   let iconLink = document.querySelector("link[rel~='icon']")
