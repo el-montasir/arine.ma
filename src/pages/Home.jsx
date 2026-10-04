@@ -91,7 +91,13 @@ export default function Home() {
           </div>
         </div>
 
-        {displayedBooks.length > 0 ? (
+        {productsLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : displayedBooks.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {displayedBooks.map((book, index) => {
               const isNewlyRevealed = showAllBooks && index >= initialBooks.length
@@ -112,7 +118,7 @@ export default function Home() {
         ) : (
           <div className="py-12 text-center">
             <p className="text-[#6b6577] text-sm">
-              {productsLoading ? (t('loading') || 'جارِ التحميل...') : (t('noBooksFound') || 'لا توجد كتب متاحة حالياً')}
+              {t('noBooksFound') || 'لا توجد كتب متاحة حالياً'}
             </p>
           </div>
         )}
@@ -222,3 +228,43 @@ function CuratedPackagesSection() {
     </section>
   )
 }
+
+function ProductCardSkeleton() {
+  return (
+    <article
+      className="bg-white rounded-[18px] border border-[#ece5f2] overflow-hidden flex flex-col justify-between relative h-full"
+      aria-hidden="true"
+    >
+      <div>
+        {/* Cover image placeholder */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd] aspect-[3/4]" />
+
+        {/* Info Area placeholder */}
+        <div className="p-3 sm:p-3.5 flex flex-col justify-between">
+          <div>
+            {/* Category tag placeholder */}
+            <div className="mb-1.5 flex items-center">
+              <div className="w-12 h-4 rounded-full bg-[#ece5f2]" />
+            </div>
+
+            {/* Title placeholder */}
+            <div className="min-h-[36px] flex flex-col gap-1.5 justify-center">
+              <div className="w-4/5 h-3.5 rounded bg-[#ece5f2]" />
+              <div className="w-3/5 h-3 rounded bg-[#ece5f2]" />
+            </div>
+
+            {/* Author placeholder */}
+            <div className="w-1/2 h-2.5 mt-1.5 rounded bg-[#f5f1f7]" />
+          </div>
+
+          {/* Price & Button placeholder */}
+          <div className="flex items-center justify-between gap-2 mt-2.5 pt-1">
+            <div className="w-14 h-4 rounded bg-[#ece5f2]" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#ece5f2] shrink-0" />
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
