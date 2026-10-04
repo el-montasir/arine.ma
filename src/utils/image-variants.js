@@ -43,8 +43,9 @@
  *   - The `src` always points to the original, guaranteeing legacy URLs and
  *     existing oversized media remain functional.
  *
- * VARIANT WIDTHS (200w, 400w, 800w, 1200w):
+ * VARIANT WIDTHS (200w, 320w, 400w, 800w, 1200w):
  *   - 200w:  card thumbnails (cart, checkout, admin list, search)
+ *   - 320w:  mobile/tablet product and package cards (50vw mobile @ ~1.75-2x DPR)
  *   - 400w:  product/package cards at 2x DPR
  *   - 800w:  product/package cards at 4x DPR, detail zoom
  *   - 1200w: detail-page hero images
@@ -61,7 +62,7 @@ import { getVariantWidths, isVariantRegistryEmpty } from '../lib/image-metadata'
  * The variant ladder, ordered ascending. Must match IMAGE_VARIANT_SIZES +
  * IMAGE_DETAIL_SIZE in server/src/lib/image-processing.js.
  */
-export const VARIANT_WIDTHS = [200, 400, 800, 1200]
+export const VARIANT_WIDTHS = [200, 320, 400, 800, 1200]
 
 /**
  * Whether responsive variant srcsets may be advertised to browsers.

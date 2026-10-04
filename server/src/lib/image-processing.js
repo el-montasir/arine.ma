@@ -10,10 +10,10 @@
  * - WebP chosen for ~25-35% smaller payloads vs JPEG at equal quality with
  *   broad browser support (>98% global). AVIF would be smaller but lacks
  *   Safari support on older iOS. Originals preserved for legacy clients.
- * - Variant widths (200w, 400w, 800w) chosen from measured card/detail
+ * - Variant widths (200w, 320w, 400w, 800w) chosen from measured card/detail
  *   display sizes (226x301, 300x200, detail hero 340-380px).
  * - DPR handled via width descriptor (2x = double source pixels), keeping
- *   variant count small (~4 widths, not dozens).
+ *   variant count small (~5 widths, not dozens).
  * - Sharp's withoutChroma option disabled; covers text legibility.
  * - METADATA POLICY (see `applyWebPolicy`): EXIF/XMP/IPTC are stripped, but the
  *   colour profile is preserved by converting to sRGB and re-attaching an sRGB
@@ -32,7 +32,7 @@ import Sharp from 'sharp'
 // The complete variant ladder, ascending. Card widths first, then the
 // detail-page width. Declared before the two legacy constants below and
 // derived FROM this list, so the ladder has exactly one definition.
-export const VARIANT_WIDTHS = [200, 400, 800, 1200]
+export const VARIANT_WIDTHS = [200, 320, 400, 800, 1200]
 
 // Standard (card/thumbnail) variant widths. Exported for the backfill tool,
 // which routes card widths through generateImageVariants and the detail width
@@ -47,7 +47,7 @@ export const IMAGE_DETAIL_SIZE = VARIANT_WIDTHS.at(-1)
 // Matches a generated variant filename, e.g. "1234-abc-200w.webp".
 // Used to EXCLUDE variants from being treated as source images during backfill,
 // which would otherwise cause recursive generation (foo-400w -> foo-400w-400w).
-export const VARIANT_FILENAME_PATTERN = /-(200|400|800|1200)w\.webp$/i
+export const VARIANT_FILENAME_PATTERN = /-(200|320|400|800|1200)w\.webp$/i
 
 // Maximum input dimensions to guard against decompression bombs
 const MAX_DIMENSIONS = 8192
@@ -234,6 +234,8 @@ export async function generateImageVariants(
     // all evaluate exactly the same rule (see generatedWidthsFor).
     if (!generatedWidthsFor(metadata.width).includes(width)) continue
 
+    const quality = width === 320 ? 80 : 82
+
     const variantBuffer = await applyWebPolicy(
       Sharp(originalBuffer).resize({
         width,
@@ -242,7 +244,7 @@ export async function generateImageVariants(
       })
     )
       .webp({
-        quality: 82, // Balanced quality/size; covers Arabic text legibility
+        quality, // Scoped: 80 for 320w, 82 for standard card variants (covers Arabic text legibility)
         lossless: false,
       })
       .toBuffer()

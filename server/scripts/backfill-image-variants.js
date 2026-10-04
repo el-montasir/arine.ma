@@ -1101,7 +1101,7 @@ OPTIONS
  *   is ground truth — it is what was written, not what was intended.
  * - A source already complete: `present` from the plan, which the planner
  *   filled by HEAD-ing each expected variant key. Also ground truth, and NOT
- *   the four-rung ladder: a 401px source has 200w and 400w present and 800w
+ *   the five-rung ladder: a 401px source has 200w, 320w and 400w present and 800w
  *   ineligible, and writing the ladder would advertise two 404s.
  * - A source that FAILED this run: contributes nothing. Existence could not be
  *   established after a failed upload, so no width is authorized — see the
