@@ -69,11 +69,63 @@ export default function OrderSuccess() {
   const [loading, setLoading] = useState(false)
   const [fetchAttempted, setFetchAttempted] = useState(false)
 
-  // Reset fetch status and previous fetched order when the URL parameter changes
+  // Fetch order from API when specified in URL params, with stale-response race prevention
   useEffect(() => {
+    if (!cleanParamOrderNum) {
+      setFetchedOrder(null)
+      setLoading(false)
+      setFetchAttempted(false)
+      return
+    }
+
+    // If matching order is already supplied by router navigation state, skip network fetch
+    if (state?.orderNumber === cleanParamOrderNum) {
+      setFetchedOrder(null)
+      setLoading(false)
+      setFetchAttempted(true)
+      return
+    }
+
+    // If matching order is already in sessionStorage, skip network fetch
+    try {
+      const raw = sessionStorage.getItem('arine-last-order')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.orderNumber === cleanParamOrderNum) {
+          setFetchedOrder(null)
+          setLoading(false)
+          setFetchAttempted(true)
+          return
+        }
+      }
+    } catch {}
+
+    let ignore = false
+    setLoading(true)
     setFetchAttempted(false)
     setFetchedOrder(null)
-  }, [cleanParamOrderNum])
+
+    api
+      .get(`/orders/${encodeURIComponent(cleanParamOrderNum)}`)
+      .then((res) => {
+        if (!ignore && res?.success && res?.order) {
+          if (res.order.orderNumber === cleanParamOrderNum) {
+            setFetchedOrder(res.order)
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false)
+          setFetchAttempted(true)
+        }
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [cleanParamOrderNum, state?.orderNumber])
 
   // Resolve order: router state -> fetched API order -> sessionStorage fallback.
   // Critical safety rule: When URL specifies an order number, never display a different order from sessionStorage or state.
@@ -100,25 +152,6 @@ export default function OrderSuccess() {
       order = null
     }
   }
-
-  // If order is not resolved and an order number is specified in URL params, fetch from API exactly once
-  useEffect(() => {
-    if (!order && cleanParamOrderNum && !loading && !fetchAttempted) {
-      setLoading(true)
-      api
-        .get(`/orders/${encodeURIComponent(cleanParamOrderNum)}`)
-        .then((res) => {
-          if (res?.success && res?.order) {
-            setFetchedOrder(res.order)
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          setLoading(false)
-          setFetchAttempted(true)
-        })
-    }
-  }, [order, cleanParamOrderNum, loading, fetchAttempted])
 
   // Register image variants if order data contains them
   useEffect(() => {
