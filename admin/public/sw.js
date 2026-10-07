@@ -86,12 +86,12 @@ self.addEventListener('push', (event) => {
   try {
     payload = event.data.json()
   } catch {
-    payload = { title: '🛍️ New Order', body: 'From arine.ma Store' }
+    payload = { title: 'Order', body: 'New Order' }
   }
 
   const {
-    title = '🛍️ New Order',
-    body = 'From arine.ma Store',
+    title = 'Order',
+    body = 'New Order',
     icon = '/icon-192.png',
     badge = '/icon-192.png',
     tag = 'arine-order-notification',

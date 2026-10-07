@@ -208,18 +208,24 @@ export async function sendOrderPushNotificationToAdmins({ order }) {
           adminBadgeCounts.set(sub.adminId, badgeCount)
         }
 
-        // Build Shopify-style push notification payload strictly protecting customer privacy
+        // Build push notification payload with iOS application branding alignment
+        const orderIdentifier = order?.orderNumber || order?.id || ''
+        const rawOrderNum = String(orderIdentifier).trim()
+        const formattedOrderNum = rawOrderNum.startsWith('#') ? rawOrderNum.slice(1) : rawOrderNum
+        const title = formattedOrderNum ? `Order #${formattedOrderNum}` : 'New Order'
+
         const hasValidTotal =
           order?.total !== null &&
           order?.total !== undefined &&
+          order?.total !== '' &&
           Number.isFinite(Number(order.total))
 
         const body = hasValidTotal
-          ? `From arine.ma Store\nPrice: ${order.total} DH`
-          : 'From arine.ma Store'
+          ? `${order.total} DH`
+          : 'New Order'
 
         const payload = JSON.stringify({
-          title: '🛍️ New Order',
+          title,
           body,
           icon: '/icon-192.png',
           badge: '/icon-192.png',
@@ -227,6 +233,7 @@ export async function sendOrderPushNotificationToAdmins({ order }) {
           data: {
             url: `/orders/${order.id}`,
             orderId: order.id,
+            orderNumber: order.orderNumber,
             badgeCount,
             type: 'NEW_ORDER',
           },

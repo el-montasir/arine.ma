@@ -1,6 +1,6 @@
 {
-  "name": "Admin Panel",
-  "short_name": "Admin Panel",
+  "name": "arine.ma store",
+  "short_name": "arine.ma store",
   "description": "لوحة تحكم وإدارة متجر مكتبة أرين",
   "start_url": "/",
   "scope": "/",
