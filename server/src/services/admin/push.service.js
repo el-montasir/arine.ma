@@ -208,12 +208,21 @@ export async function sendOrderPushNotificationToAdmins({ order }) {
           adminBadgeCounts.set(sub.adminId, badgeCount)
         }
 
-        // Generic push notification payload strictly protecting customer privacy
+        // Build Shopify-style push notification payload strictly protecting customer privacy
+        const hasValidTotal =
+          order?.total !== null &&
+          order?.total !== undefined &&
+          Number.isFinite(Number(order.total))
+
+        const body = hasValidTotal
+          ? `From arine.ma Store\nPrice: ${order.total} DH`
+          : 'From arine.ma Store'
+
         const payload = JSON.stringify({
-          title: 'طلب جديد',
-          body: 'وصل طلب جديد إلى أرين',
-          icon: '/logo.png',
-          badge: '/logo.png',
+          title: '🛍️ New Order',
+          body,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
           tag: `new-order-${order.id}`,
           data: {
             url: `/orders/${order.id}`,

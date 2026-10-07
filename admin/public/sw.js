@@ -86,14 +86,14 @@ self.addEventListener('push', (event) => {
   try {
     payload = event.data.json()
   } catch {
-    payload = { title: 'طلب جديد', body: 'وصل طلب جديد إلى أرين' }
+    payload = { title: '🛍️ New Order', body: 'From arine.ma Store' }
   }
 
   const {
-    title = 'طلب جديد',
-    body = 'وصل طلب جديد إلى أرين',
-    icon = '/logo.png',
-    badge = '/logo.png',
+    title = '🛍️ New Order',
+    body = 'From arine.ma Store',
+    icon = '/icon-192.png',
+    badge = '/icon-192.png',
     tag = 'arine-order-notification',
     data = {},
   } = payload
@@ -111,8 +111,7 @@ self.addEventListener('push', (event) => {
       url: safeUrl,
     },
     vibrate: [200, 100, 200],
-    dir: 'rtl',
-    lang: 'ar',
+    dir: 'auto',
   }
 
   const promiseChain = [
