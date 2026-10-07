@@ -32,7 +32,7 @@ export function applyFavicon() {
     appleLink.rel = 'apple-touch-icon'
     document.head.appendChild(appleLink)
   }
-  appleLink.href = href
+  appleLink.href = '/apple-touch-icon.png'
 }
 
 export function useAdminFavicon() {

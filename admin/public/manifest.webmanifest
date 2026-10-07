@@ -1,6 +1,6 @@
 {
-  "name": "لوحة تحكم أرين",
-  "short_name": "أرين أدمن",
+  "name": "Admin Panel",
+  "short_name": "Admin Panel",
   "description": "لوحة تحكم وإدارة متجر مكتبة أرين",
   "start_url": "/",
   "scope": "/",
@@ -32,6 +32,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
