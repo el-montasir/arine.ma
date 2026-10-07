@@ -1,6 +1,6 @@
-// Arine Admin PWA - Service Worker for Background Push Notifications & App Badge Synchronization
+// Arine Admin PWA - Service Worker for Background Push Notifications & App Icon Badging
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   // Activate immediately without waiting for old clients to close
   self.skipWaiting()
 })
@@ -10,14 +10,58 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })
 
-// Synchronize numeric app icon badge with safe fallback
+// Validate and sanitize notification navigation target URLs strictly to Admin order routes
+function getSafeTargetUrl(rawUrl) {
+  const fallback = '/orders'
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return fallback
+  }
+
+  const trimmed = rawUrl.trim()
+
+  // Reject dangerous schemes, protocol-relative URLs, and path traversal
+  if (
+    trimmed.startsWith('//') ||
+    trimmed.startsWith('\\\\') ||
+    trimmed.toLowerCase().includes('javascript:') ||
+    trimmed.toLowerCase().includes('data:') ||
+    trimmed.includes('..')
+  ) {
+    return fallback
+  }
+
+  // Relative path validation
+  if (trimmed.startsWith('/')) {
+    // Only permit safe admin order routes: /orders or /orders/:id (alphanumeric/hyphen/underscore)
+    if (/^\/orders(\/[a-zA-Z0-9_-]+)?$/.test(trimmed)) {
+      return trimmed
+    }
+    return fallback
+  }
+
+  // Absolute URL validation against self origin
+  try {
+    const parsed = new URL(trimmed, self.location.origin)
+    if (parsed.origin === self.location.origin) {
+      if (/^\/orders(\/[a-zA-Z0-9_-]+)?$/.test(parsed.pathname)) {
+        return parsed.pathname + parsed.search
+      }
+    }
+  } catch {
+    // Ignore URL parse failures
+  }
+
+  return fallback
+}
+
+// Synchronize numeric app icon badge with safe feature detection
 async function syncAppBadge(count) {
-  if (!('setAppBadge' in self.navigator)) return
+  if (typeof self.navigator === 'undefined' || !('setAppBadge' in self.navigator)) return
   try {
     const numericCount = Number(count)
     if (!isNaN(numericCount) && numericCount > 0) {
-      await self.navigator.setAppBadge(numericCount)
-    } else {
+      await self.navigator.setAppBadge(Math.floor(numericCount))
+    } else if ('clearAppBadge' in self.navigator) {
       await self.navigator.clearAppBadge()
     }
   } catch (err) {
@@ -32,25 +76,20 @@ self.addEventListener('push', (event) => {
   let payload = {}
   try {
     payload = event.data.json()
-  } catch (e) {
-    try {
-      payload = { title: 'إشعار جديد', body: event.data.text() }
-    } catch {
-      payload = { title: 'طلب جديد', body: 'طلب جديد تم إنشاؤه في المتجر' }
-    }
+  } catch {
+    payload = { title: 'طلب جديد', body: 'وصل طلب جديد إلى أرين' }
   }
 
   const {
     title = 'طلب جديد',
-    body = 'طلب جديد تم إنشاؤه في المتجر',
+    body = 'وصل طلب جديد إلى أرين',
     icon = '/logo.png',
     badge = '/logo.png',
     tag = 'arine-order-notification',
     data = {},
   } = payload
 
-  const actions = []
-  const orderUrl = data.url || '/orders'
+  const safeUrl = getSafeTargetUrl(data.url)
 
   const notificationOptions = {
     body,
@@ -59,13 +98,12 @@ self.addEventListener('push', (event) => {
     tag,
     renotify: true,
     data: {
-      url: orderUrl,
       ...data,
+      url: safeUrl,
     },
     vibrate: [200, 100, 200],
     dir: 'rtl',
     lang: 'ar',
-    actions,
   }
 
   const promiseChain = Promise.all([
@@ -76,30 +114,39 @@ self.addEventListener('push', (event) => {
   event.waitUntil(promiseChain)
 })
 
-// Notification Click Handler - Focus existing admin window or open order view
+// Notification Click Handler - Safely focus existing admin window or navigate to /orders
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  const targetUrl = event.notification.data?.url || '/orders'
+  const safePath = getSafeTargetUrl(event.notification.data?.url)
+  const fullTargetUrl = new URL(safePath, self.location.origin).href
 
   event.waitUntil(
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Look for an existing open window under admin domain
+      .then(async (clientList) => {
+        // Find existing open admin window on same origin
         for (const client of clientList) {
-          if ('focus' in client) {
-            client.focus()
-            if ('navigate' in client && targetUrl) {
-              client.navigate(targetUrl)
+          try {
+            const clientUrl = new URL(client.url, self.location.origin)
+            if (clientUrl.origin === self.location.origin && 'focus' in client) {
+              await client.focus()
+              if ('navigate' in client) {
+                await client.navigate(safePath)
+              }
+              return
             }
-            return
+          } catch {
+            // Ignore client inspection errors and continue loop
           }
         }
-        // If no open window found, open a new window
+        // If no matching window is open, open a new window
         if (self.clients.openWindow) {
-          return self.clients.openWindow(targetUrl)
+          return self.clients.openWindow(fullTargetUrl)
         }
+      })
+      .catch((err) => {
+        console.warn('[SW] notificationclick error:', err)
       })
   )
 })

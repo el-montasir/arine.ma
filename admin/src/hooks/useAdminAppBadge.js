@@ -9,8 +9,8 @@ export async function setAppBadge(count) {
   try {
     const num = Number(count)
     if (!isNaN(num) && num > 0) {
-      await navigator.setAppBadge(num)
-    } else {
+      await navigator.setAppBadge(Math.floor(num))
+    } else if ('clearAppBadge' in navigator) {
       await navigator.clearAppBadge()
     }
   } catch (err) {
@@ -22,16 +22,20 @@ export async function setAppBadge(count) {
  * Clear the app badge count.
  */
 export async function clearAppBadge() {
-  if (typeof navigator === 'undefined' || !('clearAppBadge' in navigator)) return
+  if (typeof navigator === 'undefined') return
   try {
-    await navigator.clearAppBadge()
+    if ('clearAppBadge' in navigator) {
+      await navigator.clearAppBadge()
+    } else if ('setAppBadge' in navigator) {
+      await navigator.setAppBadge(0)
+    }
   } catch (err) {
     console.warn('[Badge] Failed to clear badge:', err)
   }
 }
 
 /**
- * Hook to automatically synchronize the PWA app icon badge with a count value.
+ * Hook to synchronize the PWA app icon badge with a count value.
  */
 export function useAdminAppBadge(count) {
   const isSupported = typeof navigator !== 'undefined' && 'setAppBadge' in navigator

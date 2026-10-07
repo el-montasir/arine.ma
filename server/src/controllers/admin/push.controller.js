@@ -5,6 +5,7 @@ import {
   saveSubscription,
   removeSubscription,
   getUnseenOrderCount,
+  getSubscriptionStatus,
 } from '../../services/admin/push.service.js'
 
 /**
@@ -24,14 +25,6 @@ export const getPublicKey = asyncHandler(async (req, res) => {
 export const subscribe = asyncHandler(async (req, res) => {
   const adminId = req.admin.id
   const { endpoint, keys, userAgent } = req.body || {}
-
-  if (!endpoint || typeof endpoint !== 'string') {
-    return errorResponse(res, 400, 'INVALID_SUBSCRIPTION', 'معرف الاشتراك (endpoint) مطلوب')
-  }
-
-  if (!keys || !keys.p256dh || !keys.auth) {
-    return errorResponse(res, 400, 'INVALID_KEYS', 'مفاتيح التشفير (p256dh, auth) مطلوبة')
-  }
 
   const subscription = await saveSubscription(adminId, {
     endpoint,
@@ -80,5 +73,30 @@ export const getUnseenCount = asyncHandler(async (req, res) => {
     data: {
       count,
     },
+  })
+})
+
+/**
+ * Verify push subscription registration and ownership status for current admin.
+ */
+export const getStatus = asyncHandler(async (req, res) => {
+  const adminId = req.admin.id
+  const endpoint = typeof req.query.endpoint === 'string' ? req.query.endpoint : req.body?.endpoint
+
+  if (!endpoint || typeof endpoint !== 'string') {
+    return res.json({
+      success: true,
+      data: {
+        isSubscribed: false,
+        isOwner: false,
+      },
+    })
+  }
+
+  const status = await getSubscriptionStatus(adminId, endpoint)
+
+  res.json({
+    success: true,
+    data: status,
   })
 })

@@ -44,7 +44,7 @@ export function useAdminPush() {
       .catch((err) => console.warn('[SW] Registration failed:', err))
   }, [isSupported])
 
-  // Check subscription status
+  // Check subscription status and verify ownership against authenticated admin
   const checkSubscription = useCallback(async () => {
     if (!isSupported || !admin) {
       setIsSubscribed(false)
@@ -56,7 +56,20 @@ export function useAdminPush() {
       setPermission(typeof Notification !== 'undefined' ? Notification.permission : 'default')
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
-      setIsSubscribed(!!sub)
+
+      if (!sub) {
+        setIsSubscribed(false)
+        return
+      }
+
+      // Verify with backend whether this endpoint belongs to the currently authenticated admin
+      const statusRes = await api.post('/push/status', { endpoint: sub.endpoint }).catch(() => null)
+      if (statusRes?.success && statusRes?.data?.isOwner) {
+        setIsSubscribed(true)
+      } else {
+        // Subscription exists in browser but belongs to another account or is unregistered
+        setIsSubscribed(false)
+      }
     } catch (err) {
       console.warn('[Push] Failed to check subscription:', err)
       setIsSubscribed(false)
@@ -78,7 +91,7 @@ export function useAdminPush() {
     setError(null)
 
     try {
-      // 1. Request permission
+      // 1. Request notification permission
       const perm = await Notification.requestPermission()
       setPermission(perm)
       if (perm !== 'granted') {
@@ -95,8 +108,19 @@ export function useAdminPush() {
       }
       const applicationServerKey = urlBase64ToUint8Array(res.data.publicKey)
 
-      // 4. Subscribe via PushManager
+      // 4. Handle any pre-existing subscription (e.g. from previous admin account)
       let sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        // Check if current subscription belongs to current admin
+        const statusRes = await api.post('/push/status', { endpoint: sub.endpoint }).catch(() => null)
+        if (!statusRes?.data?.isOwner) {
+          // Unsubscribe stale/foreign subscription first
+          await sub.unsubscribe().catch(() => {})
+          sub = null
+        }
+      }
+
+      // 5. Create fresh subscription if needed
       if (!sub) {
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
@@ -104,7 +128,7 @@ export function useAdminPush() {
         })
       }
 
-      // 5. Send subscription to backend
+      // 6. Send subscription to backend
       const rawJson = sub.toJSON()
       await api.post('/push/subscribe', {
         endpoint: sub.endpoint,
@@ -135,9 +159,9 @@ export function useAdminPush() {
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
       if (sub) {
-        // Inform backend
+        // Inform backend to delete record for current admin
         await api.post('/push/unsubscribe', { endpoint: sub.endpoint }).catch(() => {})
-        // Unsubscribe locally
+        // Unsubscribe locally from PushManager
         await sub.unsubscribe()
       }
       setIsSubscribed(false)

@@ -1,5 +1,7 @@
 import webpush from 'web-push'
 import { prisma } from '../../lib/prisma.js'
+import { ApiError } from '../../utils/api-error.js'
+import { validateSubscriptionInput } from '../../utils/push-validator.js'
 
 let isVapidConfigured = false
 
@@ -37,44 +39,85 @@ export function getVapidPublicKey() {
 }
 
 /**
- * Save or update a push subscription for an admin user.
+ * Check if a push subscription endpoint is registered and owned by the specified admin.
  */
-export async function saveSubscription(adminId, { endpoint, keys, userAgent }) {
+export async function getSubscriptionStatus(adminId, endpoint) {
   if (!endpoint || typeof endpoint !== 'string') {
-    throw new Error('Push subscription endpoint is required')
-  }
-  if (!keys || !keys.p256dh || !keys.auth) {
-    throw new Error('Push subscription p256dh and auth keys are required')
+    return { isSubscribed: false, isOwner: false }
   }
 
-  return prisma.adminPushSubscription.upsert({
-    where: { endpoint },
-    create: {
-      adminId,
-      endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
-      userAgent: userAgent || null,
-    },
-    update: {
-      adminId,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
-      userAgent: userAgent || null,
-    },
+  const sub = await prisma.adminPushSubscription.findUnique({
+    where: { endpoint: endpoint.trim() },
+    select: { id: true, adminId: true },
+  })
+
+  if (!sub) {
+    return { isSubscribed: false, isOwner: false }
+  }
+
+  const isOwner = sub.adminId === adminId
+  return {
+    isSubscribed: isOwner,
+    isOwner,
+  }
+}
+
+/**
+ * Save or update a push subscription for an admin user.
+ * Atomic transaction ensures cross-admin ownership cannot be hijacked.
+ */
+export async function saveSubscription(adminId, { endpoint, keys, userAgent }) {
+  const validated = validateSubscriptionInput({ endpoint, keys, userAgent })
+
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.adminPushSubscription.findUnique({
+      where: { endpoint: validated.endpoint },
+    })
+
+    if (existing) {
+      if (existing.adminId !== adminId) {
+        throw new ApiError(
+          409,
+          'SUBSCRIPTION_OWNERSHIP_CONFLICT',
+          'معرف الاشتراك مرتبط بحساب إداري آخر. يرجى إلغاء الاشتراك من المتصفح أولاً'
+        )
+      }
+
+      return tx.adminPushSubscription.update({
+        where: { id: existing.id },
+        data: {
+          p256dh: validated.keys.p256dh,
+          auth: validated.keys.auth,
+          userAgent: validated.userAgent,
+        },
+      })
+    }
+
+    return tx.adminPushSubscription.create({
+      data: {
+        adminId,
+        endpoint: validated.endpoint,
+        p256dh: validated.keys.p256dh,
+        auth: validated.keys.auth,
+        userAgent: validated.userAgent,
+      },
+    })
   })
 }
 
 /**
  * Remove a push subscription by endpoint for a specific admin.
+ * Only deletes if the subscription is owned by the authenticated admin.
  */
 export async function removeSubscription(adminId, endpoint) {
-  if (!endpoint) return { count: 0 }
+  if (!endpoint || typeof endpoint !== 'string') {
+    return { count: 0 }
+  }
 
   return prisma.adminPushSubscription.deleteMany({
     where: {
       adminId,
-      endpoint,
+      endpoint: endpoint.trim(),
     },
   })
 }
@@ -96,7 +139,7 @@ export async function getUnseenOrderCount(adminId) {
 /**
  * Post-order creation hook to dispatch background Web Push notifications and
  * updated unseen NEW_ORDER badge count to all subscribed active administrators.
- * This runs outside the DB transaction with safe error isolation.
+ * Customer privacy is preserved: payload contains strictly generic text without PII.
  */
 export async function sendOrderPushNotificationToAdmins({ order }) {
   try {
@@ -138,16 +181,16 @@ export async function sendOrderPushNotificationToAdmins({ order }) {
           adminBadgeCounts.set(sub.adminId, badgeCount)
         }
 
+        // Generic push notification payload strictly protecting customer privacy
         const payload = JSON.stringify({
           title: 'طلب جديد',
-          body: `طلب جديد رقم #${order.orderNumber} من ${order.fullName} (${order.city}) بقيمة ${order.total} د.م`,
+          body: 'وصل طلب جديد إلى أرين',
           icon: '/logo.png',
           badge: '/logo.png',
           tag: `new-order-${order.id}`,
           data: {
             url: `/orders/${order.id}`,
             orderId: order.id,
-            orderNumber: order.orderNumber,
             badgeCount,
             type: 'NEW_ORDER',
           },
@@ -174,7 +217,7 @@ export async function sendOrderPushNotificationToAdmins({ order }) {
                 where: { id: sub.id },
               })
             } catch {
-              // Ignore deletion error
+              // Ignore cleanup deletion error
             }
           }
           throw err

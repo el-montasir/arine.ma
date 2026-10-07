@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useCallback, useMemo, useState } from 'react'
 import { api } from '../lib/api.js'
+import { clearAppBadge } from '../hooks/useAdminAppBadge.js'
 
 const AuthContext = createContext(null)
 
@@ -41,6 +42,23 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
+    // Best-effort cleanup of push subscription & badge on logout
+    try {
+      clearAppBadge()
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready.catch(() => null)
+        if (reg?.pushManager) {
+          const sub = await reg.pushManager.getSubscription().catch(() => null)
+          if (sub) {
+            await api.post('/push/unsubscribe', { endpoint: sub.endpoint }).catch(() => {})
+            await sub.unsubscribe().catch(() => {})
+          }
+        }
+      }
+    } catch {
+      // Ignore push cleanup failures during logout
+    }
+
     try {
       await api.post('/auth/logout')
     } catch {

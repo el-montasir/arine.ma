@@ -350,12 +350,13 @@ export async function createOrder(input) {
   }
 
   // Post-transaction Admin Web Push Notification dispatch:
-  // Runs strictly outside the DB transaction so push delivery failures NEVER impact order creation.
-  try {
-    await sendOrderPushNotificationToAdmins({ order })
-  } catch (pErr) {
-    console.error('[ADMIN_PUSH_ERROR] Post-order push notification dispatch failed:', pErr.message)
-  }
+  // Dispatches asynchronously in the background so slow push services NEVER delay the customer checkout response.
+  // Runs strictly outside the DB transaction with safe error isolation.
+  setImmediate(() => {
+    sendOrderPushNotificationToAdmins({ order }).catch((pErr) => {
+      console.error('[ADMIN_PUSH_ERROR] Post-order push notification dispatch failed:', pErr?.message || pErr)
+    })
+  })
 
   return order
 }
