@@ -1,0 +1,25 @@
+{
+  "name": "لوحة تحكم أرين",
+  "short_name": "أرين أدمن",
+  "description": "لوحة تحكم وإدارة متجر مكتبة أرين",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d0a1a",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

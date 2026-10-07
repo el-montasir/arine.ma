@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Plus, Sun, Moon, Palette, Truck, ShieldCheck, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Sun, Moon, Palette, Truck, ShieldCheck, RefreshCw, ChevronLeft, ChevronRight, Bell, BellRing, Smartphone, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
+import { useAdminPush } from '../hooks/useAdminPush.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
 import Table from '../components/ui/Table.jsx'
 import ErrorBanner from '../components/ui/ErrorBanner.jsx'
@@ -19,6 +20,18 @@ export default function Settings() {
   const { theme, setTheme } = useTheme()
   const isDark = theme === 'dark'
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight
+
+  const {
+    isSupported: pushSupported,
+    isBadgingSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    loading: pushLoading,
+    busy: pushBusy,
+    error: pushError,
+    subscribe: subscribePush,
+    unsubscribe: unsubscribePush,
+  } = useAdminPush()
 
   const { data: settings, loading: settingsLoading, error: settingsError, reload: reloadSettings } = useFetch('/settings')
   const [modal, setModal] = useState(false)
@@ -127,7 +140,73 @@ export default function Settings() {
         </div>
       </Card>
 
-      {/* 2. Quick Navigation to Dedicated Sections */}
+      {/* 2. Order Push Notifications & Badging Card */}
+      <Card className="space-y-4">
+        <div className="flex items-center justify-between border-b border-line pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600/20 text-brand-400">
+              <BellRing className="h-4 w-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-white">{t('pushNotificationsTitle')}</h2>
+              <p className="text-xs text-[#8b80a8]">{t('pushNotificationsSubtitle')}</p>
+            </div>
+          </div>
+          <div>
+            {!pushSupported ? (
+              <Badge kind="neutral">{t('pushNotSupported')}</Badge>
+            ) : pushPermission === 'denied' ? (
+              <Badge kind="danger">{t('pushStatusDenied')}</Badge>
+            ) : pushSubscribed ? (
+              <Badge kind="success">{t('pushStatusActive')}</Badge>
+            ) : (
+              <Badge kind="warning">{t('pushStatusInactive')}</Badge>
+            )}
+          </div>
+        </div>
+
+        {pushError ? <ErrorBanner message={pushError} /> : null}
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+          <div className="space-y-1.5 max-w-xl">
+            <p className="text-xs text-[#b3a8cf]">
+              {t('pushNotificationsCardDesc')}
+            </p>
+            {isBadgingSupported && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span>{t('badgeSyncActive')}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="shrink-0">
+            {pushSubscribed ? (
+              <Button
+                variant="secondary"
+                onClick={unsubscribePush}
+                disabled={pushBusy || pushLoading}
+              >
+                {pushBusy && <Loader2 className="h-4 w-4 animate-spin me-2" />}
+                <Bell className="h-4 w-4 me-1.5" />
+                {t('disablePushBtn')}
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={subscribePush}
+                disabled={!pushSupported || pushPermission === 'denied' || pushBusy || pushLoading}
+              >
+                {pushBusy && <Loader2 className="h-4 w-4 animate-spin me-2" />}
+                <BellRing className="h-4 w-4 me-1.5" />
+                {t('enablePushBtn')}
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* 3. Quick Navigation to Dedicated Sections */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="flex items-center justify-between p-4 hover:border-brand-500/50 transition-colors">
           <div className="flex items-center gap-3">

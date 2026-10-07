@@ -289,8 +289,25 @@ model Admin {
   createdPurchases Purchase[] @relation("PurchaseCreatedBy")
   createdPurchasePayments PurchasePayment[] @relation("PurchasePaymentCreatedBy")
   createdPurchaseReturns PurchaseReturn[] @relation("PurchaseReturnCreatedBy")
+  pushSubscriptions AdminPushSubscription[]
 
   @@map("admins")
+}
+
+model AdminPushSubscription {
+  id        Int      @id @default(autoincrement())
+  adminId   Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@map("admin_push_subscriptions")
 }
 
 model ActivityLog {

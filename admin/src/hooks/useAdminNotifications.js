@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import { setAppBadge, clearAppBadge } from './useAdminAppBadge.js'
 
 const POLLING_INTERVAL_MS = 25000 // 25 seconds
 
@@ -65,6 +66,15 @@ export function useAdminNotifications() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [admin, fetchNotifications])
+
+  // Automatically synchronize app icon badge with unread count
+  useEffect(() => {
+    if (!admin) {
+      clearAppBadge()
+      return
+    }
+    setAppBadge(unreadCount)
+  }, [admin, unreadCount])
 
   // Mark single notification as read
   const markAsRead = useCallback(async (id) => {

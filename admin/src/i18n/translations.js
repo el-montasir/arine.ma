@@ -1540,6 +1540,18 @@ export const translations = {
     noReturnsFound: 'لا توجد مرتجعات مشتريات مسجلة',
     searchReturnsPlaceholder: 'البحث برقم المرتجع أو المورد...',
 
+    // Web Push & App Badges
+    pushNotificationsTitle: 'إشعارات الطلبات الفورية (Web Push & Badges)',
+    pushNotificationsSubtitle: 'استقبال تنبيهات فورية عند تسجيل طلبات جديدة وتحديث شارة عدد الطلبات على أيقونة التطبيق (PWA)',
+    pushNotificationsCardDesc: 'تفعيل إشعارات المتصفح الفورية لتنبيهك فوراً عند تسجيل أي زبون لطلب جديد، حتى وإن كانت لوحة التحكم مغلقة في الخلفية.',
+    enablePushBtn: 'تفعيل الإشعارات الفورية',
+    disablePushBtn: 'تعطيل الإشعارات الفورية',
+    pushStatusActive: 'الإشعارات الفورية مفعّلة على هذا الجهاز',
+    pushStatusInactive: 'الإشعارات الفورية غير مفعّلة حالياً',
+    pushStatusDenied: 'تم حظر الإشعارات من إعدادات المتصفح (يرجى السماح بها من شريط العنوان)',
+    pushNotSupported: 'هذا المتصفح لا يدعم ميزة الإشعارات الفورية (Web Push)',
+    badgeSyncActive: 'مزامنة شارة التطبيق (App Icon Badge) نشطة تلقائياً',
+
     // Money format
     currency: 'د.م',
   },
@@ -3084,6 +3096,18 @@ export const translations = {
     returnConfirmedSuccess: 'Retour confirmé et stock déduit avec succès',
     noReturnsFound: 'Aucun retour enregistré',
     searchReturnsPlaceholder: 'Rechercher par n° de retour, fournisseur...',
+
+    // Web Push & App Badges
+    pushNotificationsTitle: 'Notifications de Commandes & Badges (Web Push)',
+    pushNotificationsSubtitle: 'Recevez des alertes instantanées pour les nouvelles commandes et synchronisez le badge de l\'icône PWA',
+    pushNotificationsCardDesc: 'Activez les notifications push du navigateur pour être averti dès qu\'un client passe une commande, même si le panneau est en arrière-plan.',
+    enablePushBtn: 'Activer les notifications push',
+    disablePushBtn: 'Désactiver les notifications push',
+    pushStatusActive: 'Notifications push actives sur cet appareil',
+    pushStatusInactive: 'Notifications push désactivées',
+    pushStatusDenied: 'Notifications bloquées dans les paramètres du navigateur (veuillez autoriser)',
+    pushNotSupported: 'Ce navigateur ne prend pas en charge les notifications Web Push',
+    badgeSyncActive: 'Synchronisation du badge d\'icône d\'application active',
 
     // Money format
     currency: 'DH',
@@ -4630,6 +4654,18 @@ export const translations = {
     returnConfirmedSuccess: 'Purchase return confirmed and stock deducted successfully',
     noReturnsFound: 'No purchase returns found',
     searchReturnsPlaceholder: 'Search by return number, supplier...',
+
+    // Web Push & App Badges
+    pushNotificationsTitle: 'Order Push Notifications & Badges',
+    pushNotificationsSubtitle: 'Receive instant alerts for new orders and sync the app icon badge on your installed PWA',
+    pushNotificationsCardDesc: 'Enable browser push notifications to be alerted immediately when a customer places a new order, even when the admin panel is closed in the background.',
+    enablePushBtn: 'Enable Push Notifications',
+    disablePushBtn: 'Disable Push Notifications',
+    pushStatusActive: 'Push notifications active on this device',
+    pushStatusInactive: 'Push notifications currently inactive',
+    pushStatusDenied: 'Notifications blocked in browser settings (please grant permission)',
+    pushNotSupported: 'This browser does not support Web Push notifications',
+    badgeSyncActive: 'App icon badge synchronization active',
 
     // Money format
     currency: 'MAD',

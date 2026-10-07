@@ -17,6 +17,7 @@ import usersRoutes from './users.routes.js'
 import activityLogRoutes from './activity-log.routes.js'
 import marketingRoutes from './marketing.routes.js'
 import notificationRoutes from './notifications.routes.js'
+import pushRoutes from './push.routes.js'
 import stockRoutes from './stock.routes.js'
 import supplierRoutes from './suppliers.routes.js'
 import purchaseRoutes from './purchases.routes.js'
@@ -50,6 +51,7 @@ router.use('/activity-logs', activityLogRoutes)
 router.use('/activity-log', activityLogRoutes)
 router.use('/marketing', marketingRoutes)
 router.use('/notifications', notificationRoutes)
+router.use('/push', pushRoutes)
 router.use('/stock', stockRoutes)
 router.use('/suppliers', supplierRoutes)
 router.use('/purchases', purchaseRoutes)

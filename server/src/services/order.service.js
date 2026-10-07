@@ -4,6 +4,7 @@ import { generateOrderNumber } from '../utils/order-number.js'
 import { calcShipping } from '../utils/shipping.js'
 import { recordOrderAttribution } from './marketing/attribution.service.js'
 import { sendCapiEvent, buildUserData } from './marketing/meta-capi.service.js'
+import { sendOrderPushNotificationToAdmins } from './admin/push.service.js'
 import { pickPrimaryImageUrl, widthsForImageUrl } from '../lib/image-metadata.js'
 
 const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
@@ -346,6 +347,14 @@ export async function createOrder(input) {
   } catch (mErr) {
     // Isolated error logging: Marketing failures must not disrupt order response
     console.error('[MARKETING_CAPI_ERROR] Post-order CAPI dispatch failed:', mErr.message)
+  }
+
+  // Post-transaction Admin Web Push Notification dispatch:
+  // Runs strictly outside the DB transaction so push delivery failures NEVER impact order creation.
+  try {
+    await sendOrderPushNotificationToAdmins({ order })
+  } catch (pErr) {
+    console.error('[ADMIN_PUSH_ERROR] Post-order push notification dispatch failed:', pErr.message)
   }
 
   return order
