@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useCallback, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useCallback, useMemo, useState, useRef } from 'react'
 import { api } from '../lib/api.js'
 import { clearAppBadge } from '../hooks/useAdminAppBadge.js'
 
@@ -7,6 +7,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [admin, setAdmin] = useState(null)
   const [loading, setLoading] = useState(true)
+  const sessionEpochRef = useRef(0)
 
   const fetchCurrentUser = useCallback(async () => {
     try {
@@ -37,7 +38,10 @@ export function AuthProvider({ children }) {
 
   // Reconcile push subscription at the authentication boundary when admin account changes
   useEffect(() => {
-    if (!admin?.id) return
+    const currentAdminId = admin?.id
+    if (!currentAdminId) return
+
+    const currentEpoch = ++sessionEpochRef.current
     let active = true
 
     async function reconcilePushSubscription() {
@@ -48,19 +52,41 @@ export function AuthProvider({ children }) {
 
         // Use getRegistration() to prevent hanging when no service worker is active
         const reg = await navigator.serviceWorker.getRegistration().catch(() => null)
-        if (!reg?.pushManager || !active) return
+        if (!reg?.pushManager || !active || sessionEpochRef.current !== currentEpoch) return
 
         const sub = await reg.pushManager.getSubscription().catch(() => null)
-        if (!sub || !active) return
+        if (!sub || !active || sessionEpochRef.current !== currentEpoch) return
 
         // Verify if the local subscription belongs to the currently authenticated admin
-        const statusRes = await api.post('/push/status', { endpoint: sub.endpoint }).catch(() => null)
-        if (!active) return
+        let isOwner = false
+        try {
+          const statusRes = await Promise.race([
+            api.post('/push/status', { endpoint: sub.endpoint }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Push status timeout')), 3500)),
+          ])
+          if (statusRes?.success && statusRes?.data && statusRes.data.isOwner === true) {
+            isOwner = true
+          }
+        } catch (err) {
+          console.warn('[Auth] Push ownership check failed or timed out:', err.message)
+          isOwner = false
+        }
 
-        // If subscription exists in browser but belongs to another admin account,
-        // unsubscribe locally to prevent cross-admin notification leaks on shared devices.
-        if (statusRes?.success && statusRes?.data && statusRes.data.isOwner === false) {
-          await sub.unsubscribe().catch(() => {})
+        if (!active || sessionEpochRef.current !== currentEpoch) return
+
+        // Fail-closed privacy strategy: If ownership cannot be verified as belonging to the current admin,
+        // unsubscribe locally from the browser to prevent cross-admin notification leaks on shared devices.
+        if (!isOwner) {
+          try {
+            const currentSub = await reg.pushManager.getSubscription().catch(() => null)
+            if (currentSub && currentSub.endpoint === sub.endpoint && sessionEpochRef.current === currentEpoch) {
+              await currentSub.unsubscribe().catch((unsubErr) => {
+                console.warn('[Auth] Browser PushManager unsubscribe failed:', unsubErr)
+              })
+            }
+          } catch (cleanupErr) {
+            console.warn('[Auth] Local foreign subscription cleanup failed:', cleanupErr)
+          }
         }
       } catch (err) {
         console.warn('[Auth] Push subscription reconciliation failed:', err)
@@ -81,18 +107,38 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
+    // Capture current session context & invalidate current session epoch immediately
+    const loggingOutEpoch = sessionEpochRef.current
+    const loggingOutAdminId = admin?.id
+    sessionEpochRef.current++ // Invalidate any running reconciliation or cleanup for next session
+
     // Non-blocking best-effort cleanup of push subscription & badge on logout
     try {
       clearAppBadge()
-      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && loggingOutAdminId) {
         const cleanupPush = async () => {
-          const reg = await navigator.serviceWorker.getRegistration().catch(() => null)
-          if (reg?.pushManager) {
+          try {
+            const reg = await navigator.serviceWorker.getRegistration().catch(() => null)
+            if (!reg?.pushManager) return
+
             const sub = await reg.pushManager.getSubscription().catch(() => null)
-            if (sub) {
-              await api.post('/push/unsubscribe', { endpoint: sub.endpoint }).catch(() => {})
-              await sub.unsubscribe().catch(() => {})
+            if (!sub) return
+
+            const endpoint = sub.endpoint
+
+            // Inform backend while session is still active
+            await api.post('/push/unsubscribe', { endpoint }).catch(() => {})
+
+            // Revalidate session epoch and subscription before performing browser PushManager unsubscribe.
+            // If a new session began (e.g. Admin B logged in quickly after timeout), DO NOT touch PushManager!
+            if (sessionEpochRef.current === loggingOutEpoch + 1) {
+              const currentSub = await reg.pushManager.getSubscription().catch(() => null)
+              if (currentSub && currentSub.endpoint === endpoint) {
+                await currentSub.unsubscribe().catch(() => {})
+              }
             }
+          } catch (err) {
+            console.warn('[Auth] Push cleanup error during logout:', err)
           }
         }
 
@@ -112,7 +158,7 @@ export function AuthProvider({ children }) {
       // Session is cleared client-side regardless
     }
     setAdmin(null)
-  }, [])
+  }, [admin?.id])
 
   const isOwner = useMemo(() => admin?.role === 'SUPER_ADMIN', [admin])
 

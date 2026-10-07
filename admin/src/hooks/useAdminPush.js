@@ -70,10 +70,10 @@ export function useAdminPush() {
 
       // Verify with backend whether this endpoint belongs to the currently authenticated admin
       const statusRes = await api.post('/push/status', { endpoint: sub.endpoint }).catch(() => null)
-      if (statusRes?.success && statusRes?.data?.isOwner) {
+      if (statusRes?.success && statusRes?.data?.isOwner === true) {
         setIsSubscribed(true)
       } else {
-        // Subscription exists in browser but belongs to another account or is unregistered
+        // Subscription exists in browser but belongs to another account, is unregistered, or status API failed
         setIsSubscribed(false)
       }
     } catch (err) {
@@ -123,9 +123,18 @@ export function useAdminPush() {
       let sub = await reg.pushManager.getSubscription()
       if (sub) {
         // Check if current subscription belongs to current admin
-        const statusRes = await api.post('/push/status', { endpoint: sub.endpoint }).catch(() => null)
-        if (!statusRes?.data?.isOwner) {
-          // Unsubscribe stale/foreign subscription locally first
+        let isOwner = false
+        try {
+          const statusRes = await api.post('/push/status', { endpoint: sub.endpoint })
+          if (statusRes?.success && statusRes?.data?.isOwner === true) {
+            isOwner = true
+          }
+        } catch {
+          isOwner = false
+        }
+
+        if (!isOwner) {
+          // Unsubscribe stale/foreign or unverified subscription locally first
           await sub.unsubscribe().catch(() => {})
           sub = null
         }

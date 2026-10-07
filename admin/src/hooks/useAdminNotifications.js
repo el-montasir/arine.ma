@@ -13,8 +13,6 @@ export function useAdminNotifications() {
   const [unseenOrderCount, setUnseenOrderCount] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  const isFetchingNotifsRef = useRef(false)
-  const isFetchingBadgeRef = useRef(false)
   const currentAdminIdRef = useRef(admin?.id)
   const notifSequenceRef = useRef(0)
   const badgeSequenceRef = useRef(0)
@@ -35,60 +33,55 @@ export function useAdminNotifications() {
         return
       }
 
-      // 1. Fetch general notifications independently
-      if (!isFetchingNotifsRef.current) {
-        isFetchingNotifsRef.current = true
-        const currentNotifSeq = ++notifSequenceRef.current
+      // 1. Fetch general notifications independently with sequence tracking
+      const currentNotifSeq = ++notifSequenceRef.current
+      if (!silent) setLoading(true)
 
-        if (!silent) setLoading(true)
-
-        api
-          .get('/notifications?limit=25')
-          .then((res) => {
-            // Discard stale responses if active admin changed or a newer request arrived
-            if (currentAdminIdRef.current !== fetchAdminId || currentNotifSeq !== notifSequenceRef.current) {
-              return
-            }
-            if (res?.success && res?.data) {
-              setNotifications(res.data.items || [])
-              setUnreadCount(typeof res.data.unreadCount === 'number' ? res.data.unreadCount : 0)
-              setTotalCount(typeof res.data.totalCount === 'number' ? res.data.totalCount : 0)
-            }
-          })
-          .catch((err) => {
+      api
+        .get('/notifications?limit=25')
+        .then((res) => {
+          // Discard stale responses if active admin changed or a newer request arrived
+          if (currentAdminIdRef.current !== fetchAdminId || currentNotifSeq !== notifSequenceRef.current) {
+            return
+          }
+          if (res?.success && res?.data) {
+            setNotifications(res.data.items || [])
+            setUnreadCount(typeof res.data.unreadCount === 'number' ? res.data.unreadCount : 0)
+            setTotalCount(typeof res.data.totalCount === 'number' ? res.data.totalCount : 0)
+          }
+        })
+        .catch((err) => {
+          if (currentAdminIdRef.current === fetchAdminId && currentNotifSeq === notifSequenceRef.current) {
             console.warn('[Notifications] Polling failed:', err)
-          })
-          .finally(() => {
-            isFetchingNotifsRef.current = false
+          }
+        })
+        .finally(() => {
+          if (currentAdminIdRef.current === fetchAdminId && currentNotifSeq === notifSequenceRef.current) {
             if (!silent) setLoading(false)
-          })
-      }
+          }
+        })
 
-      // 2. Fetch unread NEW_ORDER count for PWA app icon badge independently
-      if (!isFetchingBadgeRef.current) {
-        isFetchingBadgeRef.current = true
-        const currentBadgeSeq = ++badgeSequenceRef.current
+      // 2. Fetch unread NEW_ORDER count for PWA app icon badge independently with sequence tracking
+      const currentBadgeSeq = ++badgeSequenceRef.current
 
-        api
-          .get('/push/unseen-order-count')
-          .then((res) => {
-            // Discard stale responses if active admin changed or a newer request arrived
-            if (currentAdminIdRef.current !== fetchAdminId || currentBadgeSeq !== badgeSequenceRef.current) {
-              return
-            }
-            if (res?.success && typeof res?.data?.count === 'number') {
-              const orderCount = res.data.count
-              setUnseenOrderCount(orderCount)
-              setAppBadge(orderCount)
-            }
-          })
-          .catch((err) => {
+      api
+        .get('/push/unseen-order-count')
+        .then((res) => {
+          // Discard stale responses if active admin changed or a newer request arrived
+          if (currentAdminIdRef.current !== fetchAdminId || currentBadgeSeq !== badgeSequenceRef.current) {
+            return
+          }
+          if (res?.success && typeof res?.data?.count === 'number') {
+            const orderCount = res.data.count
+            setUnseenOrderCount(orderCount)
+            setAppBadge(orderCount)
+          }
+        })
+        .catch((err) => {
+          if (currentAdminIdRef.current === fetchAdminId && currentBadgeSeq === badgeSequenceRef.current) {
             console.warn('[Badge] Polling unseen count failed:', err)
-          })
-          .finally(() => {
-            isFetchingBadgeRef.current = false
-          })
-      }
+          }
+        })
     },
     [admin]
   )
