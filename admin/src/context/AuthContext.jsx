@@ -118,25 +118,29 @@ export function AuthProvider({ children }) {
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator && loggingOutAdminId) {
         const cleanupPush = async () => {
           try {
+            if (sessionEpochRef.current !== loggingOutEpoch + 1) return
+
             const reg = await navigator.serviceWorker.getRegistration().catch(() => null)
-            if (!reg?.pushManager) return
+            if (!reg?.pushManager || sessionEpochRef.current !== loggingOutEpoch + 1) return
 
             const sub = await reg.pushManager.getSubscription().catch(() => null)
-            if (!sub) return
+            if (!sub || sessionEpochRef.current !== loggingOutEpoch + 1) return
 
             const endpoint = sub.endpoint
 
             // Inform backend while session is still active
             await api.post('/push/unsubscribe', { endpoint }).catch(() => {})
 
-            // Revalidate session epoch and subscription before performing browser PushManager unsubscribe.
-            // If a new session began (e.g. Admin B logged in quickly after timeout), DO NOT touch PushManager!
-            if (sessionEpochRef.current === loggingOutEpoch + 1) {
-              const currentSub = await reg.pushManager.getSubscription().catch(() => null)
-              if (currentSub && currentSub.endpoint === endpoint) {
-                await currentSub.unsubscribe().catch(() => {})
-              }
-            }
+            // Revalidate session epoch after backend call
+            if (sessionEpochRef.current !== loggingOutEpoch + 1) return
+
+            const currentSub = await reg.pushManager.getSubscription().catch(() => null)
+            if (!currentSub || currentSub.endpoint !== endpoint) return
+
+            // Revalidate captured session epoch immediately after getSubscription() and before calling unsubscribe()
+            if (sessionEpochRef.current !== loggingOutEpoch + 1) return
+
+            await currentSub.unsubscribe().catch(() => {})
           } catch (err) {
             console.warn('[Auth] Push cleanup error during logout:', err)
           }
