@@ -63,16 +63,27 @@ export default function OrderSuccess() {
     searchParams.get('num') ||
     searchParams.get('orderNumber') ||
     searchParams.get('order')
+  const cleanParamOrderNum = orderNumFromParams ? String(orderNumFromParams).trim() : ''
 
   const [fetchedOrder, setFetchedOrder] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [fetchAttempted, setFetchAttempted] = useState(false)
 
-  // Survives a hard refresh: the receipt is stashed in sessionStorage at
-  // checkout time; router state is preferred when available.
+  // Reset fetch status and previous fetched order when the URL parameter changes
+  useEffect(() => {
+    setFetchAttempted(false)
+    setFetchedOrder(null)
+  }, [cleanParamOrderNum])
+
+  // Resolve order: router state -> fetched API order -> sessionStorage fallback.
+  // Critical safety rule: When URL specifies an order number, never display a different order from sessionStorage or state.
   let order = null
-  if (state?.orderNumber) {
+  if (state?.orderNumber && (!cleanParamOrderNum || state.orderNumber === cleanParamOrderNum)) {
     order = state
-  } else if (fetchedOrder?.orderNumber) {
+  } else if (
+    fetchedOrder?.orderNumber &&
+    (!cleanParamOrderNum || fetchedOrder.orderNumber === cleanParamOrderNum)
+  ) {
     order = fetchedOrder
   } else {
     try {
@@ -80,7 +91,9 @@ export default function OrderSuccess() {
       if (raw) {
         const parsed = JSON.parse(raw)
         if (parsed && typeof parsed === 'object' && parsed.orderNumber) {
-          order = parsed
+          if (!cleanParamOrderNum || parsed.orderNumber === cleanParamOrderNum) {
+            order = parsed
+          }
         }
       }
     } catch {
@@ -88,12 +101,12 @@ export default function OrderSuccess() {
     }
   }
 
-  // If order is not present in state/sessionStorage, but order number is in search params, fetch from API
+  // If order is not resolved and an order number is specified in URL params, fetch from API exactly once
   useEffect(() => {
-    if (!order && orderNumFromParams && !loading && !fetchedOrder) {
+    if (!order && cleanParamOrderNum && !loading && !fetchAttempted) {
       setLoading(true)
       api
-        .get(`/orders/${encodeURIComponent(orderNumFromParams.trim())}`)
+        .get(`/orders/${encodeURIComponent(cleanParamOrderNum)}`)
         .then((res) => {
           if (res?.success && res?.order) {
             setFetchedOrder(res.order)
@@ -102,9 +115,10 @@ export default function OrderSuccess() {
         .catch(() => {})
         .finally(() => {
           setLoading(false)
+          setFetchAttempted(true)
         })
     }
-  }, [order, orderNumFromParams, loading, fetchedOrder])
+  }, [order, cleanParamOrderNum, loading, fetchAttempted])
 
   // Register image variants if order data contains them
   useEffect(() => {
