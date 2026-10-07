@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   BookOpen,
   Check,
@@ -13,30 +13,105 @@ import {
   Share2,
   Truck,
   User,
-  ArrowLeft,
-  ArrowRight,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
+import api from '../utils/api'
 import { formatPrice } from '../utils/format'
 import { trackPurchase } from '../utils/tracking'
 import { getThumbnailImageProps } from '../utils/image-variants'
+import { registerImageVariantsFromPayload } from '../lib/image-metadata'
+
+function resolveItemImageUrl(item) {
+  if (!item) return ''
+  if (item.productImage) return item.productImage
+  if (item.packageImage) return item.packageImage
+  if (item.coverImage) return item.coverImage
+  if (typeof item.image === 'string') return item.image
+  if (Array.isArray(item.images) && item.images.length > 0) {
+    const primary = item.images.find((img) => img?.isPrimary) || item.images[0]
+    return typeof primary === 'string' ? primary : primary?.url || ''
+  }
+  return ''
+}
+
+function resolveItemImageWidths(item) {
+  if (!item) return []
+  if (Array.isArray(item.productImageVariantWidths) && item.productImageVariantWidths.length > 0) {
+    return item.productImageVariantWidths
+  }
+  if (Array.isArray(item.packageImageVariantWidths) && item.packageImageVariantWidths.length > 0) {
+    return item.packageImageVariantWidths
+  }
+  if (Array.isArray(item.imageVariantWidths) && item.imageVariantWidths.length > 0) {
+    return item.imageVariantWidths
+  }
+  if (Array.isArray(item.images) && item.images.length > 0) {
+    const primary = item.images.find((img) => img?.isPrimary) || item.images[0]
+    if (primary && typeof primary === 'object' && Array.isArray(primary.variantWidths)) {
+      return primary.variantWidths
+    }
+  }
+  return []
+}
 
 export default function OrderSuccess() {
   const { state } = useLocation()
-  const { t, isRTL } = useLanguage()
+  const [searchParams] = useSearchParams()
+  const { isRTL } = useLanguage()
+
+  const orderNumFromParams =
+    searchParams.get('num') ||
+    searchParams.get('orderNumber') ||
+    searchParams.get('order')
+
+  const [fetchedOrder, setFetchedOrder] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   // Survives a hard refresh: the receipt is stashed in sessionStorage at
   // checkout time; router state is preferred when available.
   let order = null
-  if (state?.orderNumber) order = state
-  if (!order) {
+  if (state?.orderNumber) {
+    order = state
+  } else if (fetchedOrder?.orderNumber) {
+    order = fetchedOrder
+  } else {
     try {
       const raw = sessionStorage.getItem('arine-last-order')
-      if (raw) order = JSON.parse(raw)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object' && parsed.orderNumber) {
+          order = parsed
+        }
+      }
     } catch {
       order = null
     }
   }
+
+  // If order is not present in state/sessionStorage, but order number is in search params, fetch from API
+  useEffect(() => {
+    if (!order && orderNumFromParams && !loading && !fetchedOrder) {
+      setLoading(true)
+      api
+        .get(`/orders/${encodeURIComponent(orderNumFromParams.trim())}`)
+        .then((res) => {
+          if (res?.success && res?.order) {
+            setFetchedOrder(res.order)
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          setLoading(false)
+        })
+    }
+  }, [order, orderNumFromParams, loading, fetchedOrder])
+
+  // Register image variants if order data contains them
+  useEffect(() => {
+    if (order) {
+      registerImageVariantsFromPayload(order)
+    }
+  }, [order])
 
   useEffect(() => {
     if (order && order.orderNumber) {
@@ -61,8 +136,6 @@ export default function OrderSuccess() {
       }
     }
   }, [order?.orderNumber])
-
-  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
@@ -159,188 +232,231 @@ export default function OrderSuccess() {
         )}
 
         {/* 3. Order Details Nested Card */}
-        <section className="mb-4">
-          <div className="bg-white/80 border border-[#EFE8F2] rounded-[20px] shadow-2xs overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#EFE8F2]/80 bg-[#FAF7FC]/50 flex items-center gap-2">
-              <Package className="w-4 h-4 text-[#6B2178]" strokeWidth={2.2} />
-              <h2 className="text-[0.9rem] font-extrabold text-[#1C1220]">تفاصيل الطلب</h2>
-            </div>
+        {order && (
+          <section className="mb-4">
+            <div className="bg-white/80 border border-[#EFE8F2] rounded-[20px] shadow-2xs overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#EFE8F2]/80 bg-[#FAF7FC]/50 flex items-center gap-2">
+                <Package className="w-4 h-4 text-[#6B2178]" strokeWidth={2.2} />
+                <h2 className="text-[0.9rem] font-extrabold text-[#1C1220]">تفاصيل الطلب</h2>
+              </div>
 
-            {/* Items list */}
-            <div className="px-4 divide-y divide-[#EFE8F2]/70">
-              {/* Product items */}
-              {order?.items?.map((item) => {
-                const thumbProps = item.productImage
-                  ? getThumbnailImageProps(item.productImage, item.productImageVariantWidths || [])
-                  : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
-                const lineTotal =
-                  item.totalPrice ??
-                  Number(item.unitPrice ?? item.price ?? 0) * Number(item.quantity ?? 1)
+              {/* Items list */}
+              <div className="px-4 divide-y divide-[#EFE8F2]/70">
+                {/* Product / Cart Items */}
+                {order.items?.map((item) => {
+                  const isPkg = Boolean(
+                    item.isPackage ||
+                      item.packageId ||
+                      item.packageTitle ||
+                      (item.itemsSnapshot && item.itemsSnapshot.length > 0)
+                  )
+                  const imgUrl = resolveItemImageUrl(item)
+                  const imgWidths = resolveItemImageWidths(item)
+                  const thumbProps = imgUrl
+                    ? getThumbnailImageProps(imgUrl, imgWidths)
+                    : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
+                  const title = item.productTitle || item.packageTitle || item.title || (isPkg ? 'باقة' : 'منتج')
+                  const unitPrice = item.unitPrice ?? item.price ?? 0
+                  const lineTotal =
+                    item.totalPrice ??
+                    Number(unitPrice) * Number(item.quantity ?? 1)
+                  const subItems = item.itemsSnapshot || item.items || item.packageItems || []
 
-                return (
-                  <div
-                    key={item.id || item.productTitle}
-                    className="py-3 sm:py-3.5 flex items-center gap-3"
-                  >
-                    <div className="w-12 h-16 shrink-0">
-                      {item.productImage ? (
-                        <img
-                          src={thumbProps.src}
-                          srcSet={thumbProps.srcSet || ''}
-                          sizes={thumbProps.sizes || '48px'}
-                          alt=""
-                          className="w-12 h-16 object-cover rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC]"
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => {
-                            if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                              e.currentTarget.removeAttribute('srcset')
-                              e.currentTarget.removeAttribute('sizes')
-                              e.currentTarget.dataset.variantFallbackApplied = '1'
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="w-12 h-16 rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC] flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-[#D1D5DB]" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
-                        {item.productTitle || item.title || 'منتج'}
-                      </h3>
-                      <p className="text-[0.76rem] text-[#7A6D80] mt-1">
-                        {item.quantity} × {formatPrice(item.unitPrice || item.price)}
-                      </p>
-                    </div>
-
-                    <div className="text-[0.88rem] font-extrabold text-[#1C1220] shrink-0">
-                      {formatPrice(lineTotal)}
-                    </div>
-                  </div>
-                )
-              })}
-
-              {/* Package items */}
-              {order?.packageItems?.map((item) => {
-                const thumbProps = item.packageImage
-                  ? getThumbnailImageProps(item.packageImage, item.packageImageVariantWidths || [])
-                  : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
-                const lineTotal =
-                  item.totalPrice ??
-                  Number(item.unitPrice ?? item.price ?? 0) * Number(item.quantity ?? 1)
-
-                return (
-                  <div
-                    key={item.id || item.packageTitle}
-                    className="py-3 sm:py-3.5 flex items-center gap-3"
-                  >
-                    <div className="w-12 h-12 shrink-0">
-                      {item.packageImage ? (
-                        <img
-                          src={thumbProps.src}
-                          srcSet={thumbProps.srcSet || ''}
-                          sizes={thumbProps.sizes || '48px'}
-                          alt=""
-                          className="w-12 h-12 object-cover rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC]"
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => {
-                            if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                              e.currentTarget.removeAttribute('srcset')
-                              e.currentTarget.removeAttribute('sizes')
-                              e.currentTarget.dataset.variantFallbackApplied = '1'
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC] flex items-center justify-center">
-                          <Package className="w-5 h-5 text-[#D1D5DB]" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[0.68rem] font-bold bg-[#6B2178]/10 text-[#6B2178] px-1.5 py-0.5 rounded-md">
-                          باقة
-                        </span>
-                        <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
-                          {item.packageTitle || item.title || 'باقة'}
-                        </h3>
+                  return (
+                    <div
+                      key={item.id || item.productTitle || item.title || title}
+                      className="py-3 sm:py-3.5 flex items-center gap-3"
+                    >
+                      <div className={`${isPkg ? 'w-12 h-12' : 'w-12 h-16'} shrink-0`}>
+                        {imgUrl ? (
+                          <img
+                            src={thumbProps.src}
+                            srcSet={thumbProps.srcSet || ''}
+                            sizes={thumbProps.sizes || '48px'}
+                            alt=""
+                            className={`${isPkg ? 'w-12 h-12' : 'w-12 h-16'} object-cover rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC]`}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                e.currentTarget.removeAttribute('srcset')
+                                e.currentTarget.removeAttribute('sizes')
+                                e.currentTarget.dataset.variantFallbackApplied = '1'
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className={`${isPkg ? 'w-12 h-12' : 'w-12 h-16'} rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC] flex items-center justify-center`}>
+                            {isPkg ? (
+                              <Package className="w-5 h-5 text-[#D1D5DB]" />
+                            ) : (
+                              <BookOpen className="w-5 h-5 text-[#D1D5DB]" />
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {item.itemsSnapshot?.length > 0 && (
-                        <p className="text-[0.72rem] text-[#7A6D80] truncate mt-1">
-                          {item.itemsSnapshot
-                            .map((i) => i.title || i.productTitle || '')
-                            .filter(Boolean)
-                            .join(' + ')}
+
+                      <div className="min-w-0 flex-1">
+                        {isPkg ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[0.68rem] font-bold bg-[#6B2178]/10 text-[#6B2178] px-1.5 py-0.5 rounded-md">
+                              باقة
+                            </span>
+                            <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
+                              {title}
+                            </h3>
+                          </div>
+                        ) : (
+                          <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
+                            {title}
+                          </h3>
+                        )}
+
+                        {isPkg && Array.isArray(subItems) && subItems.length > 0 && (
+                          <p className="text-[0.72rem] text-[#7A6D80] truncate mt-1">
+                            {subItems
+                              .map((i) => i.title || i.productTitle || '')
+                              .filter(Boolean)
+                              .join(' + ')}
+                          </p>
+                        )}
+
+                        <p className="text-[0.76rem] text-[#7A6D80] mt-1">
+                          {item.quantity} × {formatPrice(unitPrice)}
                         </p>
-                      )}
-                      <p className="text-[0.76rem] text-[#7A6D80] mt-1">
-                        {item.quantity} × {formatPrice(item.unitPrice || item.price)}
-                      </p>
-                    </div>
+                      </div>
 
-                    <div className="text-[0.88rem] font-extrabold text-[#1C1220] shrink-0">
-                      {formatPrice(lineTotal)}
+                      <div className="text-[0.88rem] font-extrabold text-[#1C1220] shrink-0">
+                        {formatPrice(lineTotal)}
+                      </div>
                     </div>
+                  )
+                })}
+
+                {/* Additional Package items if separate array from API */}
+                {order.packageItems?.map((item) => {
+                  const imgUrl = resolveItemImageUrl(item)
+                  const imgWidths = resolveItemImageWidths(item)
+                  const thumbProps = imgUrl
+                    ? getThumbnailImageProps(imgUrl, imgWidths)
+                    : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
+                  const lineTotal =
+                    item.totalPrice ??
+                    Number(item.unitPrice ?? item.price ?? 0) * Number(item.quantity ?? 1)
+                  const title = item.packageTitle || item.title || 'باقة'
+                  const unitPrice = item.unitPrice ?? item.price ?? 0
+                  const subItems = item.itemsSnapshot || item.items || []
+
+                  return (
+                    <div
+                      key={item.id || item.packageTitle || title}
+                      className="py-3 sm:py-3.5 flex items-center gap-3"
+                    >
+                      <div className="w-12 h-12 shrink-0">
+                        {imgUrl ? (
+                          <img
+                            src={thumbProps.src}
+                            srcSet={thumbProps.srcSet || ''}
+                            sizes={thumbProps.sizes || '48px'}
+                            alt=""
+                            className="w-12 h-12 object-cover rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC]"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                                e.currentTarget.removeAttribute('srcset')
+                                e.currentTarget.removeAttribute('sizes')
+                                e.currentTarget.dataset.variantFallbackApplied = '1'
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC] flex items-center justify-center">
+                            <Package className="w-5 h-5 text-[#D1D5DB]" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[0.68rem] font-bold bg-[#6B2178]/10 text-[#6B2178] px-1.5 py-0.5 rounded-md">
+                            باقة
+                          </span>
+                          <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
+                            {title}
+                          </h3>
+                        </div>
+                        {Array.isArray(subItems) && subItems.length > 0 && (
+                          <p className="text-[0.72rem] text-[#7A6D80] truncate mt-1">
+                            {subItems
+                              .map((i) => i.title || i.productTitle || '')
+                              .filter(Boolean)
+                              .join(' + ')}
+                          </p>
+                        )}
+                        <p className="text-[0.76rem] text-[#7A6D80] mt-1">
+                          {item.quantity} × {formatPrice(unitPrice)}
+                        </p>
+                      </div>
+
+                      <div className="text-[0.88rem] font-extrabold text-[#1C1220] shrink-0">
+                        {formatPrice(lineTotal)}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Customer, delivery & total metadata */}
+              <div className="border-t border-[#EFE8F2] bg-[#FAF7FC]/60 px-4 py-3.5 space-y-2.5">
+                {(order?.fullName || order?.customerName || order?.name) && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
+                      <User className="w-3.5 h-3.5 text-[#6B2178]" />
+                      <span>العميل</span>
+                    </span>
+                    <span className="text-[#1C1220] font-semibold">
+                      {order.fullName || order.customerName || order.name}
+                    </span>
                   </div>
-                )
-              })}
-            </div>
+                )}
 
-            {/* Customer, delivery & total metadata */}
-            <div className="border-t border-[#EFE8F2] bg-[#FAF7FC]/60 px-4 py-3.5 space-y-2.5">
-              {(order.fullName || order.customerName || order.name) && (
-                <div className="flex justify-between items-center text-xs">
-                  <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
-                    <User className="w-3.5 h-3.5 text-[#6B2178]" />
-                    <span>العميل</span>
-                  </span>
-                  <span className="text-[#1C1220] font-semibold">
-                    {order.fullName || order.customerName || order.name}
+                {(order?.city || order?.cityName) && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-[#6B2178]" />
+                      <span>المدينة</span>
+                    </span>
+                    <span className="text-[#1C1220] font-semibold">
+                      {order.city || order.cityName}
+                    </span>
+                  </div>
+                )}
+
+                {order?.paymentMethod && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
+                      <CreditCard className="w-3.5 h-3.5 text-[#6B2178]" />
+                      <span>طريقة الدفع</span>
+                    </span>
+                    <span className="text-[#1C1220] font-semibold">
+                      {order.paymentMethod === 'CASH_ON_DELIVERY'
+                        ? 'الدفع عند الاستلام'
+                        : order.paymentMethod}
+                    </span>
+                  </div>
+                )}
+
+                <div className="pt-2.5 border-t border-[#EFE8F2] flex justify-between items-center">
+                  <span className="text-[0.88rem] font-extrabold text-[#1C1220]">الإجمالي</span>
+                  <span className="font-tajawal font-extrabold text-lg sm:text-xl text-[#6B2178]">
+                    {formatPrice(order?.total || 0)}
                   </span>
                 </div>
-              )}
-
-              {(order.city || order.cityName) && (
-                <div className="flex justify-between items-center text-xs">
-                  <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-[#6B2178]" />
-                    <span>المدينة</span>
-                  </span>
-                  <span className="text-[#1C1220] font-semibold">
-                    {order.city || order.cityName}
-                  </span>
-                </div>
-              )}
-
-              {order.paymentMethod && (
-                <div className="flex justify-between items-center text-xs">
-                  <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
-                    <CreditCard className="w-3.5 h-3.5 text-[#6B2178]" />
-                    <span>طريقة الدفع</span>
-                  </span>
-                  <span className="text-[#1C1220] font-semibold">
-                    {order.paymentMethod === 'CASH_ON_DELIVERY'
-                      ? 'الدفع عند الاستلام'
-                      : order.paymentMethod}
-                  </span>
-                </div>
-              )}
-
-              <div className="pt-2.5 border-t border-[#EFE8F2] flex justify-between items-center">
-                <span className="text-[0.88rem] font-extrabold text-[#1C1220]">الإجمالي</span>
-                <span className="font-tajawal font-extrabold text-lg sm:text-xl text-[#6B2178]">
-                  {formatPrice(order.total || 0)}
-                </span>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 4. Compact "What Happens Next" Stepper */}
         <section className="mb-5">
@@ -419,7 +535,11 @@ export default function OrderSuccess() {
         <section className="space-y-2.5">
           {/* Primary Action Button */}
           <Link
-            to={`/track-order?num=${encodeURIComponent(order?.orderNumber || '')}`}
+            to={
+              order?.orderNumber
+                ? `/track-order?num=${encodeURIComponent(order.orderNumber)}`
+                : '/track-order'
+            }
             className="w-full py-3 sm:py-3.5 px-4 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 text-white text-xs sm:text-sm font-bold rounded-[14px] shadow-md shadow-[#6B2178]/20 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
           >
             <Truck className="w-4 h-4" />
@@ -450,3 +570,4 @@ export default function OrderSuccess() {
     </div>
   )
 }
+
