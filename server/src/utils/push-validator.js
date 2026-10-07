@@ -1,6 +1,23 @@
 import { ApiError } from './api-error.js'
 
 /**
+ * Standard legitimate Web Push service provider hostname patterns.
+ * All major browser push services (Google Chrome/Chromium, Mozilla Firefox,
+ * Apple Safari on iOS/macOS, and Microsoft Edge/Windows WNS) route exclusively
+ * through these vendor-operated HTTPS push gateway domains.
+ */
+const ALLOWED_PUSH_PROVIDER_PATTERNS = [
+  // Google FCM & Legacy GCM (Chrome, Chromium, Brave, Opera, Vivaldi, Android browsers)
+  /^([a-z0-9-]+\.)*(fcm|android)\.googleapis\.com$/i,
+  // Mozilla Autopush (Firefox desktop and mobile)
+  /^([a-z0-9-]+\.)*push\.services\.mozilla\.com$/i,
+  // Apple Push Notification Service (Safari macOS & iOS 16.4+ Web Push)
+  /^([a-z0-9-]+\.)*push\.apple\.com$/i,
+  // Microsoft Windows Push Notification Services (WNS / Edge)
+  /^([a-z0-9-]+\.)*notify\.windows\.com$/i,
+]
+
+/**
  * Check if an IPv4 address is in a private, loopback, link-local (cloud metadata), or reserved range.
  */
 function isPrivateIPv4(ip) {
@@ -98,6 +115,19 @@ export function isPrivateOrReservedHost(hostname) {
 }
 
 /**
+ * Verify if a hostname belongs to an authorized browser push gateway provider.
+ */
+export function isAllowedPushProviderHost(hostname) {
+  if (!hostname || typeof hostname !== 'string') return false
+  const host = hostname.toLowerCase().trim()
+
+  // Ensure host does not match private or reserved host patterns
+  if (isPrivateOrReservedHost(host)) return false
+
+  return ALLOWED_PUSH_PROVIDER_PATTERNS.some((pattern) => pattern.test(host))
+}
+
+/**
  * Validate base64 / base64url encoded cryptographic key buffer length.
  */
 export function isValidBase64Key(str, minBytes, maxBytes) {
@@ -117,6 +147,8 @@ export function isValidBase64Key(str, minBytes, maxBytes) {
 
 /**
  * Validate and sanitize complete push subscription payload.
+ * Enforces strict HTTPS protocol, default HTTPS port, no credentials,
+ * verified browser push gateway allowlist, and cryptographic key buffer lengths.
  */
 export function validateSubscriptionInput({ endpoint, keys, userAgent }) {
   if (!endpoint || typeof endpoint !== 'string' || endpoint.length < 10 || endpoint.length > 2048) {
@@ -130,16 +162,24 @@ export function validateSubscriptionInput({ endpoint, keys, userAgent }) {
     throw new ApiError(400, 'INVALID_ENDPOINT', 'معرف اشتراك الإشعارات ليس رابطاً صحيحاً')
   }
 
+  // Enforce HTTPS protocol
   if (parsedUrl.protocol !== 'https:') {
     throw new ApiError(400, 'INVALID_ENDPOINT_PROTOCOL', 'يجب أن يكون رابط الاشتراك عبر بروتوكول HTTPS الآمن')
   }
 
+  // Reject embedded URL credentials
   if (parsedUrl.username || parsedUrl.password) {
     throw new ApiError(400, 'INVALID_ENDPOINT_CREDENTIALS', 'رابط الاشتراك لا يمكن أن يحتوي على بيانات اعتماد')
   }
 
-  if (isPrivateOrReservedHost(parsedUrl.hostname)) {
-    throw new ApiError(400, 'INVALID_ENDPOINT_HOST', 'نطاق اشتراك الإشعارات غير مسموح به')
+  // Enforce default HTTPS port only (reject custom ports e.g. :8080, :22, :3000)
+  if (parsedUrl.port && parsedUrl.port !== '443') {
+    throw new ApiError(400, 'INVALID_ENDPOINT_PORT', 'منفذ اشتراك الإشعارات غير مسموح به')
+  }
+
+  // Verify hostname belongs to verified browser push service provider allowlist (SSRF prevention)
+  if (!isAllowedPushProviderHost(parsedUrl.hostname)) {
+    throw new ApiError(400, 'INVALID_ENDPOINT_HOST', 'نطاق مزود الإشعارات غير معتمد أو غير مسموح به')
   }
 
   if (!keys || typeof keys !== 'object') {

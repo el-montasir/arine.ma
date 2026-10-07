@@ -65,44 +65,71 @@ export async function getSubscriptionStatus(adminId, endpoint) {
 /**
  * Save or update a push subscription for an admin user.
  * Atomic transaction ensures cross-admin ownership cannot be hijacked.
+ * Catches Prisma P2002 race conditions cleanly.
  */
 export async function saveSubscription(adminId, { endpoint, keys, userAgent }) {
   const validated = validateSubscriptionInput({ endpoint, keys, userAgent })
 
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.adminPushSubscription.findUnique({
-      where: { endpoint: validated.endpoint },
-    })
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existing = await tx.adminPushSubscription.findUnique({
+        where: { endpoint: validated.endpoint },
+      })
 
-    if (existing) {
-      if (existing.adminId !== adminId) {
-        throw new ApiError(
-          409,
-          'SUBSCRIPTION_OWNERSHIP_CONFLICT',
-          'معرف الاشتراك مرتبط بحساب إداري آخر. يرجى إلغاء الاشتراك من المتصفح أولاً'
-        )
+      if (existing) {
+        if (existing.adminId !== adminId) {
+          throw new ApiError(
+            409,
+            'SUBSCRIPTION_OWNERSHIP_CONFLICT',
+            'معرف الاشتراك مرتبط بحساب إداري آخر. يرجى إلغاء الاشتراك من المتصفح أولاً'
+          )
+        }
+
+        return tx.adminPushSubscription.update({
+          where: { id: existing.id },
+          data: {
+            p256dh: validated.keys.p256dh,
+            auth: validated.keys.auth,
+            userAgent: validated.userAgent,
+          },
+        })
       }
 
-      return tx.adminPushSubscription.update({
-        where: { id: existing.id },
+      return tx.adminPushSubscription.create({
         data: {
+          adminId,
+          endpoint: validated.endpoint,
           p256dh: validated.keys.p256dh,
           auth: validated.keys.auth,
           userAgent: validated.userAgent,
         },
       })
-    }
-
-    return tx.adminPushSubscription.create({
-      data: {
-        adminId,
-        endpoint: validated.endpoint,
-        p256dh: validated.keys.p256dh,
-        auth: validated.keys.auth,
-        userAgent: validated.userAgent,
-      },
     })
-  })
+  } catch (err) {
+    if (err instanceof ApiError) throw err
+    // Handle Prisma unique constraint race condition gracefully (code P2002)
+    if (err?.code === 'P2002') {
+      const existing = await prisma.adminPushSubscription.findUnique({
+        where: { endpoint: validated.endpoint },
+      })
+      if (existing && existing.adminId === adminId) {
+        return prisma.adminPushSubscription.update({
+          where: { id: existing.id },
+          data: {
+            p256dh: validated.keys.p256dh,
+            auth: validated.keys.auth,
+            userAgent: validated.userAgent,
+          },
+        })
+      }
+      throw new ApiError(
+        409,
+        'SUBSCRIPTION_OWNERSHIP_CONFLICT',
+        'معرف الاشتراك مرتبط بحساب إداري آخر. يرجى إلغاء الاشتراك من المتصفح أولاً'
+      )
+    }
+    throw err
+  }
 }
 
 /**

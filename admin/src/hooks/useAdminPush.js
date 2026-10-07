@@ -54,7 +54,13 @@ export function useAdminPush() {
 
     try {
       setPermission(typeof Notification !== 'undefined' ? Notification.permission : 'default')
-      const reg = await navigator.serviceWorker.ready
+      const reg = await navigator.serviceWorker.getRegistration().catch(() => null)
+
+      if (!reg?.pushManager) {
+        setIsSubscribed(false)
+        return
+      }
+
       const sub = await reg.pushManager.getSubscription()
 
       if (!sub) {
@@ -98,8 +104,13 @@ export function useAdminPush() {
         throw new Error('Notification permission was not granted')
       }
 
-      // 2. Ensure Service Worker is ready
-      const reg = await navigator.serviceWorker.ready
+      // 2. Ensure Service Worker is ready with a bounded timeout
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Service worker readiness timed out')), 4000)
+        ),
+      ])
 
       // 3. Fetch server VAPID public key
       const res = await api.get('/push/public-key')
@@ -114,7 +125,7 @@ export function useAdminPush() {
         // Check if current subscription belongs to current admin
         const statusRes = await api.post('/push/status', { endpoint: sub.endpoint }).catch(() => null)
         if (!statusRes?.data?.isOwner) {
-          // Unsubscribe stale/foreign subscription first
+          // Unsubscribe stale/foreign subscription locally first
           await sub.unsubscribe().catch(() => {})
           sub = null
         }
@@ -156,13 +167,15 @@ export function useAdminPush() {
     setError(null)
 
     try {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      if (sub) {
-        // Inform backend to delete record for current admin
-        await api.post('/push/unsubscribe', { endpoint: sub.endpoint }).catch(() => {})
-        // Unsubscribe locally from PushManager
-        await sub.unsubscribe()
+      const reg = await navigator.serviceWorker.getRegistration().catch(() => null)
+      if (reg?.pushManager) {
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          // Inform backend to delete record for current admin
+          await api.post('/push/unsubscribe', { endpoint: sub.endpoint }).catch(() => {})
+          // Unsubscribe locally from PushManager
+          await sub.unsubscribe()
+        }
       }
       setIsSubscribed(false)
       return true

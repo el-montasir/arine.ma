@@ -12,59 +12,86 @@ export function useAdminNotifications() {
   const [totalCount, setTotalCount] = useState(0)
   const [unseenOrderCount, setUnseenOrderCount] = useState(0)
   const [loading, setLoading] = useState(false)
-  const isFetchingRef = useRef(false)
+
+  const isFetchingNotifsRef = useRef(false)
+  const isFetchingBadgeRef = useRef(false)
   const currentAdminIdRef = useRef(admin?.id)
+  const notifSequenceRef = useRef(0)
+  const badgeSequenceRef = useRef(0)
 
   useEffect(() => {
     currentAdminIdRef.current = admin?.id
   }, [admin?.id])
 
-  const fetchNotifications = useCallback(async (silent = false) => {
-    const fetchAdminId = admin?.id
-    if (!fetchAdminId) {
-      setNotifications([])
-      setUnreadCount(0)
-      setTotalCount(0)
-      setUnseenOrderCount(0)
-      clearAppBadge()
-      return
-    }
-
-    if (isFetchingRef.current) return
-    isFetchingRef.current = true
-
-    if (!silent) setLoading(true)
-
-    try {
-      // Synchronize both general notification list and NEW_ORDER unseen badge count in parallel
-      const [notifsRes, badgeRes] = await Promise.allSettled([
-        api.get('/notifications?limit=25'),
-        api.get('/push/unseen-order-count'),
-      ])
-
-      // Discard stale responses if active admin changed mid-flight
-      if (currentAdminIdRef.current !== fetchAdminId) {
+  const fetchNotifications = useCallback(
+    (silent = false) => {
+      const fetchAdminId = admin?.id
+      if (!fetchAdminId) {
+        setNotifications([])
+        setUnreadCount(0)
+        setTotalCount(0)
+        setUnseenOrderCount(0)
+        clearAppBadge()
         return
       }
 
-      if (notifsRes.status === 'fulfilled' && notifsRes.value?.success && notifsRes.value?.data) {
-        setNotifications(notifsRes.value.data.items || [])
-        setUnreadCount(typeof notifsRes.value.data.unreadCount === 'number' ? notifsRes.value.data.unreadCount : 0)
-        setTotalCount(typeof notifsRes.value.data.totalCount === 'number' ? notifsRes.value.data.totalCount : 0)
+      // 1. Fetch general notifications independently
+      if (!isFetchingNotifsRef.current) {
+        isFetchingNotifsRef.current = true
+        const currentNotifSeq = ++notifSequenceRef.current
+
+        if (!silent) setLoading(true)
+
+        api
+          .get('/notifications?limit=25')
+          .then((res) => {
+            // Discard stale responses if active admin changed or a newer request arrived
+            if (currentAdminIdRef.current !== fetchAdminId || currentNotifSeq !== notifSequenceRef.current) {
+              return
+            }
+            if (res?.success && res?.data) {
+              setNotifications(res.data.items || [])
+              setUnreadCount(typeof res.data.unreadCount === 'number' ? res.data.unreadCount : 0)
+              setTotalCount(typeof res.data.totalCount === 'number' ? res.data.totalCount : 0)
+            }
+          })
+          .catch((err) => {
+            console.warn('[Notifications] Polling failed:', err)
+          })
+          .finally(() => {
+            isFetchingNotifsRef.current = false
+            if (!silent) setLoading(false)
+          })
       }
 
-      if (badgeRes.status === 'fulfilled' && badgeRes.value?.success && typeof badgeRes.value?.data?.count === 'number') {
-        const orderCount = badgeRes.value.data.count
-        setUnseenOrderCount(orderCount)
-        setAppBadge(orderCount)
+      // 2. Fetch unread NEW_ORDER count for PWA app icon badge independently
+      if (!isFetchingBadgeRef.current) {
+        isFetchingBadgeRef.current = true
+        const currentBadgeSeq = ++badgeSequenceRef.current
+
+        api
+          .get('/push/unseen-order-count')
+          .then((res) => {
+            // Discard stale responses if active admin changed or a newer request arrived
+            if (currentAdminIdRef.current !== fetchAdminId || currentBadgeSeq !== badgeSequenceRef.current) {
+              return
+            }
+            if (res?.success && typeof res?.data?.count === 'number') {
+              const orderCount = res.data.count
+              setUnseenOrderCount(orderCount)
+              setAppBadge(orderCount)
+            }
+          })
+          .catch((err) => {
+            console.warn('[Badge] Polling unseen count failed:', err)
+          })
+          .finally(() => {
+            isFetchingBadgeRef.current = false
+          })
       }
-    } catch {
-      // Gracefully ignore notification polling network failures without resetting badge
-    } finally {
-      isFetchingRef.current = false
-      if (!silent) setLoading(false)
-    }
-  }, [admin])
+    },
+    [admin]
+  )
 
   // Single polling loop and document visibility listener
   useEffect(() => {
@@ -76,7 +103,7 @@ export function useAdminNotifications() {
     fetchNotifications(false)
 
     const interval = setInterval(() => {
-      // Only poll when document is visible
+      // Only poll when document is visible to save battery and network
       if (typeof document !== 'undefined' && document.hidden) return
       fetchNotifications(true)
     }, POLLING_INTERVAL_MS)
@@ -96,23 +123,26 @@ export function useAdminNotifications() {
   }, [admin, fetchNotifications])
 
   // Mark single notification as read
-  const markAsRead = useCallback(async (id) => {
-    if (!id) return
-    // Optimistic UI update for general notification list
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    )
-    setUnreadCount((prev) => Math.max(0, prev - 1))
+  const markAsRead = useCallback(
+    async (id) => {
+      if (!id) return
+      // Optimistic UI update for general notification list
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      )
+      setUnreadCount((prev) => Math.max(0, prev - 1))
 
-    try {
-      await api.patch(`/notifications/${id}/read`)
-    } catch {
-      // Ignore network errors
-    } finally {
-      // Re-fetch authoritative unseen order count and badge
-      fetchNotifications(true)
-    }
-  }, [fetchNotifications])
+      try {
+        await api.patch(`/notifications/${id}/read`)
+      } catch {
+        // Ignore network errors
+      } finally {
+        // Re-fetch authoritative notifications and badge state
+        fetchNotifications(true)
+      }
+    },
+    [fetchNotifications]
+  )
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {

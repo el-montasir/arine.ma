@@ -54,15 +54,24 @@ function getSafeTargetUrl(rawUrl) {
   return fallback
 }
 
-// Synchronize numeric app icon badge with safe feature detection
+// Synchronize numeric app icon badge with safe feature detection.
+// Guard: missing, undefined, null, NaN, or negative count is ignored and does NOT clear existing badge.
 async function syncAppBadge(count) {
-  if (typeof self.navigator === 'undefined' || !('setAppBadge' in self.navigator)) return
+  if (typeof self.navigator === 'undefined') return
+  if (count === null || count === undefined) return
+
+  const numericCount = Number(count)
+  if (isNaN(numericCount) || numericCount < 0) return
+
   try {
-    const numericCount = Number(count)
-    if (!isNaN(numericCount) && numericCount > 0) {
+    if (numericCount > 0 && 'setAppBadge' in self.navigator) {
       await self.navigator.setAppBadge(Math.floor(numericCount))
-    } else if ('clearAppBadge' in self.navigator) {
-      await self.navigator.clearAppBadge()
+    } else if (numericCount === 0) {
+      if ('clearAppBadge' in self.navigator) {
+        await self.navigator.clearAppBadge()
+      } else if ('setAppBadge' in self.navigator) {
+        await self.navigator.setAppBadge(0)
+      }
     }
   } catch (err) {
     console.warn('[SW] App badge sync failed:', err)
@@ -106,12 +115,16 @@ self.addEventListener('push', (event) => {
     lang: 'ar',
   }
 
-  const promiseChain = Promise.all([
+  const promiseChain = [
     self.registration.showNotification(title, notificationOptions),
-    syncAppBadge(data.badgeCount),
-  ])
+  ]
 
-  event.waitUntil(promiseChain)
+  // Only synchronize badge if payload explicitly provides a valid badge count
+  if (data.badgeCount !== null && data.badgeCount !== undefined) {
+    promiseChain.push(syncAppBadge(data.badgeCount))
+  }
+
+  event.waitUntil(Promise.all(promiseChain))
 })
 
 // Notification Click Handler - Safely focus existing admin window or navigate to /orders
@@ -156,7 +169,9 @@ self.addEventListener('message', (event) => {
   if (!event.data) return
 
   if (event.data.type === 'SET_BADGE') {
-    event.waitUntil(syncAppBadge(event.data.count))
+    if (event.data.count !== null && event.data.count !== undefined) {
+      event.waitUntil(syncAppBadge(event.data.count))
+    }
   } else if (event.data.type === 'CLEAR_BADGE') {
     event.waitUntil(syncAppBadge(0))
   }
