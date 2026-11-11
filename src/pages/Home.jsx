@@ -18,7 +18,7 @@ import { useLanguage } from '../context/LanguageContext'
 
 export default function Home() {
   const navigate = useNavigate()
-  const { books = [], loading: productsLoading } = useProducts()
+  const { books = [], loading: productsLoading, error: productsError } = useProducts()
   const showProductsSkeleton = useDelayedFlag(productsLoading)
   const { config } = useStoreConfig()
   const { banners } = useBanners('promotional')
@@ -127,8 +127,17 @@ export default function Home() {
         ) : (
           <div className="py-12 text-center">
             <p className="text-[#6b6577] text-sm">
-              {t('noBooksFound') || 'لا توجد كتب متاحة حالياً'}
+              {productsError ? t('booksLoadError') : t('noBooksFound')}
             </p>
+            {productsError && (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#8b2f9e] px-5 py-2 text-[13.5px] font-bold text-white hover:bg-[#6B2178] transition-colors"
+              >
+                {t('retry')}
+              </button>
+            )}
           </div>
         )}
 
