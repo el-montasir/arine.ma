@@ -5,22 +5,23 @@ import {
   pickPrimaryImageUrl,
   widthsForImageUrl,
 } from '../lib/image-metadata.js'
+import { getStockSettings } from '../services/stock/stock.service.js'
 
-const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
-
-function computeStockFields(product) {
-  if (!STOCK_ENABLED || !product.trackStock) {
+// `settings` is the admin's StockSettings row (the same switch the admin Stock
+// page and order confirmation use), so the storefront and the admin agree.
+function computeStockFields(product, settings) {
+  if (!settings?.stockManagementEnabled || !product.trackStock) {
     return { canPurchase: true, stockStatus: 'untracked' }
   }
   const stock = product.currentStock ?? 0
   const threshold = product.lowStockThreshold ?? 5
-  if (stock <= 0) return { canPurchase: false, stockStatus: 'out' }
+  if (stock <= 0) return { canPurchase: Boolean(settings.allowOverselling), stockStatus: 'out' }
   if (stock <= threshold) return { canPurchase: true, stockStatus: 'low' }
   return { canPurchase: true, stockStatus: 'ok' }
 }
 
 // Shape a Prisma product row into the exact JSON shape the React frontend consumes
-export function serializeProduct(product) {
+export function serializeProduct(product, stockSettings = null) {
   const images = (product.images || []).map((img) => ({
     id: img.id,
     url: img.url,
@@ -59,7 +60,7 @@ export function serializeProduct(product) {
     year: product.year,
     shippingMode: product.shippingMode ?? null,
     customShipping: product.customShipping ?? null,
-    ...computeStockFields(product),
+    ...computeStockFields(product, stockSettings),
   }
 }
 
@@ -103,18 +104,21 @@ export async function getProducts(req, res, next) {
       }
     }
 
-    const products = await prisma.product.findMany({
-      where,
-      orderBy: buildOrderBy(sort),
-      include: {
-        category: true,
-        images: { orderBy: { sortOrder: 'asc' } },
-      },
-    })
+    const [stockSettings, products] = await Promise.all([
+      getStockSettings(),
+      prisma.product.findMany({
+        where,
+        orderBy: buildOrderBy(sort),
+        include: {
+          category: true,
+          images: { orderBy: { sortOrder: 'asc' } },
+        },
+      }),
+    ])
 
     return res.json({
       success: true,
-      data: products.map(serializeProduct),
+      data: products.map((p) => serializeProduct(p, stockSettings)),
       count: products.length,
     })
   } catch (err) {
@@ -139,7 +143,8 @@ export async function getProductById(req, res, next) {
     if (!product) {
       return errorResponse(res, 404, 'NOT_FOUND', 'الكتاب غير موجود')
     }
-    return res.json({ success: true, data: serializeProduct(product) })
+    const stockSettings = await getStockSettings()
+    return res.json({ success: true, data: serializeProduct(product, stockSettings) })
   } catch (err) {
     next(err)
   }

@@ -5,19 +5,20 @@ import {
   pickPrimaryImageUrl,
   widthsForImageUrl,
 } from '../lib/image-metadata.js'
+import { getStockSettings } from '../services/stock/stock.service.js'
 
-const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
-
-function productStockFields(p) {
-  if (!STOCK_ENABLED || !p.trackStock) return { canPurchase: true, stockStatus: 'untracked' }
+// `settings` is the admin's StockSettings row, shared with order confirmation.
+function productStockFields(p, settings) {
+  if (!settings?.stockManagementEnabled || !p.trackStock) return { canPurchase: true, stockStatus: 'untracked' }
   const stock = p.currentStock ?? 0
   const threshold = p.lowStockThreshold ?? 5
-  if (stock <= 0) return { canPurchase: false, stockStatus: 'out' }
+  if (stock <= 0) return { canPurchase: Boolean(settings.allowOverselling), stockStatus: 'out' }
   if (stock <= threshold) return { canPurchase: true, stockStatus: 'low' }
   return { canPurchase: true, stockStatus: 'ok' }
 }
 
-export function serializePublicPackage(pkg) {
+export function serializePublicPackage(pkg, stockSettings = null) {
+  const stockEnabled = Boolean(stockSettings?.stockManagementEnabled)
   const images = (pkg.images || []).map((img) => ({
     id: img.id,
     url: img.url,
@@ -51,7 +52,7 @@ export function serializePublicPackage(pkg) {
       availability: p.availability,
       sortOrder: item.sortOrder,
       componentQuantity: item.quantity ?? 1,
-      ...productStockFields(p),
+      ...productStockFields(p, stockSettings),
     }
   })
 
@@ -92,8 +93,8 @@ export function serializePublicPackage(pkg) {
     booksCount: books.length,
     books,
     sumBooksPrice,
-    canPurchase: STOCK_ENABLED ? pkgCanPurchase : true,
-    stockStatus: STOCK_ENABLED ? pkgStockStatus : 'untracked',
+    canPurchase: stockEnabled ? pkgCanPurchase : true,
+    stockStatus: stockEnabled ? pkgStockStatus : 'untracked',
   }
 }
 
@@ -126,6 +127,7 @@ export async function getPackages(req, res, next) {
       ]
     }
 
+    const stockSettings = await getStockSettings()
     const packages = await prisma.package.findMany({
       where,
       orderBy: buildOrderBy(sort),
@@ -149,7 +151,7 @@ export async function getPackages(req, res, next) {
 
     return res.json({
       success: true,
-      data: packages.map(serializePublicPackage),
+      data: packages.map((p) => serializePublicPackage(p, stockSettings)),
       count: packages.length,
     })
   } catch (err) {
@@ -165,6 +167,7 @@ export async function getPackageById(req, res, next) {
       return errorResponse(res, 400, 'INVALID_ID', 'معرف الباقة غير صحيح')
     }
 
+    const stockSettings = await getStockSettings()
     const pkg = await prisma.package.findUnique({
       where: { id },
       include: {
@@ -191,7 +194,7 @@ export async function getPackageById(req, res, next) {
 
     return res.json({
       success: true,
-      data: serializePublicPackage(pkg),
+      data: serializePublicPackage(pkg, stockSettings),
     })
   } catch (err) {
     next(err)

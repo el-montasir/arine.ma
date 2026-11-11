@@ -6,8 +6,8 @@ import { recordOrderAttribution } from './marketing/attribution.service.js'
 import { sendCapiEvent, buildUserData } from './marketing/meta-capi.service.js'
 import { sendOrderPushNotificationToAdmins } from './admin/push.service.js'
 import { pickPrimaryImageUrl, widthsForImageUrl } from '../lib/image-metadata.js'
+import { getStockSettings } from './stock/stock.service.js'
 
-const STOCK_ENABLED = process.env.STOCK_MANAGEMENT_ENABLED === 'true'
 
 export class OrderError extends Error {
   constructor(status, code, message) {
@@ -86,7 +86,9 @@ export async function createOrder(input) {
     // tracked products in the cart have enough currentStock. This is a soft
     // read — no locks held — so two PENDING orders may still refer to the last
     // copy. First CONFIRMED wins (deductStockForOrder enforces hard lock).
-    if (STOCK_ENABLED) {
+    // Same switch as the admin Stock page and order confirmation (StockSettings).
+    const stockSettings = await getStockSettings(tx)
+    if (stockSettings.stockManagementEnabled && !stockSettings.allowOverselling) {
       const conflicts = []
 
       for (const item of input.items || []) {
