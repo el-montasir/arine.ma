@@ -16,20 +16,34 @@ import { registerImageVariantsFromPayload } from '../lib/image-metadata'
  *   loading – true while the API request is in flight.
  *   error   – true when the request failed.
  */
+// Last response per query, kept for the page visit. Revisiting a list (Home ->
+// Books -> back, or re-selecting a category) shows it instantly while a fresh
+// copy loads in the background, instead of flashing a loading state.
+const listCache = new Map()
+
 export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
-  const [books, setBooks] = useState([])
-  const [loading, setLoading] = useState(true)
+  const params = new URLSearchParams()
+  if (q) params.set('search', q)
+  if (category) params.set('category', category)
+  if (sort && sort !== 'popular') params.set('sort', sort)
+  const qs = params.toString()
+
+  const cached = listCache.get(qs)
+  const [books, setBooks] = useState(cached || [])
+  const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    const params = new URLSearchParams()
-    if (q) params.set('search', q)
-    if (category) params.set('category', category)
-    if (sort && sort !== 'popular') params.set('sort', sort)
-    const qs = params.toString()
+    const hit = listCache.get(qs)
 
-    setLoading(true)
+    if (hit) {
+      registerImageVariantsFromPayload(hit)
+      setBooks(hit)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
     setError(false)
 
     api
@@ -40,6 +54,7 @@ export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
           // BEFORE setBooks: the registry is a module singleton, so the render
           // this triggers must not be able to run before the widths are in it.
           registerImageVariantsFromPayload(list)
+          listCache.set(qs, list)
           setBooks(list)
           setError(false)
         }
@@ -47,8 +62,9 @@ export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
       .catch((err) => {
         if (!cancelled) {
           console.error('Failed to load products:', err)
-          setBooks([])
-          setError(true)
+          // Keep showing the cached list if there is one; only an empty page errors.
+          if (!hit) setBooks([])
+          setError(!hit)
         }
       })
       .finally(() => {
@@ -58,7 +74,7 @@ export function useProducts({ q = '', category = '', sort = 'popular' } = {}) {
     return () => {
       cancelled = true
     }
-  }, [q, category, sort])
+  }, [qs])
 
   return { books, products: books, loading, error }
 }

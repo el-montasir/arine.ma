@@ -154,3 +154,38 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Loading placeholders: a soft light band sweeps across (Shop / Home skeletons) */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.75) 50%, transparent 80%);
+  transform: translateX(100%);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    animation: none;
+  }
+}
+
+/* iOS Safari zooms the page in when a form field's text is under 16px and
+   leaves it zoomed. Keep fields at 16px on touch screens so typing (search,
+   order tracking, checkout) never zooms the page. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

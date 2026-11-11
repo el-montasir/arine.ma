@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { SlidersHorizontal, Grid3X3, LayoutList, Loader2, Info } from 'lucide-react'
+import { SlidersHorizontal, Grid3X3, LayoutList, Info } from 'lucide-react'
 import ProductGrid from '../components/ProductGrid'
 import useCategories from '../hooks/useCategories'
 import useProducts from '../hooks/useProducts'
+import useDelayedFlag from '../hooks/useDelayedFlag'
+import { searchBooks } from '../utils/search'
 import { useLanguage } from '../context/LanguageContext'
 import { hexToRgba, getContrastTextColor } from '../utils/color'
 
@@ -11,7 +13,7 @@ export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [mobileFilters, setMobileFilters] = useState(false)
   const [gridCols, setGridCols] = useState('4')
-  const { categories = [] } = useCategories()
+  const { categories = [], loading: categoriesLoading } = useCategories()
   const { t } = useLanguage()
 
   const q = searchParams.get('q') || ''
@@ -37,7 +39,11 @@ export default function Shop() {
     })
   }
 
-  const { books: filteredBooks, loading, error } = useProducts({ q, category, sort })
+  // Search runs in the browser over the (cached) list, with the same typo- and
+  // Arabic-spelling-tolerant matching as the search overlay.
+  const { books, loading, error } = useProducts({ category, sort })
+  const filteredBooks = useMemo(() => (q ? searchBooks(books, q) : books), [books, q])
+  const showLoading = useDelayedFlag(loading)
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-8">
@@ -50,10 +56,14 @@ export default function Shop() {
               ? `${t('search')}: "${q}"`
               : t('exploreBooks')}
         </h1>
-        <p className="text-muted text-[0.85rem] mt-1 flex items-center gap-1.5">
-          {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          {t('itemsCount', { count: filteredBooks.length })}
-        </p>
+        {loading ? (
+          <div
+            className={`skeleton-shimmer mt-2 h-3.5 w-24 rounded bg-[#efe7f4] transition-opacity duration-300 ${showLoading ? 'opacity-100' : 'opacity-0'}`}
+            aria-hidden="true"
+          />
+        ) : (
+          <p className="text-muted text-[0.85rem] mt-1">{t('itemsCount', { count: filteredBooks.length })}</p>
+        )}
       </div>
 
       {error && (
@@ -90,6 +100,12 @@ export default function Shop() {
             >
               {t('all')}
             </button>
+            {showLoading &&
+              categoriesLoading &&
+              categories.length === 0 &&
+              [76, 92, 64].map((w) => (
+                <span key={w} className="skeleton-shimmer h-[34px] rounded-full bg-[#efe7f4]" style={{ width: w }} aria-hidden="true" />
+              ))}
             {categories.map((cat) => {
               const isSelected = category === cat.slug
               const color = cat.color || '#8b2f9e'
@@ -208,7 +224,7 @@ export default function Shop() {
       )}
 
       {/* Product grid */}
-      <ProductGrid books={filteredBooks} />
+      <ProductGrid books={filteredBooks} loading={loading} />
     </div>
   )
 }

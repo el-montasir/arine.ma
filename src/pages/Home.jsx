@@ -4,11 +4,13 @@ import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Package as PackageIcon }
 import PromoBanner from '../components/PromoBanner'
 import CategoryPills from '../components/CategoryPills'
 import ProductCard from '../components/ProductCard'
+import ProductCardSkeleton from '../components/ProductCardSkeleton'
 import FeaturedBook from '../components/FeaturedBook'
 import LibraryBanner from '../components/LibraryBanner'
 import Newsletter from '../components/Newsletter'
 import PackageCard from '../components/PackageCard'
 import useProducts from '../hooks/useProducts'
+import useDelayedFlag from '../hooks/useDelayedFlag'
 import usePackages from '../hooks/usePackages'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { useBanners } from '../hooks/useBanners'
@@ -17,6 +19,7 @@ import { useLanguage } from '../context/LanguageContext'
 export default function Home() {
   const navigate = useNavigate()
   const { books = [], loading: productsLoading } = useProducts()
+  const showProductsSkeleton = useDelayedFlag(productsLoading)
   const { config } = useStoreConfig()
   const { banners } = useBanners('promotional')
   const { t } = useLanguage()
@@ -92,7 +95,12 @@ export default function Home() {
         </div>
 
         {productsLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div
+            className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 transition-opacity duration-300 ${
+              showProductsSkeleton ? 'opacity-100' : 'opacity-0'
+            }`}
+            aria-busy="true"
+          >
             {Array.from({ length: 8 }).map((_, index) => (
               <ProductCardSkeleton key={index} />
             ))}
@@ -227,45 +235,6 @@ function CuratedPackagesSection() {
         </button>
       </div>
     </section>
-  )
-}
-
-function ProductCardSkeleton() {
-  return (
-    <article
-      className="bg-white rounded-[18px] border border-[#ece5f2] overflow-hidden flex flex-col justify-between relative h-full"
-      aria-hidden="true"
-    >
-      <div>
-        {/* Cover image placeholder */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#e7dcef] to-[#cfc0dd] aspect-[3/4]" />
-
-        {/* Info Area placeholder */}
-        <div className="p-3 sm:p-3.5 flex flex-col justify-between">
-          <div>
-            {/* Category tag placeholder */}
-            <div className="mb-1.5 flex items-center">
-              <div className="w-12 h-4 rounded-full bg-[#ece5f2]" />
-            </div>
-
-            {/* Title placeholder */}
-            <div className="min-h-[36px] flex flex-col gap-1.5 justify-center">
-              <div className="w-4/5 h-3.5 rounded bg-[#ece5f2]" />
-              <div className="w-3/5 h-3 rounded bg-[#ece5f2]" />
-            </div>
-
-            {/* Author placeholder */}
-            <div className="w-1/2 h-2.5 mt-1.5 rounded bg-[#f5f1f7]" />
-          </div>
-
-          {/* Price & Button placeholder */}
-          <div className="flex items-center justify-between gap-2 mt-2.5 pt-1">
-            <div className="w-14 h-4 rounded bg-[#ece5f2]" />
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#ece5f2] shrink-0" />
-          </div>
-        </div>
-      </div>
-    </article>
   )
 }
 

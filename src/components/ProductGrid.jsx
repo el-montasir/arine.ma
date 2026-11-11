@@ -1,11 +1,32 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import ProductCard from './ProductCard'
+import ProductCardSkeleton from './ProductCardSkeleton'
+import useDelayedFlag from '../hooks/useDelayedFlag'
 import { useLanguage } from '../context/LanguageContext'
 
-export default function ProductGrid({ books, title, subtitle, viewAllLink }) {
+export default function ProductGrid({ books, title, subtitle, viewAllLink, loading = false }) {
   const { isRTL } = useLanguage()
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
+  // Placeholders take the grid's space at once but only become visible when
+  // loading is actually slow, so fast loads show the books with no flash.
+  const showSkeleton = useDelayedFlag(loading)
+
+  if (loading) {
+    return (
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8" aria-busy="true">
+        <div
+          className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 transition-opacity duration-300 ${
+            showSkeleton ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {Array.from({ length: 8 }, (_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   if (!books || books.length === 0) {
     return (

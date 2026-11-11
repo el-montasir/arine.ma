@@ -29,7 +29,13 @@ function levenshtein(a, b) {
   return prev[b.length]
 }
 
-const stripArticle = (w) => (w.length > 4 && w.startsWith('ال') ? w.slice(2) : w)
+// Drops a leading "ال" or "وال" (and a lone conjunction "و"), so "والدواء"
+// compares as "دواء".
+const stripArticle = (w) => {
+  if (w.length > 5 && w.startsWith('وال')) return w.slice(3)
+  if (w.length > 4 && w.startsWith('ال')) return w.slice(2)
+  return w
+}
 
 // 0..1: how close a (possibly misspelled or half-typed) query word is to a
 // word, comparing the whole word and its prefix. The article "ال" is dropped
@@ -88,4 +94,26 @@ export function rank(item, q) {
     if (score >= FUZZY_THRESHOLD) return { r: 4, score }
   }
   return { r: -1, score: 0 }
+}
+
+/**
+ * Filters and orders a list of books for a typed query, with the same matching
+ * as the search overlay (exact matches first, then close/misspelled ones).
+ * Books keep their incoming order within the same rank.
+ */
+export function searchBooks(books, query) {
+  const q = normalizeSearch(query)
+  if (!q) return books
+  const ranked = (books || [])
+    .map((book, index) => ({
+      book,
+      index,
+      ...rank({ fields: [book.title, book.author, book.category, book.publisher].map(normalizeSearch) }, q),
+    }))
+    .filter((x) => x.r >= 0)
+  const hasExact = ranked.some((x) => x.r < 4)
+  return ranked
+    .filter((x) => x.r < 4 || !hasExact || x.score >= FUZZY_THRESHOLD_WITH_EXACT)
+    .sort((a, b) => a.r - b.r || b.score - a.score || a.index - b.index)
+    .map((x) => x.book)
 }

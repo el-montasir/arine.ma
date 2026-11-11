@@ -341,3 +341,12 @@ table.orders-table tr:hover {
   background: var(--bg);
 }
 
+
+/* iOS Safari zooms in on form fields under 16px; keep them at 16px on touch screens. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
