@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Search, ShoppingCart, Heart, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '../context/CartContext'
@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 import { getImageUrl } from '../utils/images'
 import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
+import SearchOverlay from './SearchOverlay'
 
 export default function Navbar() {
   const { count, setIsCartOpen, isMenuOpen, setIsMenuOpen, favorites } = useCart()
@@ -13,8 +14,6 @@ export default function Navbar() {
   const { config } = useStoreConfig()
   const [erroredLogoUrl, setErroredLogoUrl] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const inputRef = useRef(null)
   const { pathname } = useLocation()
 
   // Resolve the configured logo once so the <img> src and the error state
@@ -37,20 +36,7 @@ export default function Navbar() {
 
   const ChevronIcon = isRTL ? ChevronLeft : ChevronRight
 
-  useEffect(() => {
-    if (searchOpen && inputRef.current) inputRef.current.focus()
-  }, [searchOpen])
-
-  const handleSearch = useCallback(
-    (e) => {
-      e.preventDefault()
-      if (!query.trim()) return
-      window.location.href = `/shop?q=${encodeURIComponent(query.trim())}`
-      setSearchOpen(false)
-      setQuery('')
-    },
-    [query]
-  )
+  const closeSearch = useCallback(() => setSearchOpen(false), [])
 
   return (
     <>
@@ -263,60 +249,7 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Search overlay */}
-      {searchOpen && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[10vh]"
-          onClick={() => setSearchOpen(false)}
-        >
-          <form
-            onSubmit={handleSearch}
-            className="w-full max-w-[600px] mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center border-b border-gray-100 px-4">
-              <Search className="w-5 h-5 text-gray-400 mx-3 flex-shrink-0" />
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder={t('searchPlaceholder') || 'ابحث عن كتاب، مؤلف، أو باقة...'}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 py-4 text-[0.95rem] text-foreground placeholder:text-gray-400 outline-none bg-transparent"
-              />
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                className="text-sm text-gray-400 hover:text-purple-800 transition-colors"
-                aria-label={t('close') || 'إغلاق'}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="px-5 py-4">
-              <p className="text-[0.78rem] text-muted mb-3">{t('popularSearches') || 'عمليات البحث الشائعة'}</p>
-              <div className="flex flex-wrap gap-2">
-                {['صحيح البخاري', 'تفسير ابن كثير', 'رياض الصالحين', 'باقة طالب العلم'].map(
-                  (term) => (
-                    <button
-                      key={term}
-                      type="button"
-                      onClick={() => {
-                        setQuery(term)
-                        window.location.href = `/shop?q=${encodeURIComponent(term)}`
-                        setSearchOpen(false)
-                      }}
-                      className="px-3 py-1.5 bg-purple-50 text-purple-800 text-[0.8rem] rounded-full hover:bg-purple-100 transition-colors font-medium cursor-pointer"
-                    >
-                      {term}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
+      {searchOpen && <SearchOverlay onClose={closeSearch} />}
     </>
   )
 }
