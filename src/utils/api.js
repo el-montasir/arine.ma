@@ -6,8 +6,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 async function request(path, options = {}) {
   let res
   try {
+    // Content-Type only when there is a body: on a bodyless GET it turns the
+    // request into a CORS "non-simple" one and costs an OPTIONS preflight
+    // round trip before every catalog call.
     res = await fetch(`${API_URL}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
+      ...(options.body ? { headers: { 'Content-Type': 'application/json' } } : {}),
       ...options,
     })
   } catch {

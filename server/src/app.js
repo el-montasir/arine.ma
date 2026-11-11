@@ -56,7 +56,8 @@ const allowedOrigins = Array.from(
     ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:5174'] : []),
   ])
 )
-app.use(cors({ origin: allowedOrigins, credentials: true }))
+// maxAge lets browsers reuse a CORS preflight instead of repeating it per request.
+app.use(cors({ origin: allowedOrigins, credentials: true, maxAge: 7200 }))
 
 app.use(express.json())
 app.use(sessionMiddleware)
