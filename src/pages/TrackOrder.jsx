@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { Search, Package, MapPin, CreditCard, Clock, CheckCircle2, Truck, AlertCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { Search, Package, MapPin, CreditCard, Clock, CheckCircle2, Truck, AlertCircle, ArrowLeft, ArrowRight, Loader2, XCircle } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import api from '../utils/api'
 import { formatPrice } from '../utils/format'
@@ -107,298 +107,312 @@ export default function TrackOrder() {
 
   const currentStatus = order ? ORDER_STATUS_META[order.status] || ORDER_STATUS_META.PENDING : null
 
-  return (
-    <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-10 lg:py-16">
-      {/* Header */}
-      <div className="max-w-2xl mx-auto text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-100 text-brand-800 text-[0.82rem] font-medium rounded-full mb-3">
-          <Truck className="w-4 h-4" />
-          {t('trackOrderTitle')}
-        </div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('trackOrderTitle')}</h1>
-        <p className="text-muted text-[0.92rem] mt-2">
-          {t('trackOrderSubtitle')}
-        </p>
+  const glass =
+    'bg-gradient-to-br from-white/[0.11] to-white/[0.04] backdrop-blur-[22px] backdrop-saturate-150 border border-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_18px_40px_-20px_rgba(0,0,0,0.8)]'
 
-        {/* Search form */}
-        <form onSubmit={handleSubmit} className="mt-8 flex gap-2 max-w-lg mx-auto">
-          <div className="relative flex-1">
-            <Search className="w-5 h-5 text-muted absolute top-1/2 -translate-y-1/2 start-3.5 pointer-events-none" />
+  // Glass chip colour per status (presentation only; the status itself comes from the API).
+  const STATUS_CHIP = {
+    PENDING: 'bg-amber-400/15 border-amber-300/40 text-amber-200',
+    CONFIRMED: 'bg-sky-400/15 border-sky-300/40 text-sky-200',
+    SHIPPING: 'bg-[#C46BDB]/20 border-[#E0A6EE]/45 text-[#F3D3FA]',
+    DELIVERED: 'bg-emerald-400/15 border-emerald-300/45 text-emerald-200',
+    CANCELLED: 'bg-red-400/15 border-red-300/45 text-red-200',
+  }
+
+  const itemCount = (order?.items?.length || 0) + (order?.packageItems?.length || 0)
+
+  return (
+    <div
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="relative isolate overflow-hidden bg-[#10061A] text-[#F4ECF8] -mt-[72px] pt-[104px] lg:mt-0 lg:pt-14 pb-16 px-4 min-h-[70vh]"
+    >
+      {/* Amethyst glow behind the glass */}
+      <div className="pointer-events-none absolute -z-10 -top-24 -start-24 w-[420px] h-[420px] rounded-full bg-[#8E2DB0]/70 blur-[90px]" />
+      <div className="pointer-events-none absolute -z-10 top-[40%] -end-32 w-[380px] h-[380px] rounded-full bg-[#E05BB8]/30 blur-[90px]" />
+      <div className="pointer-events-none absolute -z-10 -bottom-24 start-0 w-[420px] h-[420px] rounded-full bg-[#4B2BC9]/45 blur-[100px]" />
+
+      <div className="mx-auto w-full max-w-[560px] flex flex-col gap-4">
+        {/* Header */}
+        <header className="text-center">
+          <span className={`${glass} inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.8rem] font-semibold text-[#F0D6F7]`}>
+            <Truck className="w-4 h-4" />
+            {t('trackOrder')}
+          </span>
+          <h1 className="font-tajawal font-extrabold text-[1.7rem] sm:text-3xl leading-snug mt-4 text-white">
+            {t('trackOrderTitle')}
+          </h1>
+          <p className="text-[0.88rem] text-[#B7A6C2] mt-1">{t('trackOrderSubtitle')}</p>
+        </header>
+
+        {/* Search */}
+        <form onSubmit={handleSubmit} className={`${glass} flex flex-col sm:flex-row sm:items-center gap-2 rounded-[22px] p-2`}>
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-5 h-5 text-[#B7A6C2] absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none" />
             <input
               type="text"
               dir="ltr"
+              inputMode="text"
+              autoCapitalize="characters"
+              aria-label={t('orderNumberLabel')}
               placeholder="AR-YYYYMMDD-XXXX"
               value={orderNumberInput}
               onChange={(e) => setOrderNumberInput(e.target.value)}
-              className="w-full px-11 py-3.5 bg-white border border-border/70 rounded-xl text-[0.95rem] font-mono text-foreground placeholder:text-muted/60 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all text-center"
+              className="w-full bg-transparent pl-10 pr-3 py-3 font-mono text-[0.95rem] tracking-wide text-white placeholder:text-white/35 outline-none"
             />
           </div>
           <button
             type="submit"
             disabled={loading || !orderNumberInput.trim()}
-            className="px-6 py-3.5 bg-brand-700 hover:bg-brand-800 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[0.92rem] font-semibold rounded-xl transition-colors flex items-center gap-2 shrink-0 shadow-sm"
+            className="shrink-0 inline-flex items-center justify-center gap-2 rounded-[16px] bg-gradient-to-b from-[#B455CB] to-[#6B2178] px-5 py-3 text-[0.9rem] font-bold text-white shadow-[0_8px_24px_-8px_rgba(180,85,203,0.7),inset_0_1px_0_rgba(255,255,255,0.3)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {t('searchOrderBtn')}
           </button>
         </form>
-      </div>
 
-      {/* Error state */}
-      {error && (
-        <div className="max-w-xl mx-auto mb-10 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3 text-red-700 text-[0.88rem]">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">{t('orderNotFound')}</p>
-            <p className="text-red-600/90 text-[0.82rem] mt-0.5">{error}</p>
+        {/* Error */}
+        {error && (
+          <div className="flex items-start gap-3 rounded-[20px] border border-red-300/30 bg-red-500/10 backdrop-blur-xl px-4 py-3.5 text-red-100">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-300" />
+            <div>
+              <p className="font-semibold text-[0.9rem]">{t('orderNotFound')}</p>
+              <p className="text-red-100/75 text-[0.8rem] mt-0.5">{error}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Order Details View */}
-      {order && currentStatus && (
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* Status banner */}
-          <div className="bg-white border border-border/60 rounded-3xl p-6 lg:p-8 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/60">
-              <div>
-                <div className="text-[0.78rem] text-muted mb-1">{t('orderNumberLabel')}</div>
-                <div dir="ltr" className="text-xl font-bold font-mono text-brand-800">
-                  {order.orderNumber}
+        {/* Result */}
+        {order && currentStatus && (
+          <>
+            {/* Status card */}
+            <section className={`${glass} rounded-[24px] p-5`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[0.75rem] text-[#B7A6C2]">{t('orderNumberLabel')}</div>
+                  <div dir="ltr" className="font-mono font-semibold text-[1.25rem] sm:text-[1.4rem] tracking-wide text-white break-all">
+                    {order.orderNumber}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`px-4 py-1.5 rounded-full text-[0.85rem] font-semibold border ${currentStatus.color}`}>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.82rem] font-bold ${
+                    STATUS_CHIP[order.status] || STATUS_CHIP.PENDING
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   {currentStatus.label}
                 </span>
               </div>
-            </div>
 
-            {/* Timeline progress (if not cancelled) */}
-            {order.status !== 'CANCELLED' ? (
-              <div className="py-8">
-                <div className="grid grid-cols-4 gap-2 relative">
-                  {/* Connecting bar */}
-                  <div className="absolute top-5 inset-x-8 h-1 bg-border/60 -z-0" />
-                  <div
-                    className={`absolute top-5 ${isRTL ? 'right-8' : 'left-8'} h-1 bg-brand-600 transition-all duration-500 -z-0`}
-                    style={{
-                      width: `${((currentStatus.step - 1) / (STEPS.length - 1)) * 100}%`,
-                    }}
-                  />
-
-                  {STEPS.map((s) => {
+              {order.status !== 'CANCELLED' ? (
+                <ol className="mt-5 grid gap-0">
+                  {STEPS.map((s, i) => {
                     const isPassed = currentStatus.step >= s.step
                     const isCurrent = currentStatus.step === s.step
+                    const isLast = i === STEPS.length - 1
                     const Icon = s.icon
                     return (
-                      <div key={s.step} className="flex flex-col items-center text-center z-10">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                            isPassed
-                              ? 'bg-brand-700 text-white shadow-md shadow-brand-700/20'
-                              : 'bg-white border-2 border-border/80 text-muted'
-                          } ${isCurrent ? 'ring-4 ring-brand-100' : ''}`}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </div>
+                      <li key={s.step} className="relative flex items-start gap-3 pb-5 last:pb-0">
+                        {!isLast && (
+                          <span
+                            className={`absolute top-10 start-[19px] w-[2px] h-[calc(100%-2.5rem)] rounded-full ${
+                              currentStatus.step > s.step ? 'bg-gradient-to-b from-[#C46BDB] to-[#8E2DB0]' : 'bg-white/10'
+                            }`}
+                          />
+                        )}
                         <span
-                          className={`text-[0.78rem] mt-2 font-medium ${
-                            isPassed ? 'text-foreground' : 'text-muted'
-                          }`}
+                          className={`relative z-10 w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
+                            isPassed
+                              ? 'bg-gradient-to-b from-[#C46BDB] to-[#6B2178] text-white'
+                              : 'bg-white/[0.06] border border-white/[0.12] text-white/40'
+                          } ${isCurrent ? 'shadow-[0_0_24px_4px_rgba(196,107,219,0.55)] ring-4 ring-[#C46BDB]/20' : ''}`}
                         >
-                          {s.label}
+                          <Icon className="w-[18px] h-[18px]" />
                         </span>
-                      </div>
+                        <div className="pt-2 min-w-0">
+                          <div className={`text-[0.92rem] font-bold ${isPassed ? 'text-white' : 'text-white/45'}`}>{s.label}</div>
+                        </div>
+                      </li>
                     )
                   })}
+                </ol>
+              ) : (
+                <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-red-300/30 bg-red-500/10 px-4 py-3.5 text-red-100">
+                  <XCircle className="w-5 h-5 shrink-0 text-red-300" />
+                  <p className="font-semibold text-[0.9rem]">{t('orderStatusCancelled')}</p>
                 </div>
-                <p className="text-center text-[0.85rem] text-muted mt-6 bg-brand-50/50 p-3 rounded-xl border border-brand-100">
-                  {currentStatus.desc}
-                </p>
-              </div>
-            ) : (
-              <div className="py-6 text-center text-red-600 bg-red-50/50 rounded-2xl border border-red-100 my-4">
-                <p className="font-semibold text-[0.92rem]">{t('orderStatusCancelled')}</p>
-              </div>
-            )}
+              )}
+            </section>
 
-            {/* Delivery & Contact info */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-border/60 text-start">
-              <div className="bg-[#F9FAFB] p-4 rounded-2xl">
-                <div className="flex items-center gap-2 text-[0.78rem] text-muted mb-1">
-                  <MapPin className="w-4 h-4 text-brand-600" />
+            {/* Delivery, payment, date */}
+            <section className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className={`${glass} rounded-[20px] px-4 py-3.5`}>
+                <div className="flex items-center gap-1.5 text-[0.74rem] text-[#B7A6C2]">
+                  <MapPin className="w-3.5 h-3.5" />
                   {t('deliveryAddress')}
                 </div>
-                <div className="text-[0.88rem] font-semibold text-foreground">{order.city}</div>
-                {order.address && (
-                  <div className="text-[0.78rem] text-muted/90 mt-0.5">{order.address}</div>
-                )}
+                <div className="text-[0.95rem] font-bold text-white mt-0.5">{order.city}</div>
+                {order.address && <div className="text-[0.78rem] text-[#B7A6C2] mt-0.5">{order.address}</div>}
               </div>
-
-              <div className="bg-[#F9FAFB] p-4 rounded-2xl">
-                <div className="flex items-center gap-2 text-[0.78rem] text-muted mb-1">
-                  <CreditCard className="w-4 h-4 text-brand-600" />
+              <div className={`${glass} rounded-[20px] px-4 py-3.5 col-span-2 order-last sm:col-span-1 sm:order-none`}>
+                <div className="flex items-center gap-1.5 text-[0.74rem] text-[#B7A6C2]">
+                  <CreditCard className="w-3.5 h-3.5" />
                   {t('paymentMethod')}
                 </div>
-                <div className="text-[0.88rem] font-semibold text-foreground">
+                <div className="text-[0.95rem] font-bold text-white mt-0.5">
                   {order.paymentMethod === 'CASH_ON_DELIVERY' ? t('cashOnDelivery') : order.paymentMethod}
                 </div>
-                <div className="text-[0.78rem] text-muted/90 mt-0.5">{t('cashOnDeliveryDesc')}</div>
+                <div className="text-[0.76rem] text-[#B7A6C2] mt-0.5">{t('cashOnDeliveryDesc')}</div>
               </div>
-
-              <div className="bg-[#F9FAFB] p-4 rounded-2xl">
-                <div className="flex items-center gap-2 text-[0.78rem] text-muted mb-1">
-                  <Clock className="w-4 h-4 text-brand-600" />
+              <div className={`${glass} rounded-[20px] px-4 py-3.5`}>
+                <div className="flex items-center gap-1.5 text-[0.74rem] text-[#B7A6C2]">
+                  <Clock className="w-3.5 h-3.5" />
                   {language === 'ar' ? 'تاريخ الطلب' : 'Date'}
                 </div>
-                <div className="text-[0.88rem] font-semibold text-foreground">
+                <div className="text-[0.95rem] font-bold text-white mt-0.5">
                   {new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-FR', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
                   })}
                 </div>
-                <div className="text-[0.78rem] text-muted/90 mt-0.5">
+                <div className="text-[0.76rem] text-[#B7A6C2] mt-0.5">
                   {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
-            </div>
-          </div>
+            </section>
 
-          {/* Items card */}
-          <div className="bg-white border border-border/60 rounded-3xl p-6 lg:p-8 shadow-sm">
-            <h3 className="font-bold text-foreground text-[1.05rem] mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-brand-700" />
-              {t('orderSummary')} ({((order.items?.length || 0) + (order.packageItems?.length || 0))})
-            </h3>
+            {/* Items and totals */}
+            <section className={`${glass} rounded-[24px] px-5 pt-4 pb-5`}>
+              <h2 className="flex items-center gap-2 font-tajawal text-[1.05rem] font-extrabold text-white">
+                <Package className="w-5 h-5 text-[#E0A6EE]" />
+                {t('orderSummary')} ({itemCount})
+              </h2>
 
-            <div className="divide-y divide-border/60">
-              {order.items?.map((item) => {
-                // Resolved once, not three times, and from the widths the order
-                // row snapshotted at purchase time.
-                const thumb = orderThumb(item.productImage, item.productImageVariantWidths)
-                return (
-                <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {item.productImage ? (
-                      <img
-                        src={thumb.src}
-                        srcSet={thumb.srcSet}
-                        sizes={thumb.sizes}
-                        alt=""
-                        className="w-10 h-14 object-cover rounded-lg border border-border/60 shrink-0"
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                            e.currentTarget.removeAttribute('srcset')
-                            e.currentTarget.removeAttribute('sizes')
-                            e.currentTarget.dataset.variantFallbackApplied = '1'
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div className="min-w-0">
-                      <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.productTitle}</h4>
-                      <span className="text-[0.78rem] text-muted">
-                        {item.quantity} × {formatPrice(item.unitPrice)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-[0.92rem] font-bold text-brand-800 shrink-0">
-                    {formatPrice(item.totalPrice)}
-                  </div>
-                </div>
-              )
-              })}
-              {order.packageItems?.map((item) => {
-                const thumb = orderThumb(item.packageImage, item.packageImageVariantWidths)
-                return (
-                <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {item.packageImage ? (
-                      <img
-                        src={thumb.src}
-                        srcSet={thumb.srcSet}
-                        sizes={thumb.sizes}
-                        alt=""
-                        className="w-12 h-12 object-cover rounded-xl border border-border/60 shrink-0"
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                            e.currentTarget.removeAttribute('srcset')
-                            e.currentTarget.removeAttribute('sizes')
-                            e.currentTarget.dataset.variantFallbackApplied = '1'
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[0.7rem] font-medium bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded">
-                          {t('package') || 'باقة'}
+              <ul className="mt-1 divide-y divide-white/[0.08]">
+                {order.items?.map((item) => {
+                  const thumb = orderThumb(item.productImage, item.productImageVariantWidths)
+                  return (
+                    <li key={item.id} className="py-3 flex items-center gap-3">
+                      {item.productImage ? (
+                        <img
+                          src={thumb.src}
+                          srcSet={thumb.srcSet}
+                          sizes={thumb.sizes}
+                          alt=""
+                          className="w-11 h-[60px] object-cover rounded-lg ring-1 ring-white/15 shadow-[0_8px_18px_-6px_rgba(0,0,0,0.8)] shrink-0"
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                              e.currentTarget.removeAttribute('srcset')
+                              e.currentTarget.removeAttribute('sizes')
+                              e.currentTarget.dataset.variantFallbackApplied = '1'
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-[0.9rem] font-bold text-white truncate">{item.productTitle}</h3>
+                        <span className="text-[0.76rem] text-[#B7A6C2]">
+                          {item.quantity} × {formatPrice(item.unitPrice)}
                         </span>
-                        <h4 className="text-[0.9rem] font-semibold text-foreground truncate">{item.packageTitle}</h4>
                       </div>
-                      {item.itemsSnapshot && Array.isArray(item.itemsSnapshot) && item.itemsSnapshot.length > 0 && (
-                        <p className="text-[0.75rem] text-muted truncate mt-0.5">
-                          {item.itemsSnapshot.map((i) => i.title).filter(Boolean).join(' + ')}
-                        </p>
-                      )}
-                      <span className="text-[0.78rem] text-muted block mt-0.5">
-                        {item.quantity} × {formatPrice(item.unitPrice)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-[0.92rem] font-bold text-brand-800 shrink-0">
-                    {formatPrice(item.totalPrice)}
-                  </div>
+                      <span className="text-[0.9rem] font-extrabold text-white shrink-0">{formatPrice(item.totalPrice)}</span>
+                    </li>
+                  )
+                })}
+                {order.packageItems?.map((item) => {
+                  const thumb = orderThumb(item.packageImage, item.packageImageVariantWidths)
+                  return (
+                    <li key={item.id} className="py-3 flex items-center gap-3">
+                      {item.packageImage ? (
+                        <img
+                          src={thumb.src}
+                          srcSet={thumb.srcSet}
+                          sizes={thumb.sizes}
+                          alt=""
+                          className="w-12 h-12 object-cover rounded-xl ring-1 ring-white/15 shrink-0"
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+                              e.currentTarget.removeAttribute('srcset')
+                              e.currentTarget.removeAttribute('sizes')
+                              e.currentTarget.dataset.variantFallbackApplied = '1'
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="shrink-0 rounded-full bg-[#C46BDB]/25 px-2 py-0.5 text-[0.65rem] font-bold text-[#F0D6F7]">
+                            {t('package') || 'باقة'}
+                          </span>
+                          <h3 className="text-[0.9rem] font-bold text-white truncate">{item.packageTitle}</h3>
+                        </div>
+                        {item.itemsSnapshot && Array.isArray(item.itemsSnapshot) && item.itemsSnapshot.length > 0 && (
+                          <p className="text-[0.72rem] text-[#B7A6C2] truncate mt-0.5">
+                            {item.itemsSnapshot.map((i) => i.title).filter(Boolean).join(' + ')}
+                          </p>
+                        )}
+                        <span className="text-[0.76rem] text-[#B7A6C2] block mt-0.5">
+                          {item.quantity} × {formatPrice(item.unitPrice)}
+                        </span>
+                      </div>
+                      <span className="text-[0.9rem] font-extrabold text-white shrink-0">{formatPrice(item.totalPrice)}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+
+              <div className="mt-2 pt-3 border-t border-white/[0.08] grid gap-1.5 text-[0.86rem]">
+                <div className="flex justify-between text-[#B7A6C2]">
+                  <span>{t('subtotal')}</span>
+                  <span className="text-white">{formatPrice(order.subtotal)}</span>
                 </div>
-              )
-              })}
-            </div>
+                <div className="flex justify-between text-[#B7A6C2]">
+                  <span>{t('shipping')}</span>
+                  <span className={order.shipping === 0 ? 'text-emerald-300 font-semibold' : 'text-white'}>
+                    {order.shipping === 0 ? t('free') : formatPrice(order.shipping)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-1.5">
+                  <span className="font-tajawal text-[1.05rem] font-extrabold text-white">{t('total')}</span>
+                  <span className="font-tajawal text-[1.2rem] font-extrabold bg-gradient-to-l from-[#F3C6FF] to-[#C46BDB] bg-clip-text text-transparent">
+                    {formatPrice(order.total)}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
 
-            {/* Price summary */}
-            <div className="mt-6 pt-4 border-t border-border/60 space-y-2 text-[0.88rem]">
-              <div className="flex justify-between text-muted">
-                <span>{t('subtotal')}</span>
-                <span className="text-foreground">{formatPrice(order.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-muted">
-                <span>{t('shipping')}</span>
-                <span className={order.shipping === 0 ? 'text-emerald-600 font-semibold' : 'text-foreground'}>
-                  {order.shipping === 0 ? t('free') : formatPrice(order.shipping)}
-                </span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-foreground pt-3 border-t border-border/60">
-                <span>{t('total')}</span>
-                <span className="text-brand-700 text-lg">{formatPrice(order.total)}</span>
+        {/* Empty state */}
+        {!order && !loading && !error && (
+          <section className={`${glass} rounded-[24px] px-5 py-8 text-center`}>
+            <div className="relative mx-auto w-16 h-16 flex items-center justify-center" aria-hidden="true">
+              <div className="absolute inset-0 rounded-full bg-[#C978E0]/30 blur-xl" />
+              <div className="relative w-14 h-14 rounded-full flex items-center justify-center bg-white/[0.08] border border-white/[0.15]">
+                <Package className="w-6 h-6 text-[#E0A6EE]" />
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Empty / Help helper */}
-      {!order && !loading && (
-        <div className="max-w-md mx-auto mt-12 text-center bg-white border border-border/60 rounded-3xl p-8">
-          <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Package className="w-7 h-7 text-brand-600" />
-          </div>
-          <h3 className="font-bold text-foreground text-[0.95rem]">{t('trackOrderSubtitle')}</h3>
-          <div className="mt-6 flex justify-center gap-3">
+            <p className="mt-4 text-[0.9rem] text-[#D9C8E2]">
+              {language === 'ar'
+                ? 'تجد رقم طلبك في صفحة تأكيد الطلب، ويبدأ بـ AR-'
+                : language === 'fr'
+                  ? 'Votre numéro figure sur la page de confirmation et commence par AR-'
+                  : 'Your order number is on the confirmation page and starts with AR-'}
+            </p>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-[0.85rem] font-semibold transition-colors"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-[0.85rem] font-semibold text-white hover:bg-white/[0.12] transition-colors"
             >
-              <span>{t('exploreShop')}</span>
+              {t('exploreShop')}
               <ArrowIcon className="w-4 h-4" />
             </Link>
-          </div>
-        </div>
-      )}
+          </section>
+        )}
+      </div>
     </div>
   )
 }

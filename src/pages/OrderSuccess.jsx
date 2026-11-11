@@ -1,22 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import {
-  BookOpen,
-  Check,
-  CheckCircle2,
-  Clock,
-  Copy,
-  CreditCard,
-  MapPin,
-  Package,
-  ShieldCheck,
-  Share2,
-  Truck,
-  User,
-} from 'lucide-react'
+import { BookOpen, Check, Copy, Package, Share2, Truck, Wallet } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import api from '../utils/api'
 import { formatPrice } from '../utils/format'
+import { useStoreConfig } from '../hooks/useStoreConfig'
 import { trackPurchase } from '../utils/tracking'
 import { getThumbnailImageProps } from '../utils/image-variants'
 import { registerImageVariantsFromPayload } from '../lib/image-metadata'
@@ -54,10 +42,120 @@ function resolveItemImageWidths(item) {
   return []
 }
 
+// Shown on the "arrives within" card. Not stored in the admin yet, so it lives here.
+const DELIVERY_ESTIMATE = '24–48 ساعة'
+
+// WhatsApp line for confirming an order from this page only (the rest of the
+// site keeps using the numbers from Store Settings).
+const ORDER_WHATSAPP_NUMBER = '0665128821'
+
+// Moroccan local numbers (06…/07…) to the international form wa.me expects.
+function toWhatsAppNumber(raw) {
+  const digits = String(raw || '').replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('212')) return digits
+  if (digits.startsWith('0')) return `212${digits.slice(1)}`
+  return digits
+}
+
+// Book and package lines from either the checkout receipt (cart items) or the
+// API order (items + packageItems), in one shape for rendering.
+function collectLines(order) {
+  if (!order) return []
+  const lines = []
+  for (const item of order.items || []) {
+    const isPkg = Boolean(
+      item.isPackage || item.packageId || item.packageTitle || (item.itemsSnapshot && item.itemsSnapshot.length > 0)
+    )
+    lines.push({ item, isPkg })
+  }
+  for (const item of order.packageItems || []) lines.push({ item, isPkg: true })
+  return lines.map(({ item, isPkg }, idx) => {
+    const unitPrice = item.unitPrice ?? item.price ?? 0
+    const quantity = Number(item.quantity ?? 1)
+    const subItems = item.itemsSnapshot || item.items || item.packageItems || []
+    return {
+      key: `${isPkg ? 'p' : 'b'}-${item.id ?? item.packageId ?? idx}-${idx}`,
+      isPkg,
+      title: item.productTitle || item.packageTitle || item.title || (isPkg ? 'باقة' : 'كتاب'),
+      subtitle: isPkg
+        ? (Array.isArray(subItems) ? subItems.map((i) => i.title || i.productTitle || '').filter(Boolean).join(' + ') : '')
+        : '',
+      quantity,
+      unitPrice,
+      lineTotal: item.totalPrice ?? Number(unitPrice) * quantity,
+      imageUrl: resolveItemImageUrl(item),
+      imageWidths: resolveItemImageWidths(item),
+    }
+  })
+}
+
+function Cover({ line, className }) {
+  const props = line.imageUrl
+    ? getThumbnailImageProps(line.imageUrl, line.imageWidths)
+    : null
+  if (!props?.src) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-white/10`}>
+        {line.isPkg ? <Package className="w-5 h-5 text-white/50" /> : <BookOpen className="w-5 h-5 text-white/50" />}
+      </div>
+    )
+  }
+  return (
+    <img
+      src={props.src}
+      srcSet={props.srcSet || undefined}
+      sizes="120px"
+      alt=""
+      decoding="async"
+      className={`${className} object-cover`}
+      onError={(e) => {
+        if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
+          e.currentTarget.removeAttribute('srcset')
+          e.currentTarget.dataset.variantFallbackApplied = '1'
+        }
+      }}
+    />
+  )
+}
+
+// Up to three of the ordered covers, fanned, with a glowing check on top.
+function CoverFan({ lines }) {
+  const shown = lines.slice(0, 3)
+  const tilt = shown.length === 1 ? [0] : shown.length === 2 ? [-8, 8] : [-11, 0, 11]
+  return (
+    <div className="relative mx-auto h-[150px] w-[220px]" aria-hidden="true">
+      <div className="absolute inset-x-6 bottom-2 h-16 rounded-full bg-[#C46BDB]/40 blur-2xl" />
+      {shown.map((line, i) => {
+        const center = shown.length === 3 ? i === 1 : shown.length === 1
+        return (
+          <div
+            key={line.key}
+            className="absolute bottom-3 left-1/2"
+            style={{
+              transform: `translateX(calc(-50% + ${(i - (shown.length - 1) / 2) * 52}px)) rotate(${tilt[i]}deg)`,
+              zIndex: center ? 2 : 1,
+            }}
+          >
+            <Cover
+              line={line}
+              className={`${center ? 'w-[82px] h-[112px]' : 'w-[70px] h-[96px]'} rounded-[10px] shadow-[0_18px_30px_-12px_rgba(0,0,0,0.85)] ring-1 ring-white/20`}
+            />
+          </div>
+        )
+      })}
+      <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 z-10 w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-b from-[#C46BDB] to-[#6B2178] ring-4 ring-[#10061A]/70 shadow-[0_0_28px_6px_rgba(196,107,219,0.55)]">
+        <Check className="w-5 h-5 text-white" strokeWidth={3} />
+      </div>
+    </div>
+  )
+}
+
 export default function OrderSuccess() {
   const { state } = useLocation()
   const [searchParams] = useSearchParams()
   const { isRTL } = useLanguage()
+  const { config } = useStoreConfig()
 
   const orderNumFromParams =
     searchParams.get('num') ||
@@ -214,407 +312,190 @@ export default function OrderSuccess() {
     } catch {}
   }
 
-  return (
-    <div className="min-h-[calc(100dvh-120px)] bg-gradient-to-b from-[#FAF7FB] via-[#F6EDF9]/40 to-[#FAF7FB] py-6 sm:py-10 px-3 sm:px-4 flex items-center justify-center relative overflow-hidden">
-      {/* Soft Ambient Background Atmospheric Glow */}
-      <div className="absolute top-1/4 -start-24 w-80 h-80 bg-[#8F3AA1]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -end-24 w-80 h-80 bg-[#6B2178]/10 rounded-full blur-3xl pointer-events-none" />
+  const lines = collectLines(order)
+  const coverLines = lines.filter((l) => l.imageUrl)
+  const isCashOnDelivery = !order?.paymentMethod || order.paymentMethod === 'CASH_ON_DELIVERY'
 
-      {/* Floating Glass Card Container */}
-      <div className="w-[calc(100%-24px)] sm:w-[calc(100%-32px)] max-w-[520px] mx-auto bg-white/92 backdrop-blur-[20px] backdrop-saturate-[140%] border border-white/80 rounded-[28px] shadow-[0_14px_45px_-18px_rgba(76,22,96,0.18),0_4px_20px_-6px_rgba(143,58,161,0.08),0_1px_3px_rgba(0,0,0,0.04)] p-5 sm:p-7 relative z-10 my-2 sm:my-6">
-        {/* 1. Success Icon & Header */}
-        <section className="text-center mb-6">
-          <div className="w-16 h-16 bg-[#E8F7F1] border border-[#0F6E51]/15 rounded-full flex items-center justify-center mx-auto mb-3.5 shadow-2xs">
-            <CheckCircle2 className="w-8 h-8 text-[#0F6E51]" strokeWidth={2.5} />
-          </div>
-          <h1 className="font-tajawal font-extrabold text-2xl sm:text-[1.7rem] text-[#1C1220] tracking-tight leading-snug mb-1.5">
-            تم استلام طلبك بنجاح!
+  const whatsappNumber = toWhatsAppNumber(
+    ORDER_WHATSAPP_NUMBER || config?.store?.whatsapp || config?.store?.whatsappNumbers?.[0]
+  )
+  const whatsappText = order?.orderNumber
+    ? `السلام عليكم، أريد تأكيد طلبي رقم ${order.orderNumber}${order.total != null ? ` (المجموع ${formatPrice(order.total)})` : ''}`
+    : 'السلام عليكم، لدي سؤال حول طلبي'
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappText)}`
+    : null
+
+  const glass =
+    'bg-gradient-to-br from-white/[0.11] to-white/[0.04] backdrop-blur-[22px] backdrop-saturate-150 border border-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_18px_40px_-20px_rgba(0,0,0,0.8)]'
+
+  return (
+    <div
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="relative isolate overflow-hidden bg-[#10061A] text-[#F4ECF8] -mt-[72px] pt-[96px] lg:mt-0 lg:pt-12 pb-14 px-4"
+    >
+      {/* Amethyst glow behind the glass */}
+      <div className="pointer-events-none absolute -z-10 -top-24 -start-24 w-[420px] h-[420px] rounded-full bg-[#8E2DB0]/70 blur-[90px]" />
+      <div className="pointer-events-none absolute -z-10 top-[38%] -end-32 w-[380px] h-[380px] rounded-full bg-[#E05BB8]/35 blur-[90px]" />
+      <div className="pointer-events-none absolute -z-10 -bottom-24 start-0 w-[420px] h-[420px] rounded-full bg-[#4B2BC9]/45 blur-[100px]" />
+
+      <div className="mx-auto w-full max-w-[460px] flex flex-col gap-3.5">
+        {/* 1. The ordered books, with the success check */}
+        <section className="text-center pt-2">
+          {coverLines.length > 0 ? (
+            <CoverFan lines={coverLines} />
+          ) : (
+            <div className="relative mx-auto w-20 h-20 flex items-center justify-center" aria-hidden="true">
+              <div className="absolute inset-0 rounded-full bg-[#C978E0]/35 blur-xl" />
+              <div className="relative w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-b from-[#C46BDB] to-[#6B2178] shadow-[0_0_28px_6px_rgba(196,107,219,0.55)]">
+                <Check className="w-7 h-7 text-white" strokeWidth={3} />
+              </div>
+            </div>
+          )}
+          <h1 className="font-tajawal font-extrabold text-[1.65rem] sm:text-3xl leading-snug mt-5 text-white">
+            تم استلام طلبك بنجاح
           </h1>
-          <p className="text-[#7A6D80] text-xs sm:text-sm max-w-[380px] mx-auto leading-relaxed">
-            تم تسجيل طلبك وسيقوم فريقنا بالتواصل معك قريباً لتجهيز وإرسال الطلب.
+          <p className="text-[0.88rem] text-[#B7A6C2] mt-1">
+            جزاك الله خيراً على ثقتك بمكتبة أرين
           </p>
         </section>
 
-        {/* 2. Order Number Nested Glass Card */}
-        {order?.orderNumber && (
-          <section className="mb-4">
-            <div className="bg-[#FAF7FC]/90 border border-[#EBDCF1]/80 rounded-[18px] p-3.5 sm:p-4 shadow-2xs flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-[12px] bg-[#F6EDF9] border border-[#EBDCF1] flex items-center justify-center shrink-0">
-                  <Package className="w-4 h-4 text-[#6B2178]" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[0.72rem] text-[#7A6D80] font-medium leading-none mb-1">
-                    رقم الطلب
-                  </div>
-                  <div
-                    dir="ltr"
-                    className="text-sm sm:text-base font-bold text-[#1C1220] font-mono tracking-wide truncate"
-                  >
-                    {order.orderNumber}
-                  </div>
-                </div>
-              </div>
+        {loading && !order && (
+          <div className="flex justify-center py-6" aria-label="جارِ التحميل">
+            <div className="w-7 h-7 rounded-full border-2 border-white/20 border-t-[#E0A6EE] animate-spin" />
+          </div>
+        )}
+        {fetchAttempted && !loading && !order && cleanParamOrderNum && (
+          <p className={`${glass} rounded-[18px] px-4 py-3 text-center text-[0.85rem] text-[#D9C8E2]`}>
+            لم نجد تفاصيل هذا الطلب هنا، يمكنك متابعته من صفحة تتبع الطلب.
+          </p>
+        )}
 
+        {/* 2. Order number */}
+        {order?.orderNumber && (
+          <section className={`${glass} rounded-[22px] px-4 py-3.5`}>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[0.75rem] text-[#B7A6C2]">رقم الطلب — احتفظ به لتتبع طلبك</span>
               <button
-                onClick={handleCopy}
                 type="button"
+                onClick={handleCopy}
                 aria-label="نسخ رقم الطلب"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-[10px] bg-white/90 border border-[#EBDCF1] text-[#6B2178] hover:text-[#8F3AA1] hover:bg-white hover:border-[#8F3AA1]/40 transition-all shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#F0D6F7]/35 px-3 py-1 text-[0.75rem] font-bold text-[#F0D6F7] hover:bg-white/10 transition-colors"
               >
-                {copied ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-[#0F6E51]" />
-                    <span className="text-[#0F6E51]">تم النسخ</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>نسخ</span>
-                  </>
-                )}
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'تم النسخ' : 'نسخ'}
               </button>
             </div>
-          </section>
-        )}
-
-        {/* 3. Order Details Nested Card */}
-        {order && (
-          <section className="mb-4">
-            <div className="bg-white/80 border border-[#EFE8F2] rounded-[20px] shadow-2xs overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#EFE8F2]/80 bg-[#FAF7FC]/50 flex items-center gap-2">
-                <Package className="w-4 h-4 text-[#6B2178]" strokeWidth={2.2} />
-                <h2 className="text-[0.9rem] font-extrabold text-[#1C1220]">تفاصيل الطلب</h2>
-              </div>
-
-              {/* Items list */}
-              <div className="px-4 divide-y divide-[#EFE8F2]/70">
-                {/* Product / Cart Items */}
-                {order.items?.map((item) => {
-                  const isPkg = Boolean(
-                    item.isPackage ||
-                      item.packageId ||
-                      item.packageTitle ||
-                      (item.itemsSnapshot && item.itemsSnapshot.length > 0)
-                  )
-                  const imgUrl = resolveItemImageUrl(item)
-                  const imgWidths = resolveItemImageWidths(item)
-                  const thumbProps = imgUrl
-                    ? getThumbnailImageProps(imgUrl, imgWidths)
-                    : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
-                  const title = item.productTitle || item.packageTitle || item.title || (isPkg ? 'باقة' : 'منتج')
-                  const unitPrice = item.unitPrice ?? item.price ?? 0
-                  const lineTotal =
-                    item.totalPrice ??
-                    Number(unitPrice) * Number(item.quantity ?? 1)
-                  const subItems = item.itemsSnapshot || item.items || item.packageItems || []
-
-                  return (
-                    <div
-                      key={item.id || item.productTitle || item.title || title}
-                      className="py-3 sm:py-3.5 flex items-center gap-3"
-                    >
-                      <div className={`${isPkg ? 'w-12 h-12' : 'w-12 h-16'} shrink-0`}>
-                        {imgUrl ? (
-                          <img
-                            src={thumbProps.src}
-                            srcSet={thumbProps.srcSet || ''}
-                            sizes={thumbProps.sizes || '48px'}
-                            alt=""
-                            className={`${isPkg ? 'w-12 h-12' : 'w-12 h-16'} object-cover rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC]`}
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                              if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                                e.currentTarget.removeAttribute('srcset')
-                                e.currentTarget.removeAttribute('sizes')
-                                e.currentTarget.dataset.variantFallbackApplied = '1'
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className={`${isPkg ? 'w-12 h-12' : 'w-12 h-16'} rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC] flex items-center justify-center`}>
-                            {isPkg ? (
-                              <Package className="w-5 h-5 text-[#D1D5DB]" />
-                            ) : (
-                              <BookOpen className="w-5 h-5 text-[#D1D5DB]" />
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        {isPkg ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[0.68rem] font-bold bg-[#6B2178]/10 text-[#6B2178] px-1.5 py-0.5 rounded-md">
-                              باقة
-                            </span>
-                            <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
-                              {title}
-                            </h3>
-                          </div>
-                        ) : (
-                          <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
-                            {title}
-                          </h3>
-                        )}
-
-                        {isPkg && Array.isArray(subItems) && subItems.length > 0 && (
-                          <p className="text-[0.72rem] text-[#7A6D80] truncate mt-1">
-                            {subItems
-                              .map((i) => i.title || i.productTitle || '')
-                              .filter(Boolean)
-                              .join(' + ')}
-                          </p>
-                        )}
-
-                        <p className="text-[0.76rem] text-[#7A6D80] mt-1">
-                          {item.quantity} × {formatPrice(unitPrice)}
-                        </p>
-                      </div>
-
-                      <div className="text-[0.88rem] font-extrabold text-[#1C1220] shrink-0">
-                        {formatPrice(lineTotal)}
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {/* Additional Package items if separate array from API */}
-                {order.packageItems?.map((item) => {
-                  const imgUrl = resolveItemImageUrl(item)
-                  const imgWidths = resolveItemImageWidths(item)
-                  const thumbProps = imgUrl
-                    ? getThumbnailImageProps(imgUrl, imgWidths)
-                    : { src: '', srcSet: '', sizes: '', fallbackSrc: '' }
-                  const lineTotal =
-                    item.totalPrice ??
-                    Number(item.unitPrice ?? item.price ?? 0) * Number(item.quantity ?? 1)
-                  const title = item.packageTitle || item.title || 'باقة'
-                  const unitPrice = item.unitPrice ?? item.price ?? 0
-                  const subItems = item.itemsSnapshot || item.items || []
-
-                  return (
-                    <div
-                      key={item.id || item.packageTitle || title}
-                      className="py-3 sm:py-3.5 flex items-center gap-3"
-                    >
-                      <div className="w-12 h-12 shrink-0">
-                        {imgUrl ? (
-                          <img
-                            src={thumbProps.src}
-                            srcSet={thumbProps.srcSet || ''}
-                            sizes={thumbProps.sizes || '48px'}
-                            alt=""
-                            className="w-12 h-12 object-cover rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC]"
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                              if (e.currentTarget.dataset.variantFallbackApplied !== '1') {
-                                e.currentTarget.removeAttribute('srcset')
-                                e.currentTarget.removeAttribute('sizes')
-                                e.currentTarget.dataset.variantFallbackApplied = '1'
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-[10px] border border-[#EFE8F2] bg-[#FAF7FC] flex items-center justify-center">
-                            <Package className="w-5 h-5 text-[#D1D5DB]" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[0.68rem] font-bold bg-[#6B2178]/10 text-[#6B2178] px-1.5 py-0.5 rounded-md">
-                            باقة
-                          </span>
-                          <h3 className="text-[0.85rem] font-bold text-[#1C1220] truncate">
-                            {title}
-                          </h3>
-                        </div>
-                        {Array.isArray(subItems) && subItems.length > 0 && (
-                          <p className="text-[0.72rem] text-[#7A6D80] truncate mt-1">
-                            {subItems
-                              .map((i) => i.title || i.productTitle || '')
-                              .filter(Boolean)
-                              .join(' + ')}
-                          </p>
-                        )}
-                        <p className="text-[0.76rem] text-[#7A6D80] mt-1">
-                          {item.quantity} × {formatPrice(unitPrice)}
-                        </p>
-                      </div>
-
-                      <div className="text-[0.88rem] font-extrabold text-[#1C1220] shrink-0">
-                        {formatPrice(lineTotal)}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Customer, delivery & total metadata */}
-              <div className="border-t border-[#EFE8F2] bg-[#FAF7FC]/60 px-4 py-3.5 space-y-2.5">
-                {(order?.fullName || order?.customerName || order?.name) && (
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
-                      <User className="w-3.5 h-3.5 text-[#6B2178]" />
-                      <span>العميل</span>
-                    </span>
-                    <span className="text-[#1C1220] font-semibold">
-                      {order.fullName || order.customerName || order.name}
-                    </span>
-                  </div>
-                )}
-
-                {(order?.city || order?.cityName) && (
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
-                      <MapPin className="w-3.5 h-3.5 text-[#6B2178]" />
-                      <span>المدينة</span>
-                    </span>
-                    <span className="text-[#1C1220] font-semibold">
-                      {order.city || order.cityName}
-                    </span>
-                  </div>
-                )}
-
-                {order?.paymentMethod && (
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="flex items-center gap-1.5 text-[#7A6D80] font-medium">
-                      <CreditCard className="w-3.5 h-3.5 text-[#6B2178]" />
-                      <span>طريقة الدفع</span>
-                    </span>
-                    <span className="text-[#1C1220] font-semibold">
-                      {order.paymentMethod === 'CASH_ON_DELIVERY'
-                        ? 'الدفع عند الاستلام'
-                        : order.paymentMethod}
-                    </span>
-                  </div>
-                )}
-
-                <div className="pt-2.5 border-t border-[#EFE8F2] flex justify-between items-center">
-                  <span className="text-[0.88rem] font-extrabold text-[#1C1220]">الإجمالي</span>
-                  <span className="font-tajawal font-extrabold text-lg sm:text-xl text-[#6B2178]">
-                    {formatPrice(order?.total || 0)}
-                  </span>
-                </div>
-              </div>
+            <div dir="ltr" className="mt-1.5 font-mono font-semibold text-[1.3rem] sm:text-[1.45rem] tracking-wide text-white text-end break-all">
+              {order.orderNumber}
             </div>
           </section>
         )}
 
-        {/* 4. Compact "What Happens Next" Stepper */}
-        <section className="mb-5">
-          <div className="bg-white/80 border border-[#EFE8F2] rounded-[20px] p-4 sm:p-5 shadow-2xs">
-            <div className="flex items-center gap-2 mb-3.5 pb-2.5 border-b border-[#EFE8F2]/80">
-              <Clock className="w-4 h-4 text-[#6B2178]" strokeWidth={2.2} />
-              <h2 className="text-[0.9rem] font-extrabold text-[#1C1220]">ماذا يحدث الآن؟</h2>
-            </div>
-
-            <div className="relative">
-              {/* Vertical Stepper Line */}
-              <div
-                className={`absolute top-4 bottom-4 w-0.5 bg-[#EFE8F2] ${
-                  isRTL ? 'right-4 -mr-[1px]' : 'left-4 -ml-[1px]'
-                }`}
-              />
-
-              <div className="space-y-4">
-                {[
-                  {
-                    label: 'تم استلام الطلب',
-                    desc: 'تم تسجيل طلبك بنجاح',
-                    icon: CheckCircle2,
-                    done: true,
-                  },
-                  {
-                    label: 'تجهيز الطلب',
-                    desc: 'سنقوم بتجهيز طلبك قريباً',
-                    icon: Package,
-                    done: false,
-                  },
-                  {
-                    label: 'في طريقه إليك',
-                    desc: 'سيتم شحن طلبك قريباً',
-                    icon: Truck,
-                    done: false,
-                  },
-                  {
-                    label: 'تم التوصيل',
-                    desc: 'سيصلك طلبك قريباً',
-                    icon: ShieldCheck,
-                    done: false,
-                  },
-                ].map((step, idx) => {
-                  const StepIcon = step.icon
-                  return (
-                    <div key={idx} className="relative flex items-center gap-3">
-                      <div
-                        className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-2xs ${
-                          step.done
-                            ? 'bg-[#0F6E51] text-white'
-                            : 'bg-white border border-[#EFE8F2] text-[#9CA3AF]'
-                        }`}
-                      >
-                        <StepIcon className="w-4 h-4" strokeWidth={2} />
-                      </div>
-                      <div className="min-w-0">
-                        <h3
-                          className={`text-xs font-bold leading-tight ${
-                            step.done ? 'text-[#1C1220]' : 'text-[#7A6D80]'
-                          }`}
-                        >
-                          {step.label}
-                        </h3>
-                        <p className="text-[0.72rem] text-[#7A6D80]/80 mt-0.5">{step.desc}</p>
-                      </div>
+        {/* 3. Items and total */}
+        {lines.length > 0 && (
+          <section className={`${glass} rounded-[22px] px-4 pt-1.5 pb-3.5`}>
+            <ul className="divide-y divide-white/[0.08]">
+              {lines.map((line) => (
+                <li key={line.key} className="flex items-center gap-3 py-3">
+                  <Cover
+                    line={line}
+                    className={`${line.isPkg ? 'w-12 h-12' : 'w-11 h-[60px]'} shrink-0 rounded-lg ring-1 ring-white/15 shadow-[0_8px_18px_-6px_rgba(0,0,0,0.8)]`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      {line.isPkg && (
+                        <span className="shrink-0 rounded-full bg-[#C46BDB]/25 px-2 py-0.5 text-[0.65rem] font-bold text-[#F0D6F7]">باقة</span>
+                      )}
+                      <h3 className="truncate text-[0.9rem] font-bold text-white">{line.title}</h3>
                     </div>
-                  )
-                })}
+                    {line.subtitle && <p className="truncate text-[0.72rem] text-[#B7A6C2] mt-0.5">{line.subtitle}</p>}
+                    <p className="text-[0.76rem] text-[#B7A6C2] mt-0.5">
+                      {line.quantity} × {formatPrice(line.unitPrice)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[0.9rem] font-extrabold text-white">{formatPrice(line.lineTotal)}</span>
+                </li>
+              ))}
+            </ul>
+            {order?.total != null && (
+              <div className="flex items-center justify-between border-t border-white/[0.08] pt-3">
+                <span className="font-tajawal text-[1.05rem] font-extrabold text-white">المجموع مع التوصيل</span>
+                <span className="font-tajawal text-[1.15rem] font-extrabold bg-gradient-to-l from-[#F3C6FF] to-[#C46BDB] bg-clip-text text-transparent">
+                  {formatPrice(order.total)}
+                </span>
               </div>
-            </div>
+            )}
+          </section>
+        )}
+
+        {/* 4. What to prepare and when it arrives */}
+        <section className="grid grid-cols-2 gap-3">
+          <div className={`${glass} rounded-[20px] px-3.5 py-3`}>
+            <span className="flex items-center gap-1.5 text-[0.72rem] text-[#B7A6C2]">
+              <Wallet className="w-3.5 h-3.5" />
+              {isCashOnDelivery ? 'جهّز عند الاستلام' : 'المبلغ'}
+            </span>
+            <strong className="block font-tajawal text-[1.1rem] font-extrabold text-white mt-0.5">
+              {order?.total != null ? formatPrice(order.total) : '—'}
+            </strong>
+          </div>
+          <div className={`${glass} rounded-[20px] px-3.5 py-3`}>
+            <span className="flex items-center gap-1.5 text-[0.72rem] text-[#B7A6C2]">
+              <Truck className="w-3.5 h-3.5" />
+              يصلك خلال
+            </span>
+            <strong className="block font-tajawal text-[1.1rem] font-extrabold text-white mt-0.5">{DELIVERY_ESTIMATE}</strong>
           </div>
         </section>
 
-        {/* 5. Action Buttons */}
-        <section className="space-y-2.5">
-          {/* Primary Action Button */}
-          <Link
-            to={
-              order?.orderNumber
-                ? `/track-order?num=${encodeURIComponent(order.orderNumber)}`
-                : '/track-order'
-            }
-            className="w-full py-3 sm:py-3.5 px-4 bg-gradient-to-r from-[#8F3AA1] to-[#6B2178] hover:opacity-95 text-white text-xs sm:text-sm font-bold rounded-[14px] shadow-md shadow-[#6B2178]/20 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
-          >
-            <Truck className="w-4 h-4" />
-            <span>متابعة الطلب</span>
-          </Link>
-
-          {/* Secondary Actions Grid */}
-          <div className="grid grid-cols-2 gap-2.5">
+        {/* 5. Actions */}
+        <section className="grid grid-cols-2 gap-3">
+          {whatsappHref ? (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-[18px] border border-[#25D366]/45 bg-[#25D366]/15 py-3.5 text-[0.9rem] font-bold text-[#7CF0A9] backdrop-blur-xl hover:bg-[#25D366]/25 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.3.4c.1.2.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.7-.9c.2-.2.4-.2.6-.1l1.9.9c.3.1.4.2.5.3.1.2.1.6-.1 1.2z" />
+              </svg>
+              واتساب
+            </a>
+          ) : (
             <Link
               to="/shop"
-              className="py-2.5 sm:py-3 px-3 bg-white/90 border border-[#EFE8F2] hover:border-[#EBDCF1] hover:bg-white text-[#1C1220] text-xs font-bold rounded-[12px] flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-[0.99]"
+              className={`${glass} flex items-center justify-center gap-2 rounded-[18px] py-3.5 text-[0.9rem] font-bold text-white`}
             >
-              <BookOpen className="w-3.5 h-3.5 text-[#6B2178]" />
-              <span>تصفح الكتب</span>
+              <BookOpen className="w-4 h-4" />
+              تصفح الكتب
             </Link>
-
-            <button
-              type="button"
-              onClick={handleShare}
-              className="py-2.5 sm:py-3 px-3 bg-white/90 border border-[#EFE8F2] hover:border-[#EBDCF1] hover:bg-white text-[#1C1220] text-xs font-bold rounded-[12px] flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5 text-[#6B2178]" />
-              <span>مشاركة الطلب</span>
-            </button>
-          </div>
+          )}
+          <Link
+            to={order?.orderNumber ? `/track-order?num=${encodeURIComponent(order.orderNumber)}` : '/track-order'}
+            className="flex items-center justify-center gap-2 rounded-[18px] bg-gradient-to-b from-[#B455CB] to-[#6B2178] py-3.5 text-[0.9rem] font-bold text-white shadow-[0_8px_24px_-8px_rgba(180,85,203,0.7),inset_0_1px_0_rgba(255,255,255,0.3)] hover:brightness-110 transition"
+          >
+            <Truck className="w-4 h-4" />
+            تتبع الطلب
+          </Link>
         </section>
+
+        <div className="mt-1 flex items-center justify-center gap-5 text-[0.82rem] font-semibold text-[#D9B8E6]">
+          {whatsappHref && (
+            <Link to="/shop" className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+              <BookOpen className="w-3.5 h-3.5" />
+              تصفح المزيد من الكتب
+            </Link>
+          )}
+          {order?.orderNumber && (
+            <button type="button" onClick={handleShare} className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+              <Share2 className="w-3.5 h-3.5" />
+              مشاركة الطلب
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
 }
-
