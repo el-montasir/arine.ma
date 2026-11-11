@@ -11,7 +11,7 @@
 // The TTL only bounds staleness for changes made outside the admin API
 // (scripts, a second instance, time-based banner windows).
 
-const DEFAULT_TTL_MS = Number(process.env.PUBLIC_CACHE_TTL_MS || 30_000)
+const DEFAULT_TTL_MS = Number(process.env.PUBLIC_CACHE_TTL_MS || 300_000)
 const MAX_ENTRIES = 500
 
 const store = new Map()
