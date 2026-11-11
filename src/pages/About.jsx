@@ -1,14 +1,28 @@
+import { useEffect } from 'react'
 import { MapPin, Phone, Mail, Clock, BookOpen, ShieldCheck, Zap, HeartHandshake, Sparkles } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { useStoreConfig } from '../hooks/useStoreConfig'
 
+// Calligraphic Ruqaa face for the About tagline. Loaded only on this page so
+// the rest of the site does not download it.
+const RUQAA_HREF = 'https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&display=swap'
+
 export default function About() {
   const { t } = useLanguage()
+
+  useEffect(() => {
+    if (document.getElementById('font-aref-ruqaa')) return
+    const link = document.createElement('link')
+    link.id = 'font-aref-ruqaa'
+    link.rel = 'stylesheet'
+    link.href = RUQAA_HREF
+    document.head.appendChild(link)
+  }, [])
   const { config } = useStoreConfig()
 
   const store = config?.store || {}
   const storeName = store.name || t('appName') || 'مكتبة أرين'
-  const storeDesc = store.description || 'مكتبة أرين للكتب الشرعية والمعرفية'
+  const storeDesc = store.description || 'مكتبة أرين للكتب الشرعية'
   const address = store.address || 'المغرب، فاس، طريق نرجس'
   const phone = store.phone || '0665128821'
   const email = store.email || 'arine.ma00@gmail.com'
@@ -44,7 +58,10 @@ export default function About() {
         <h1 className="font-tajawal font-extrabold text-3xl sm:text-4xl text-[#1C1220] tracking-tight mb-3">
           {storeName}
         </h1>
-        <p className="text-[#7A6D80] text-sm sm:text-[15px] max-w-[540px] mx-auto leading-[1.8]">
+        <p
+          className="text-[#6B2178] text-[1.45rem] sm:text-[1.85rem] max-w-[540px] mx-auto leading-[1.6]"
+          style={{ fontFamily: "'Aref Ruqaa', 'Tajawal', serif" }}
+        >
           {storeDesc}
         </p>
       </div>
@@ -58,13 +75,22 @@ export default function About() {
           </h2>
           <div className="space-y-4 text-[#4A3D50] text-sm sm:text-[14.5px] leading-[2]">
             <p>
-              بدأت مكتبة أرين بشغف القراءة وإيمانًا بأن الكتب هي أساس المعرفة والتنوير. نسعى لتوفير أفضل الكتب الشرعية والمعرفية بأسعار مناسبة لكل بيت مغربي.
+              بدأت حكاية <strong className="font-bold text-[#1C1220]">مكتبة أرين</strong> من تجربة شخصية مع القراءة وطلب العلم.
             </p>
             <p>
-              نعمل مع دور النشر والمستوردين الموثوقين لنضمن لك جودة الكتب ومصداقيتها. فريقنا من المتحمسين للقراءة والعلم يختار لك كل كتاب بعناية.
+              فكلما أردت اقتناء كتاب، كنت أواجه صعوبة في العثور عليه، وحتى عندما أجده، كانت بعض الطبعات لا ترقى إلى الجودة التي أبحث عنها.
             </p>
             <p>
-              رؤيتنا هي أن نكون الوجهة الموثوقة الأولى في المغرب لطالب العلم والقارئ الشغوف، مع توفير تجربة تسوق سهلة وتوصيل سريع ومضمون.
+              ولم تكن المشكلة في توفر الكتب وجودتها فقط، بل كنت أفتقد أيضاً من يرشدني إلى الاختيار الصحيح. من أين أبدأ؟ وما الكتب المناسبة لمستواي؟ وأي الكتب ستساعدني فعلاً في رحلتي مع التعلم؟
+            </p>
+            <p>
+              من هنا وُلدت فكرة <strong className="font-bold text-[#1C1220]">مكتبة أرين</strong>.
+            </p>
+            <p>
+              أردنا أن ننشئ المكتبة التي كنت أتمنى أن أجدها حين بدأت؛ مكتبة لا تكتفي ببيع الكتب، بل تهتم بجودة طبعاتها، وتساعد القارئ على اختيار ما يناسب مستواه واحتياجاته.
+            </p>
+            <p className="font-bold text-[#6B2178]">
+              لأننا نؤمن أن البداية الصحيحة في طلب العلم لا تكون بكثرة الكتب، بل بحسن اختيارها.
             </p>
           </div>
         </div>
