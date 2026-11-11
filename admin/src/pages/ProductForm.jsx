@@ -111,11 +111,24 @@ export default function ProductForm() {
     setBusy(true)
     setError('')
 
-    const imageUrls = (form.images || [])
-      .map((img) => (typeof img === 'string' ? img.trim() : img.url?.trim()))
-      .filter(Boolean)
+    // Send image objects, not bare URLs: `variantWidths` must survive the save
+    // or the storefront falls back to the full-size original for this image.
+    const imagesArray = (form.images || [])
+      .map((img, idx) => {
+        if (typeof img === 'string') {
+          return { url: img.trim(), isPrimary: idx === 0, sortOrder: idx }
+        }
+        return {
+          url: img.url?.trim() || '',
+          variantWidths: Array.isArray(img.variantWidths) ? img.variantWidths : [],
+          isPrimary: Boolean(img.isPrimary ?? idx === 0),
+          sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
+        }
+      })
+      .filter((img) => Boolean(img.url))
 
-    const primaryImage = imageUrls[0] || form.image.trim() || null
+    const primaryImage =
+      imagesArray.find((img) => img.isPrimary)?.url || imagesArray[0]?.url || form.image.trim() || null
 
     const payload = {
       title: form.title.trim(),
@@ -127,7 +140,7 @@ export default function ProductForm() {
       discount: num(form.discount) ?? 0,
       availability: form.availability,
       image: primaryImage,
-      images: imageUrls,
+      images: imagesArray,
       description: form.description.trim() || null,
       rating: num(form.rating),
       isNew: form.isNew,

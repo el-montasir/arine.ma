@@ -237,11 +237,20 @@ export async function initMetaPixel() {
       n.loaded = !0
       n.version = '2.0'
       n.queue = []
-      t = b.createElement(e)
-      t.async = !0
-      t.src = v
-      s = b.getElementsByTagName(e)[0]
-      s.parentNode.insertBefore(t, s)
+      // The fbq stub above queues every call immediately, so no event is lost;
+      // only the ~260 KB library download waits until the page has loaded and
+      // the browser is idle, keeping it off the critical path for book images.
+      const inject = () => {
+        t = b.createElement(e)
+        t.async = !0
+        t.src = v
+        s = b.getElementsByTagName(e)[0]
+        s.parentNode.insertBefore(t, s)
+      }
+      const whenIdle = () =>
+        'requestIdleCallback' in f ? f.requestIdleCallback(inject, { timeout: 3000 }) : setTimeout(inject, 1500)
+      if (b.readyState === 'complete') whenIdle()
+      else f.addEventListener('load', whenIdle, { once: true })
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
     /* eslint-enable */
 

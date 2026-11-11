@@ -23,6 +23,25 @@ export function updateFavicon() {
   })
 }
 
+// Navbar, Footer, AnnouncementBar and the page all use this hook at once; they
+// share one request per page load instead of each fetching the same config.
+let storeConfigPromise = null
+
+function fetchStoreConfig() {
+  if (!storeConfigPromise) {
+    storeConfigPromise = api.get('/store-config').then((res) => {
+      // BEFORE any setConfig, so the logo's srcset is correct on first paint.
+      if (res?.data) registerImageVariantsFromPayload(res.data)
+      return res
+    })
+    // A failed request must not be cached: the next mount retries.
+    storeConfigPromise.catch(() => {
+      storeConfigPromise = null
+    })
+  }
+  return storeConfigPromise
+}
+
 export function useStoreConfig() {
   const [config, setConfig] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -30,12 +49,9 @@ export function useStoreConfig() {
 
   useEffect(() => {
     let mounted = true
-    api
-      .get('/store-config')
+    fetchStoreConfig()
       .then((res) => {
         if (mounted && res?.data) {
-          // BEFORE setConfig, so the logo's srcset is correct on first paint.
-          registerImageVariantsFromPayload(res.data)
           setConfig(res.data)
           updateFavicon()
         }

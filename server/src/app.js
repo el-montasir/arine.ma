@@ -17,6 +17,7 @@ import adminRoutes from './routes/admin/index.js'
 import { sessionMiddleware } from './lib/session.js'
 import { isR2Configured, getFromStorage } from './lib/storage.js'
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js'
+import { publicCache, invalidatePublicCacheOnWrite } from './middleware/public-cache.middleware.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -134,18 +135,20 @@ app.get('/uploads/*', async (req, res, next) => {
 // Health check
 app.get('/api/health', (_req, res) => res.json({ success: true, message: 'ok' }))
 
-// Public (customer-facing) API
-app.use('/api/products', productRoutes)
-app.use('/api/packages', packageRoutes)
-app.use('/api/categories', categoryRoutes)
+// Public (customer-facing) API. Catalog/config reads are identical for every
+// visitor, so they go through a short in-memory cache (orders never do).
+app.use('/api/products', publicCache(), productRoutes)
+app.use('/api/packages', publicCache(), packageRoutes)
+app.use('/api/categories', publicCache(), categoryRoutes)
 app.use('/api/orders', orderRoutes)
-app.use('/api/shipping', shippingRoutes)
-app.use('/api/banners', bannerRoutes)
-app.use('/api/store-config', storeConfigRoutes)
-app.use('/api/marketing', marketingPublicRoutes)
+app.use('/api/shipping', publicCache(), shippingRoutes)
+app.use('/api/banners', publicCache(), bannerRoutes)
+app.use('/api/store-config', publicCache(), storeConfigRoutes)
+app.use('/api/marketing', publicCache(), marketingPublicRoutes)
 
 // Admin API — the router itself forces authentication on everything but login.
-app.use('/api/admin', adminRoutes)
+// Any successful admin write clears the public cache so edits show up at once.
+app.use('/api/admin', invalidatePublicCacheOnWrite, adminRoutes)
 
 // 404 for unknown /api routes, then centralized error handling
 app.use('/api', notFoundHandler)

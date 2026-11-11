@@ -216,6 +216,8 @@ export default function PackageForm() {
         }
         return {
           url: img.url?.trim() || '',
+          // Keep the generated WebP widths, or the storefront serves the full-size original.
+          variantWidths: Array.isArray(img.variantWidths) ? img.variantWidths : [],
           isPrimary: Boolean(img.isPrimary ?? idx === 0),
           sortOrder: typeof img.sortOrder === 'number' ? img.sortOrder : idx,
         }
