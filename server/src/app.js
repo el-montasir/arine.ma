@@ -89,6 +89,8 @@ app.get('/uploads/*', async (req, res, next) => {
           res.setHeader('Last-Modified', new Date(obj.lastModified).toUTCString())
         }
         res.setHeader('Cache-Control', 'public, max-age=604800, immutable')
+        // Lets the storefront's CDN (Vercel /uploads rewrite) keep a copy at the edge.
+        res.setHeader('CDN-Cache-Control', 'public, max-age=31536000, immutable')
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
         res.setHeader('Access-Control-Allow-Origin', '*')
 
@@ -125,6 +127,7 @@ app.get('/uploads/*', async (req, res, next) => {
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
       res.setHeader('Access-Control-Allow-Origin', '*')
       res.setHeader('Cache-Control', 'public, max-age=604800, immutable')
+      res.setHeader('CDN-Cache-Control', 'public, max-age=31536000, immutable')
       return res.sendFile(localFilePath)
     }
 
