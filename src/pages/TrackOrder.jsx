@@ -231,7 +231,9 @@ export default function TrackOrder() {
                   {t('deliveryAddress')}
                 </div>
                 <div className="text-[0.88rem] font-semibold text-foreground">{order.city}</div>
-                <div className="text-[0.78rem] text-muted/90 mt-0.5">{order.address}</div>
+                {order.address && (
+                  <div className="text-[0.78rem] text-muted/90 mt-0.5">{order.address}</div>
+                )}
               </div>
 
               <div className="bg-[#F9FAFB] p-4 rounded-2xl">

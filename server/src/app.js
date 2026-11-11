@@ -14,6 +14,7 @@ import bannerRoutes from './routes/banners.routes.js'
 import storeConfigRoutes from './routes/store-config.routes.js'
 import marketingPublicRoutes from './routes/marketing.routes.js'
 import adminRoutes from './routes/admin/index.js'
+import sitemapRoutes from './routes/sitemap.routes.js'
 import { sessionMiddleware } from './lib/session.js'
 import { isR2Configured, getFromStorage } from './lib/storage.js'
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js'
@@ -132,6 +133,9 @@ app.get('/uploads/*', async (req, res, next) => {
     next(err)
   }
 })
+
+// Sitemap for search engines (referenced from the storefront's robots.txt)
+app.use('/sitemap.xml', sitemapRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => res.json({ success: true, message: 'ok' }))

@@ -1,18 +1,26 @@
 import { createOrder, findOrders, findOrder, OrderError } from '../services/order.service.js'
 import { errorResponse } from '../utils/api-response.js'
 
+// "محمد أمين العلوي" -> "محمد أ."; enough for the customer to recognise the order.
+function maskName(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return null
+  return parts.length === 1 ? parts[0] : `${parts[0]} ${parts[1].charAt(0)}.`
+}
+
 // Public-facing orders must never leak the admin-only cost snapshot. The
 // whitelist below keeps future OrderItem fields invisible by default: only
 // fields explicitly listed here reach the customer Store.
+//
+// Anyone who knows (or guesses) an order number can call the public lookup, so
+// it carries no contact data: no phone, street address or note, and only a
+// shortened name. The admin API still has the full record.
 function publicOrder(order) {
   return {
     id: order.id,
     orderNumber: order.orderNumber,
-    fullName: order.fullName,
-    phone: order.phone,
+    fullName: maskName(order.fullName),
     city: order.city,
-    address: order.address,
-    note: order.note,
     paymentMethod: order.paymentMethod,
     status: order.status,
     subtotal: order.subtotal,
