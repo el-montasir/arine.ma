@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, Suspense } from 'react'
 import { LanguageProvider } from './context/LanguageContext'
 import { CartProvider } from './context/CartContext'
 import { initMetaPixel, trackPageView, captureAttribution } from './utils/tracking'
@@ -10,20 +10,22 @@ import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import Toast from './components/Toast'
 import Home from './pages/Home'
+import AppErrorBoundary from './components/AppErrorBoundary'
+import { lazyPage } from './utils/chunk-reload'
 
-const Shop = lazy(() => import('./pages/Shop'))
-const BookDetails = lazy(() => import('./pages/BookDetails'))
-const Packages = lazy(() => import('./pages/Packages'))
-const PackageDetails = lazy(() => import('./pages/PackageDetails'))
-const CartPage = lazy(() => import('./pages/CartPage'))
-const Checkout = lazy(() => import('./pages/Checkout'))
-const OrderSuccess = lazy(() => import('./pages/OrderSuccess'))
-const TrackOrder = lazy(() => import('./pages/TrackOrder'))
-const Favorites = lazy(() => import('./pages/Favorites'))
-const About = lazy(() => import('./pages/About'))
-const Contact = lazy(() => import('./pages/Contact'))
-const LibraryEntry = lazy(() => import('./pages/LibraryEntry'))
-const NotFound = lazy(() => import('./pages/NotFound'))
+const Shop = lazyPage(() => import('./pages/Shop'))
+const BookDetails = lazyPage(() => import('./pages/BookDetails'))
+const Packages = lazyPage(() => import('./pages/Packages'))
+const PackageDetails = lazyPage(() => import('./pages/PackageDetails'))
+const CartPage = lazyPage(() => import('./pages/CartPage'))
+const Checkout = lazyPage(() => import('./pages/Checkout'))
+const OrderSuccess = lazyPage(() => import('./pages/OrderSuccess'))
+const TrackOrder = lazyPage(() => import('./pages/TrackOrder'))
+const Favorites = lazyPage(() => import('./pages/Favorites'))
+const About = lazyPage(() => import('./pages/About'))
+const Contact = lazyPage(() => import('./pages/Contact'))
+const LibraryEntry = lazyPage(() => import('./pages/LibraryEntry'))
+const NotFound = lazyPage(() => import('./pages/NotFound'))
 
 function RouteTracker() {
   const { pathname, search } = useLocation()
@@ -36,11 +38,15 @@ function RouteTracker() {
 }
 
 function Layout({ children }) {
+  // Keyed on the path so leaving a crashed page clears the error.
+  const { pathname } = useLocation()
   return (
     <div className="min-h-screen flex flex-col">
       <AnnouncementBar />
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <AppErrorBoundary key={pathname}>{children}</AppErrorBoundary>
+      </main>
       <Footer />
     </div>
   )

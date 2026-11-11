@@ -119,7 +119,7 @@ function Cover({ line, className }) {
   )
 }
 
-// Up to three of the ordered covers, fanned, with a glowing check on top.
+// Up to three of the ordered covers, fanned, on a soft amethyst glow.
 function CoverFan({ lines }) {
   const shown = lines.slice(0, 3)
   const tilt = shown.length === 1 ? [0] : shown.length === 2 ? [-8, 8] : [-11, 0, 11]
@@ -144,9 +144,6 @@ function CoverFan({ lines }) {
           </div>
         )
       })}
-      <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 z-10 w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-b from-[#C46BDB] to-[#6B2178] ring-4 ring-[#10061A]/70 shadow-[0_0_28px_6px_rgba(196,107,219,0.55)]">
-        <Check className="w-5 h-5 text-white" strokeWidth={3} />
-      </div>
     </div>
   )
 }

@@ -16,23 +16,17 @@ if (googleFontsLink) {
   }
 }
 
-// After a deploy, a tab opened on the previous build still asks for the old
-// hashed chunks (e.g. Shop-<hash>.js), which no longer exist, so the lazy route
-// fails and renders a blank page. Reload once to pick up the new build; the
-// timestamp guard stops a reload loop if the chunk is genuinely broken.
-window.addEventListener('vite:preloadError', (event) => {
-  const KEY = 'arine-chunk-reload-at'
-  let last = 0
-  try {
-    last = Number(sessionStorage.getItem(KEY)) || 0
-  } catch {}
-  if (Date.now() - last < 10_000) return
-  try {
-    sessionStorage.setItem(KEY, String(Date.now()))
-  } catch {}
-  event.preventDefault()
-  window.location.reload()
-})
+// iOS Safari zooms into a form field when its text is under 16px and stays
+// zoomed. index.css keeps fields at 16px; maximum-scale=1 is the belt-and-braces
+// fix (iOS still allows pinch-zoom with it, so it is applied on iOS only).
+const isIOS =
+  /iP(hone|od|ad)/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+if (isIOS) {
+  document
+    .querySelector('meta[name="viewport"]')
+    ?.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1')
+}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
