@@ -110,7 +110,8 @@ export default function Home() {
                       : ''
                   }
                 >
-                  <ProductCard book={book} isPriority={index === 0} />
+                  {/* The first row is two cards on phones; either can be the LCP image. */}
+                  <ProductCard book={book} isPriority={index < 2} />
                 </div>
               )
             })}
