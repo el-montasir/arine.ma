@@ -6,7 +6,7 @@ import { prisma } from '../lib/prisma.js'
 // here and the storefront's robots.txt points crawlers to this file.
 const SITE_URL = (process.env.STOREFRONT_PUBLIC_URL || 'https://www.arine.ma').replace(/\/+$/, '')
 
-const STATIC_PATHS = ['/', '/shop', '/packages', '/about', '/contact', '/track-order']
+const STATIC_PATHS = ['/', '/shop', '/packages', '/about', '/contact', '/track-order', '/shipping', '/returns']
 
 function urlEntry(path, lastmod) {
   const loc = `<loc>${SITE_URL}${path}</loc>`

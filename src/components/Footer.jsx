@@ -124,10 +124,8 @@ export default function Footer() {
   ]
 
   const helpLinks = [
-    { label: t('footerReturnPolicy') || 'سياسة الاستبدال والاسترجاع', to: '/contact' },
-    { label: t('footerShippingPolicy') || 'الشحن والتوصيل', to: '/contact' },
-    { label: t('footerFaq') || 'الأسئلة الشائعة', to: '/contact' },
-    { label: t('footerTerms') || 'الشروط والأحكام', to: '/contact' },
+    { label: t('footerShippingPolicy') || 'الشحن والتوصيل', to: '/shipping' },
+    { label: t('footerReturnPolicy') || 'سياسة الاستبدال والاسترجاع', to: '/returns' },
   ]
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
@@ -422,11 +420,11 @@ export default function Footer() {
             © {currentYear} {store.name || t('appName') || 'مكتبة أرين للكتب الشرعية'}. {t('allRightsReserved') || 'جميع الحقوق محفوظة.'}
           </div>
           <div className="flex items-center gap-5">
-            <Link to="/contact" className="hover:text-white transition-colors">
-              {t('footerPrivacy') || 'الخصوصية'}
+            <Link to="/shipping" className="hover:text-white transition-colors">
+              {t('footerShippingPolicy') || 'الشحن والتوصيل'}
             </Link>
-            <Link to="/contact" className="hover:text-white transition-colors">
-              {t('footerTerms') || 'الشروط والأحكام'}
+            <Link to="/returns" className="hover:text-white transition-colors">
+              {t('footerReturnPolicy') || 'سياسة الاستبدال والاسترجاع'}
             </Link>
           </div>
         </div>

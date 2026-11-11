@@ -25,6 +25,8 @@ const Favorites = lazyPage(() => import('./pages/Favorites'))
 const About = lazyPage(() => import('./pages/About'))
 const Contact = lazyPage(() => import('./pages/Contact'))
 const LibraryEntry = lazyPage(() => import('./pages/LibraryEntry'))
+const Shipping = lazyPage(() => import('./pages/Shipping'))
+const Returns = lazyPage(() => import('./pages/Returns'))
 const NotFound = lazyPage(() => import('./pages/NotFound'))
 
 function RouteTracker() {
@@ -89,6 +91,8 @@ export default function App() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/account" element={<TrackOrder />} />
                 <Route path="/library" element={<LibraryEntry />} />
+                <Route path="/shipping" element={<Shipping />} />
+                <Route path="/returns" element={<Returns />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
