@@ -7,6 +7,7 @@ import {
   pickPrimaryImageUrl,
   widthsForImageUrl,
 } from '../../lib/image-metadata.js'
+import { ensureImageVariants } from '../../lib/ensure-image-variants.js'
 
 const INCLUDE = {
   items: {
@@ -178,6 +179,8 @@ export async function createPackage(inputData) {
   // widths. A bare URL yields an empty list, which is the correct answer for a
   // source with no variants: serve the original, advertise nothing.
   const imagesList = normalizeImageInputs(rawImages)
+  // Server-side guarantee that every image has its small WebP variants recorded.
+  await ensureImageVariants(imagesList)
 
   // Same picker the serializers use, so "which image is primary" cannot differ
   // between the write path and the read path.
@@ -309,6 +312,7 @@ export async function updatePackage(id, inputData) {
     // the form — that is what preserves backfilled metadata across an edit that
     // did not re-upload the image.
     imagesList = normalizeImageInputs(rawImages)
+    await ensureImageVariants(imagesList)
 
     const primaryImg = pickPrimaryImageUrl(imagesList)
     if (primaryImg) updateData.image = primaryImg

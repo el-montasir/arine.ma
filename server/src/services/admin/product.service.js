@@ -8,6 +8,7 @@ import {
   pickPrimaryImageUrl,
   widthsForImageUrl,
 } from '../../lib/image-metadata.js'
+import { ensureImageVariants } from '../../lib/ensure-image-variants.js'
 
 const INCLUDE = {
   category: true,
@@ -118,6 +119,9 @@ export async function createProduct(inputData) {
     imageList.push({ url: String(data.image).trim(), variantWidths: [], sortOrder: 0, isPrimary: true })
   }
 
+  // Server-side guarantee that every cover has its small WebP variants recorded.
+  await ensureImageVariants(imageList)
+
   // Set primary image to legacy image field for backwards compatibility
   if (imageList.length > 0) {
     data.image = pickPrimaryImageUrl(imageList)
@@ -166,6 +170,7 @@ export async function updateProduct(id, inputData) {
   let imageList = null
   if (rawImages !== undefined) {
     imageList = normalizeImageInputs(rawImages)
+    await ensureImageVariants(imageList)
     data.image = pickPrimaryImageUrl(imageList)
   }
 
