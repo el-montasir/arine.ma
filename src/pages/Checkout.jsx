@@ -45,7 +45,7 @@ export default function Checkout() {
   const totalCount = items.reduce((sum, i) => sum + i.quantity, 0)
 
   return (
-    <div className="min-h-[calc(100dvh-120px)] bg-[#FAF7FB] py-5 sm:py-7 lg:py-10 lg:bg-transparent">
+    <div className="min-h-[calc(100dvh-120px)] py-5 sm:py-7 lg:py-10">
       {/* Centered Floating Container on Mobile / Standard Responsive Container on Desktop */}
       <div className="w-[calc(100%-24px)] sm:w-[calc(100%-32px)] max-w-[500px] mx-auto bg-white border border-[#EBDCF1] rounded-[28px] shadow-[0_4px_24px_-4px_rgba(143,58,161,0.10),0_8px_32px_-8px_rgba(107,33,120,0.08),0_1px_2px_rgba(62,17,71,0.04)] p-4 sm:p-6 lg:p-0 lg:max-w-[1440px] lg:bg-transparent lg:border-0 lg:shadow-none lg:rounded-none lg:w-full lg:px-8">
         {/* Navigation Breadcrumbs */}
