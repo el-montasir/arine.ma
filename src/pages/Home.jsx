@@ -2,7 +2,8 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Package as PackageIcon } from 'lucide-react'
 import PromoBanner from '../components/PromoBanner'
-import CategoryPills from '../components/CategoryPills'
+import ShopHeader from '../components/ShopHeader'
+import useCategories from '../hooks/useCategories'
 import ProductCard from '../components/ProductCard'
 import ProductCardSkeleton from '../components/ProductCardSkeleton'
 import FeaturedBook from '../components/FeaturedBook'
@@ -20,6 +21,7 @@ export default function Home() {
   const navigate = useNavigate()
   const { books = [], loading: productsLoading, error: productsError } = useProducts()
   const showProductsSkeleton = useDelayedFlag(productsLoading)
+  const { categories = [], loading: categoriesLoading } = useCategories()
   const { config } = useStoreConfig()
   const { banners } = useBanners('promotional')
   const { t } = useLanguage()
@@ -71,28 +73,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* Category pills */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-10">
-        <CategoryPills
-          includeAll
-          onSelect={(slug) =>
-            navigate(slug === 'all' ? '/shop' : `/shop?category=${encodeURIComponent(slug)}`)
-          }
+      {/* Books section: title, live count and category chips (Amiri) */}
+      <section ref={booksSectionRef} className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-16 scroll-mt-20">
+        <ShopHeader
+          headingTag="h2"
+          title={t('exploreBooks')}
+          count={books.length}
+          loading={productsLoading}
+          showLoading={showProductsSkeleton}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          category=""
+          onCategory={(slug) => navigate(slug ? `/shop?category=${encodeURIComponent(slug)}` : '/shop')}
         />
-      </div>
-
-      {/* Books Grid with Inline Expand / Collapse */}
-      <section ref={booksSectionRef} className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 scroll-mt-20">
-        <div className="flex items-baseline justify-between mb-6 flex-wrap gap-2">
-          <div>
-            <h2 className="font-tajawal font-extrabold text-2xl sm:text-[26px] text-[#161616] tracking-tight m-0">
-              {t('popularBooks') || 'الكتب الأكثر طلباً'}
-            </h2>
-            <p className="text-[#6b6577] text-[13px] mt-1 m-0">
-              {t('popularBooksSubtitle') || 'الأكثر مبيعاً واستحساناً من قرائنا'}
-            </p>
-          </div>
-        </div>
 
         {productsLoading ? (
           <div

@@ -1,31 +1,22 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { SlidersHorizontal, Grid3X3, LayoutList, Info } from 'lucide-react'
+import { Info } from 'lucide-react'
 import ProductGrid from '../components/ProductGrid'
 import useCategories from '../hooks/useCategories'
 import useProducts from '../hooks/useProducts'
 import useDelayedFlag from '../hooks/useDelayedFlag'
 import { searchBooks } from '../utils/search'
+import ShopHeader from '../components/ShopHeader'
 import { useLanguage } from '../context/LanguageContext'
-import { hexToRgba, getContrastTextColor } from '../utils/color'
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [mobileFilters, setMobileFilters] = useState(false)
-  const [gridCols, setGridCols] = useState('4')
   const { categories = [], loading: categoriesLoading } = useCategories()
   const { t } = useLanguage()
 
   const q = searchParams.get('q') || ''
   const category = searchParams.get('category') || ''
   const sort = searchParams.get('sort') || 'popular'
-
-  const SORT_OPTIONS = [
-    { value: 'popular', label: t('sortPopular') },
-    { value: 'newest', label: t('sortNewest') },
-    { value: 'price-asc', label: t('sortPriceAsc') },
-    { value: 'price-desc', label: t('sortPriceDesc') },
-  ]
 
   const setFilter = (key, value) => {
     setSearchParams((prev) => {
@@ -45,181 +36,30 @@ export default function Shop() {
   const filteredBooks = useMemo(() => (q ? searchBooks(books, q) : books), [books, q])
   const showLoading = useDelayedFlag(loading)
 
+  const pageTitle = category
+    ? categories.find((c) => c.slug === category || c.name === category)?.name || t('books')
+    : q
+      ? `${t('search')}: "${q}"`
+      : t('exploreBooks')
+
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-          {category
-            ? categories.find((c) => c.slug === category || c.name === category)?.name || t('books')
-            : q
-              ? `${t('search')}: "${q}"`
-              : t('exploreBooks')}
-        </h1>
-        {loading ? (
-          <div
-            className={`skeleton-shimmer mt-2 h-3.5 w-24 rounded bg-[#efe7f4] transition-opacity duration-300 ${showLoading ? 'opacity-100' : 'opacity-0'}`}
-            aria-hidden="true"
-          />
-        ) : (
-          <p className="text-muted text-[0.85rem] mt-1">{t('itemsCount', { count: filteredBooks.length })}</p>
-        )}
-      </div>
+      <ShopHeader
+        title={pageTitle}
+        count={filteredBooks.length}
+        loading={loading}
+        showLoading={showLoading}
+        categories={categories}
+        categoriesLoading={categoriesLoading}
+        category={category}
+        onCategory={(slug) => setFilter('category', slug)}
+        showTitle={false}
+      />
 
       {error && (
         <div className="mb-6 flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-[0.82rem] rounded-xl">
           <Info className="w-4 h-4 flex-shrink-0" />
           {t('errorOccurred')}
-        </div>
-      )}
-
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-        <div className="flex items-center gap-2">
-          {/* Filter toggle (mobile) */}
-          <button
-            onClick={() => setMobileFilters(!mobileFilters)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-[0.85rem] text-foreground/70 hover:border-brand-300 transition-colors"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            {t('filterCategory')}
-          </button>
-
-          {/* Category chips (desktop) */}
-          <div className="hidden lg:flex flex-wrap gap-2">
-            <button
-              onClick={() => setFilter('category', '')}
-              style={
-                !category
-                  ? { backgroundColor: '#8b2f9e', borderColor: '#8b2f9e', color: '#ffffff', boxShadow: '0 2px 8px -2px rgba(139, 47, 158, 0.4)' }
-                  : { color: '#6b6577', borderColor: '#ece5f2', backgroundColor: 'transparent' }
-              }
-              className={`px-3.5 py-1.5 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
-                !category ? 'shadow-sm' : 'hover:border-[#8b2f9e]/40 hover:text-[#161616]'
-              }`}
-            >
-              {t('all')}
-            </button>
-            {showLoading &&
-              categoriesLoading &&
-              categories.length === 0 &&
-              [76, 92, 64].map((w) => (
-                <span key={w} className="skeleton-shimmer h-[34px] rounded-full bg-[#efe7f4]" style={{ width: w }} aria-hidden="true" />
-              ))}
-            {categories.map((cat) => {
-              const isSelected = category === cat.slug
-              const color = cat.color || '#8b2f9e'
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setFilter('category', cat.slug)}
-                  style={
-                    isSelected
-                      ? {
-                          backgroundColor: color,
-                          borderColor: color,
-                          color: getContrastTextColor(color),
-                          boxShadow: `0 2px 8px -2px ${hexToRgba(color, 0.4)}`,
-                        }
-                      : {
-                          backgroundColor: hexToRgba(color, 0.08),
-                          borderColor: hexToRgba(color, 0.35),
-                          color: color,
-                        }
-                  }
-                  className={`px-3.5 py-1.5 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
-                    isSelected ? 'shadow-sm' : ''
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Sort */}
-          <select
-            value={sort}
-            onChange={(e) => setFilter('sort', e.target.value)}
-            className="px-3 py-2.5 bg-white border border-border rounded-xl text-[0.85rem] text-foreground/80 outline-none focus:border-brand-400 transition-colors cursor-pointer"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          {/* Grid toggle (desktop) */}
-          <div className="hidden lg:flex items-center bg-white border border-border rounded-xl overflow-hidden">
-            <button
-              onClick={() => setGridCols('3')}
-              className={`p-2.5 transition-colors ${gridCols === '3' ? 'bg-brand-100 text-brand-700' : 'text-muted hover:text-foreground'}`}
-              aria-label="3 Columns"
-            >
-              <Grid3X3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setGridCols('4')}
-              className={`p-2.5 transition-colors ${gridCols === '4' ? 'bg-brand-100 text-brand-700' : 'text-muted hover:text-foreground'}`}
-              aria-label="4 Columns"
-            >
-              <LayoutList className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile filter panel */}
-      {mobileFilters && (
-        <div className="lg:hidden mb-6 p-4 bg-white border border-border rounded-xl">
-          <h4 className="font-semibold text-[0.88rem] text-foreground mb-3">{t('categories')}</h4>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setFilter('category', '')}
-              style={
-                !category
-                  ? { backgroundColor: '#8b2f9e', borderColor: '#8b2f9e', color: '#ffffff', boxShadow: '0 2px 8px -2px rgba(139, 47, 158, 0.4)' }
-                  : { color: '#6b6577', borderColor: '#ece5f2', backgroundColor: 'transparent' }
-              }
-              className={`px-3.5 py-2 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
-                !category ? 'shadow-sm' : 'hover:border-[#8b2f9e]/40 hover:text-[#161616]'
-              }`}
-            >
-              {t('all')}
-            </button>
-            {categories.map((cat) => {
-              const isSelected = category === cat.slug
-              const color = cat.color || '#8b2f9e'
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setFilter('category', cat.slug)}
-                  style={
-                    isSelected
-                      ? {
-                          backgroundColor: color,
-                          borderColor: color,
-                          color: getContrastTextColor(color),
-                          boxShadow: `0 2px 8px -2px ${hexToRgba(color, 0.4)}`,
-                        }
-                      : {
-                          backgroundColor: hexToRgba(color, 0.08),
-                          borderColor: hexToRgba(color, 0.35),
-                          color: color,
-                        }
-                  }
-                  className={`px-3.5 py-2 text-[0.82rem] font-bold rounded-full border transition-all hover:opacity-90 ${
-                    isSelected ? 'shadow-sm' : ''
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              )
-            })}
-          </div>
         </div>
       )}
 
