@@ -1,10 +1,8 @@
-import { useEffect } from 'react'
 import { hexToRgba, getContrastTextColor } from '../utils/color'
+import useAmiriFont, { AMIRI } from '../hooks/useAmiriFont'
 
 // Books header (Home page): title in Amiri (classic Naskh), live book count and the
-// category chips. Amiri is loaded only where this header is shown.
-const AMIRI_HREF = 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap'
-const AMIRI = { fontFamily: "'Amiri', serif" }
+// category chips.
 
 // Arabic count agreement: كتاب واحد، كتابان، 3–10 كتب، 11+ كتاباً.
 function booksCountLabel(n) {
@@ -78,14 +76,7 @@ export default function ShopHeader({
   showTitle = true,
   headingTag: Heading = 'h1',
 }) {
-  useEffect(() => {
-    if (document.getElementById('font-amiri')) return
-    const link = document.createElement('link')
-    link.id = 'font-amiri'
-    link.rel = 'stylesheet'
-    link.href = AMIRI_HREF
-    document.head.appendChild(link)
-  }, [])
+  useAmiriFont()
 
   return (
     <div className="mb-7 text-center">

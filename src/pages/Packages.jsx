@@ -1,73 +1,47 @@
-import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Package as PackageIcon, Loader2, Info } from 'lucide-react'
+import { Package as PackageIcon, Info } from 'lucide-react'
 import PackageCard from '../components/PackageCard'
 import usePackages from '../hooks/usePackages'
 import { useLanguage } from '../context/LanguageContext'
+import useDelayedFlag from '../hooks/useDelayedFlag'
+import useAmiriFont, { AMIRI } from '../hooks/useAmiriFont'
+
+// Arabic count agreement: باقة واحدة، باقتان، 3–10 باقات، 11+ باقةً.
+function packagesCountLabel(n) {
+  if (n === 0) return 'لا توجد باقات'
+  if (n === 1) return 'باقة واحدة'
+  if (n === 2) return 'باقتان'
+  if (n >= 3 && n <= 10) return `${n} باقات`
+  return `${n} باقةً`
+}
 
 export default function Packages() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const { t } = useLanguage()
 
   const q = searchParams.get('q') || ''
   const sort = searchParams.get('sort') || 'popular'
 
-  const SORT_OPTIONS = [
-    { value: 'popular', label: t('sortPopular') || 'الأكثر طلباً' },
-    { value: 'newest', label: t('sortNewest') || 'الأحدث' },
-    { value: 'price-asc', label: t('sortPriceAsc') || 'السعر: من الأقل للأعلى' },
-    { value: 'price-desc', label: t('sortPriceDesc') || 'السعر: من الأعلى للأقل' },
-  ]
-
-  const setFilter = (key, value) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev)
-      if (!value) {
-        next.delete(key)
-      } else {
-        next.set(key, value)
-      }
-      return next
-    })
-  }
-
   const { packages, loading, error } = usePackages({ search: q, sort })
+  const showLoading = useDelayedFlag(loading)
+  useAmiriFont()
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold mb-2">
-            <PackageIcon className="w-3.5 h-3.5" />
-            <span>{t('curatedPackages') || 'مجموعات وباقات مختارة'}</span>
-          </div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-            {q ? `${t('search')}: "${q}"` : (t('packagesTitle') || 'باقات الكتب الشرعية')}
-          </h1>
-          <p className="text-muted text-sm mt-1">
-            {t('packagesSubtitle') || 'مجموعات متميزة من أمهات الكتب بتخفيضات خاصة وشحن ميسر'}
-          </p>
-        </div>
-
-        {/* Sort & Count */}
-        <div className="flex items-center gap-3 self-start md:self-auto">
-          <span className="text-xs text-muted flex items-center gap-1.5 whitespace-nowrap">
-            {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {t('packagesCount', { count: packages.length })}
-          </span>
-
-          <select
-            value={sort}
-            onChange={(e) => setFilter('sort', e.target.value)}
-            className="px-3 py-2 bg-white border border-border rounded-xl text-xs text-foreground/80 outline-none focus:border-brand-400 transition-colors cursor-pointer shadow-sm"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+      {/* Header: same Amiri treatment as the Home books section */}
+      <div className="mb-8 text-center">
+        <h1 className="text-[2.2rem] sm:text-[2.9rem] font-bold leading-[1.2] text-[#1C1220]" style={AMIRI}>
+          {q ? `${t('search')}: "${q}"` : t('packagesTitle') || 'باقات الكتب'}
+        </h1>
+        <div className="mt-0.5 min-h-[1.6rem] text-[1.05rem] text-[#6B2178]" style={AMIRI}>
+          {loading ? (
+            <span
+              className={`skeleton-shimmer inline-block h-3.5 w-24 rounded bg-[#efe7f4] align-middle transition-opacity duration-300 ${showLoading ? 'opacity-100' : 'opacity-0'}`}
+              aria-hidden="true"
+            />
+          ) : (
+            `${packagesCountLabel(packages.length)} بين يديك`
+          )}
         </div>
       </div>
 
