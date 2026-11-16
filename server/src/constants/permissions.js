@@ -40,6 +40,9 @@ export const PERMISSIONS = {
   // Finance & Profit
   FINANCE_VIEW: 'FINANCE_VIEW',
   FINANCE_EXPORT: 'FINANCE_EXPORT',
+  // Edit order real profit, record sadaqa payments, change the sadaqa rate.
+  // Not in any role preset: SUPER_ADMIN only unless granted explicitly.
+  FINANCE_SADAQA_MANAGE: 'FINANCE_SADAQA_MANAGE',
 
   // Marketing & Banners
   BANNERS_VIEW: 'BANNERS_VIEW',
@@ -149,7 +152,7 @@ export const PERMISSION_GROUPS = [
   },
   {
     key: 'finance',
-    permissions: [PERMISSIONS.FINANCE_VIEW, PERMISSIONS.FINANCE_EXPORT],
+    permissions: [PERMISSIONS.FINANCE_VIEW, PERMISSIONS.FINANCE_EXPORT, PERMISSIONS.FINANCE_SADAQA_MANAGE],
   },
   {
     key: 'banners',

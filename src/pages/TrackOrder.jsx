@@ -59,6 +59,12 @@ export default function TrackOrder() {
       color: 'text-red-700 bg-red-50 border-red-200',
       step: 0,
     },
+    RETURNED: {
+      label: t('orderStatusReturned'),
+      desc: t('orderStatusReturned'),
+      color: 'text-slate-700 bg-slate-50 border-slate-200',
+      step: 0,
+    },
   }
 
   const STEPS = [
@@ -117,6 +123,7 @@ export default function TrackOrder() {
     SHIPPING: 'bg-[#C46BDB]/20 border-[#E0A6EE]/45 text-[#F3D3FA]',
     DELIVERED: 'bg-emerald-400/15 border-emerald-300/45 text-emerald-200',
     CANCELLED: 'bg-red-400/15 border-red-300/45 text-red-200',
+    RETURNED: 'bg-slate-400/15 border-slate-300/45 text-slate-200',
   }
 
   const itemCount = (order?.items?.length || 0) + (order?.packageItems?.length || 0)
@@ -203,7 +210,7 @@ export default function TrackOrder() {
                 </span>
               </div>
 
-              {order.status !== 'CANCELLED' ? (
+              {order.status !== 'CANCELLED' && order.status !== 'RETURNED' ? (
                 <ol className="mt-5 grid gap-0">
                   {STEPS.map((s, i) => {
                     const isPassed = currentStatus.step >= s.step
@@ -238,7 +245,7 @@ export default function TrackOrder() {
               ) : (
                 <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-red-300/30 bg-red-500/10 px-4 py-3.5 text-red-100">
                   <XCircle className="w-5 h-5 shrink-0 text-red-300" />
-                  <p className="font-semibold text-[0.9rem]">{t('orderStatusCancelled')}</p>
+                  <p className="font-semibold text-[0.9rem]">{currentStatus.label}</p>
                 </div>
               )}
             </section>

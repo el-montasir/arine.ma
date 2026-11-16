@@ -23,6 +23,7 @@ import {
   FileText,
   CreditCard,
   RotateCcw,
+  HandCoins,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -95,6 +96,12 @@ export function SidebarContent({ onNavigate }) {
           to: '/finance',
           label: t('navFinance'),
           icon: Wallet,
+          permission: 'FINANCE_VIEW',
+        },
+        {
+          to: '/sadaqat',
+          label: t('navSadaqat'),
+          icon: HandCoins,
           permission: 'FINANCE_VIEW',
         },
       ],

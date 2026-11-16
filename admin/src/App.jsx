@@ -16,6 +16,7 @@ import Packages from './pages/Packages.jsx'
 import PackageForm from './pages/PackageForm.jsx'
 import Categories from './pages/Categories.jsx'
 import Finance from './pages/Finance.jsx'
+import Sadaqat from './pages/Sadaqat.jsx'
 import Customers from './pages/Customers.jsx'
 import Banners from './pages/Banners.jsx'
 import StoreSettings from './pages/StoreSettings.jsx'
@@ -239,6 +240,14 @@ export default function App() {
           element={
             <PermissionGate permission="FINANCE_VIEW" showDeniedView>
               <Finance />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="sadaqat"
+          element={
+            <PermissionGate permission="FINANCE_VIEW" showDeniedView>
+              <Sadaqat />
             </PermissionGate>
           }
         />

@@ -17,6 +17,7 @@ enum OrderStatus {
   SHIPPING
   DELIVERED
   CANCELLED
+  RETURNED
 }
 
 enum CustomerStatus {
@@ -202,6 +203,13 @@ model Order {
   // Stock lifecycle tracking fields
   stockDeducted         Boolean @default(false)
   stockDeductionCycleId String?
+  // Set on each transition into DELIVERED. Sadaqa months are keyed on this
+  // date (Africa/Casablanca), never on createdAt. `deliveredAtEstimated` marks
+  // legacy orders backfilled from updatedAt; the admin can correct the date.
+  deliveredAt           DateTime?
+  deliveredAtEstimated  Boolean @default(false)
+  profit                OrderProfit?
+  charges               OrderCharge[]
   customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   items         OrderItem[]
   packageItems  PackageOrderItem[]
@@ -286,6 +294,10 @@ model Admin {
   activityLogs ActivityLog[]
   notifications Notification[]
   stockMovements StockMovement[]
+  updatedOrderProfits OrderProfit[] @relation("OrderProfitUpdatedBy")
+  createdSadaqaRates SadaqaRate[] @relation("SadaqaRateCreatedBy")
+  createdSadaqaPayments SadaqaPayment[] @relation("SadaqaPaymentCreatedBy")
+  voidedSadaqaPayments SadaqaPayment[] @relation("SadaqaPaymentVoidedBy")
   createdPurchases Purchase[] @relation("PurchaseCreatedBy")
   createdPurchasePayments PurchasePayment[] @relation("PurchasePaymentCreatedBy")
   createdPurchaseReturns PurchaseReturn[] @relation("PurchaseReturnCreatedBy")
@@ -873,3 +885,92 @@ model PurchaseReturnItem {
   @@map("purchase_return_items")
 }
 
+// ---------------------------------------------------------
+// Real profit & sadaqa (Admin-only)
+// ---------------------------------------------------------
+// New money fields are integer centimes (1 DH = 100), because 7 % of a
+// whole-dirham profit is not a whole dirham. Existing order money stays in DH.
+
+enum OrderProfitMode {
+  AUTO // real profit = initial profit − extra charges
+  MANUAL // real profit = manualProfitCents, typed by the admin
+}
+
+enum OrderChargeType {
+  SHIPPING_EXTRA
+  PACKAGING
+  OTHER
+}
+
+model OrderProfit {
+  id                     Int             @id @default(autoincrement())
+  orderId                Int             @unique
+  mode                   OrderProfitMode @default(AUTO)
+  manualProfitCents      Int?
+  // Goods cost typed by the admin when the order's cost snapshot is incomplete.
+  goodsCostOverrideCents Int?
+  note                   String?
+  updatedByAdminId       Int?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  order                  Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  updatedByAdmin         Admin?          @relation("OrderProfitUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+
+  @@map("order_profits")
+}
+
+model OrderCharge {
+  id          Int             @id @default(autoincrement())
+  orderId     Int
+  type        OrderChargeType @default(SHIPPING_EXTRA)
+  amountCents Int
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_charges")
+}
+
+// Rate history: an order uses the rate in force at its deliveredAt, so a
+// change never rewrites earlier months.
+model SadaqaRate {
+  id               Int      @id @default(autoincrement())
+  rateBp           Int // basis points: 700 = 7 %
+  effectiveFrom    DateTime
+  createdByAdminId Int?
+  createdAt        DateTime @default(now())
+
+  createdByAdmin   Admin?   @relation("SadaqaRateCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([effectiveFrom])
+  @@map("sadaqa_rates")
+}
+
+// A recorded hand-over of sadaqa for one month. Never deleted — a mistaken
+// entry is voided with a reason. The snapshot fields freeze what was due when
+// the payment was recorded, so later order corrections show up as an explicit
+// adjustment instead of silently rewriting history.
+model SadaqaPayment {
+  id               Int       @id @default(autoincrement())
+  periodMonth      String // "YYYY-MM", Africa/Casablanca
+  amountCents      Int
+  paidAt           DateTime
+  reference        String?
+  note             String?
+  dueSnapshotCents Int
+  ordersSnapshot   Json
+  createdByAdminId Int?
+  voidedAt         DateTime?
+  voidReason       String?
+  voidedByAdminId  Int?
+  createdAt        DateTime  @default(now())
+
+  createdByAdmin   Admin?    @relation("SadaqaPaymentCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  voidedByAdmin    Admin?    @relation("SadaqaPaymentVoidedBy", fields: [voidedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([periodMonth])
+  @@map("sadaqa_payments")
+}

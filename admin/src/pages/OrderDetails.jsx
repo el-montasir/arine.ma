@@ -14,8 +14,9 @@ import Modal from '../components/ui/Modal.jsx'
 import Spinner from '../components/ui/Spinner.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import OrderProfitSadaqa from '../components/OrderProfitSadaqa.jsx'
 
-const STATUS_KEYS = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED']
+const STATUS_KEYS = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED', 'RETURNED']
 
 export default function OrderDetails() {
   const { id } = useParams()
@@ -353,6 +354,10 @@ export default function OrderDetails() {
               )}
             </div>
           </Card>
+
+          {can('FINANCE_VIEW') ? (
+            <OrderProfitSadaqa orderId={order.id} refreshKey={`${order.status}-${order.updatedAt}`} />
+          ) : null}
         </div>
       </div>
 

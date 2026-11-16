@@ -3,6 +3,7 @@ import { validate } from '../../middleware/validate.middleware.js'
 import { requirePermission } from '../../middleware/auth.middleware.js'
 import { PERMISSIONS } from '../../constants/permissions.js'
 import { updateOrderStatusSchema } from '../../validators/admin/order.validator.js'
+import { saveOrderProfitSchema } from '../../validators/admin/sadaqa.validator.js'
 import {
   getOrders,
   getOrderById,
@@ -10,6 +11,7 @@ import {
   deleteOrderHandler,
   getPendingOrdersCountHandler,
 } from '../../controllers/admin/order.controller.js'
+import { getOrderProfitHandler, saveOrderProfitHandler } from '../../controllers/admin/sadaqa.controller.js'
 
 const router = Router()
 
@@ -21,6 +23,13 @@ router.patch(
   requirePermission(PERMISSIONS.ORDERS_STATUS_UPDATE),
   validate(updateOrderStatusSchema),
   patchOrderStatus
+)
+router.get('/:id/profit', requirePermission(PERMISSIONS.FINANCE_VIEW), getOrderProfitHandler)
+router.put(
+  '/:id/profit',
+  requirePermission(PERMISSIONS.FINANCE_SADAQA_MANAGE),
+  validate(saveOrderProfitSchema),
+  saveOrderProfitHandler
 )
 router.delete(
   '/:id',

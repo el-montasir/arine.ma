@@ -163,7 +163,7 @@ async function _deductStockInTx(tx, orderRow, settings, actorAdminId) {
  * @param {object} orderRow - already-locked order row
  * @param {number|null} actorAdminId
  */
-async function _restoreStockInTx(tx, orderRow, actorAdminId) {
+async function _restoreStockInTx(tx, orderRow, actorAdminId, note = null) {
   const orderId = orderRow.id
   if (!orderRow.stockDeducted || !orderRow.stockDeductionCycleId) return
 
@@ -210,6 +210,7 @@ async function _restoreStockInTx(tx, orderRow, actorAdminId) {
         previousStock: previous,
         newStock: next,
         actorAdminId,
+        note,
       },
     })
   }
@@ -280,14 +281,22 @@ export async function applyStockAndUpdateOrderStatus(orderId, newStatus, include
       if (settings.stockManagementEnabled) {
         if (newStatus === 'CONFIRMED') {
           await _deductStockInTx(tx, orderRow, settings, actorAdminId)
-        } else if (newStatus === 'CANCELLED' && orderRow.stockDeducted) {
-          await _restoreStockInTx(tx, orderRow, actorAdminId)
+        } else if ((newStatus === 'CANCELLED' || newStatus === 'RETURNED') && orderRow.stockDeducted) {
+          // A returned order puts its books back on the shelf, like a cancellation.
+          await _restoreStockInTx(tx, orderRow, actorAdminId, newStatus === 'RETURNED' ? 'ORDER_RETURNED' : null)
         }
       }
 
+      // Sadaqa months are keyed on the delivery date, so stamp it on every
+      // transition into DELIVERED.
+      const deliveredStamp =
+        newStatus === 'DELIVERED' && orderRow.status !== 'DELIVERED'
+          ? { deliveredAt: new Date(), deliveredAtEstimated: false }
+          : {}
+
       return tx.order.update({
         where: { id: orderId },
-        data: { status: newStatus },
+        data: { status: newStatus, ...deliveredStamp },
         include: includeClause,
       })
     }, {

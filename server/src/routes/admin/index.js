@@ -23,6 +23,7 @@ import supplierRoutes from './suppliers.routes.js'
 import purchaseRoutes from './purchases.routes.js'
 import paymentRoutes from './payments.routes.js'
 import purchaseReturnRoutes from './purchase-returns.routes.js'
+import sadaqaRoutes from './sadaqa.routes.js'
 
 const router = Router()
 
@@ -58,5 +59,6 @@ router.use('/purchases', purchaseRoutes)
 router.use('/purchase-payments', paymentRoutes)
 router.use('/payments', paymentRoutes)
 router.use('/purchase-returns', purchaseReturnRoutes)
+router.use('/sadaqa', sadaqaRoutes)
 
 export default router

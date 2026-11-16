@@ -38,6 +38,7 @@ export default function Orders() {
     { value: 'SHIPPING', label: t('statusShipping') },
     { value: 'DELIVERED', label: t('statusDelivered') },
     { value: 'CANCELLED', label: t('statusCancelled') },
+    { value: 'RETURNED', label: t('statusReturned') },
   ]
 
   async function load() {

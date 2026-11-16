@@ -91,7 +91,7 @@ const PERMISSION_GROUPS = [
   {
     key: 'finance',
     labelKey: 'navFinance',
-    permissions: ['FINANCE_VIEW', 'FINANCE_EXPORT'],
+    permissions: ['FINANCE_VIEW', 'FINANCE_EXPORT', 'FINANCE_SADAQA_MANAGE'],
   },
   {
     key: 'banners',

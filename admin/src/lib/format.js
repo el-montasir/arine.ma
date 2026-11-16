@@ -6,6 +6,34 @@ export function formatMoney(n, lang = 'ar') {
   return `${Number(n).toLocaleString('en-US').replace(/,/g, ' ')} ${currency}`
 }
 
+// Centimes (1 DH = 100) → "2.80 درهم". Used by the profit & sadaqa screens.
+export function formatCents(cents, lang = 'ar') {
+  if (cents == null || Number.isNaN(cents)) return '—'
+  const currency = lang === 'en' ? 'MAD' : (lang === 'fr' ? 'DH' : 'درهم')
+  const value = (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return `${value.replace(/,/g, ' ')} ${currency}`
+}
+
+// "10", "10.5", "10,50" → 1050. Returns null for empty or invalid input.
+export function parseDhToCents(text, { allowNegative = false } = {}) {
+  const clean = String(text ?? '').trim().replace(/\s+/g, '').replace(',', '.')
+  if (!clean) return null
+  const re = allowNegative ? /^-?\d+(\.\d{1,2})?$/ : /^\d+(\.\d{1,2})?$/
+  if (!re.test(clean)) return null
+  return Math.round(Number(clean) * 100)
+}
+
+export function centsToInput(cents) {
+  return cents == null ? '' : (cents / 100).toFixed(2).replace(/\.00$/, '')
+}
+
+// Basis points → "7٪" / "7%".
+export function formatRate(bp, lang = 'ar') {
+  if (bp == null) return '—'
+  const n = Number((bp / 100).toFixed(2))
+  return lang === 'ar' ? `${n}٪` : `${n}%`
+}
+
 export function formatNumber(n) {
   if (n == null || Number.isNaN(n)) return '—'
   return Number(n).toLocaleString('en-US').replace(/,/g, ' ')
@@ -72,6 +100,10 @@ export function getOrderStatus(status, t, lang = 'ar') {
       label: t ? t('statusCancelled') : (lang === 'en' ? 'Cancelled' : (lang === 'fr' ? 'Annulée' : 'ملغي')),
       color: 'status-danger',
     },
+    RETURNED: {
+      label: t ? t('statusReturned') : (lang === 'en' ? 'Returned' : (lang === 'fr' ? 'Retournée' : 'راجعة')),
+      color: 'status-neutral',
+    },
   }
   return map[status] || { label: status, color: 'status-neutral' }
 }
@@ -107,6 +139,7 @@ export const ORDER_STATUS = {
   SHIPPING: { label: 'Shipping', color: 'status-info' },
   DELIVERED: { label: 'Delivered', color: 'status-ok' },
   CANCELLED: { label: 'Cancelled', color: 'status-danger' },
+  RETURNED: { label: 'Returned', color: 'status-neutral' },
 }
 
 export const PAYMENT_LABEL = {
