@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, Plus } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { formatMoney, formatDate, getPaymentLabel, getOrderStatus } from '../lib/format.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
@@ -84,7 +84,14 @@ export default function Orders() {
     {
       key: 'orderNumber',
       label: t('orderNumber'),
-      render: (r) => <span dir="ltr" className="font-mono text-xs font-bold text-[var(--purple)]">{r.orderNumber}</span>,
+      render: (r) => (
+        <div>
+          <span dir="ltr" className="font-mono text-xs font-bold text-[var(--purple)]">{r.orderNumber}</span>
+          {r.source && r.source !== 'WEBSITE' ? (
+            <span className="block text-[10.5px] text-[var(--ink-soft)]">{t('manualOrderLabel')} · {t(`source_${r.source}`)}</span>
+          ) : null}
+        </div>
+      ),
     },
     {
       key: 'customer',
@@ -161,6 +168,11 @@ export default function Orders() {
             <Button variant="secondary" size="md" onClick={() => setQuery(search.trim())}>
               {t('search')}
             </Button>
+            {can('ORDERS_CREATE') ? (
+              <Button variant="primary" size="md" onClick={() => navigate('/orders/new')}>
+                <Plus className="h-3.5 w-3.5" /> {t('coAddOrder')}
+              </Button>
+            ) : null}
           </div>
         }
       />

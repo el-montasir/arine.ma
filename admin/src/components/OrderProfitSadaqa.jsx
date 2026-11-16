@@ -164,28 +164,73 @@ export default function OrderProfitSadaqa({ orderId, refreshKey }) {
         </div>
       ) : null}
 
+      {/* How the goods profit is built, book by book */}
+      <h3 className="mb-1.5 text-xs font-bold text-[var(--ink)]">{t('sqBreakdownTitle')}</h3>
+      <div className="mb-3 overflow-x-auto rounded-[12px] border border-[var(--line)]">
+        <table className="w-full text-xs">
+          <thead className="bg-[var(--bg)] text-[var(--ink-soft)]">
+            <tr>
+              <th className="px-3 py-2 text-start font-semibold">{t('colBook')}</th>
+              <th className="px-3 py-2 text-start font-semibold">{t('sqColSale')}</th>
+              <th className="px-3 py-2 text-start font-semibold">{t('sqColCost')}</th>
+              <th className="px-3 py-2 text-start font-semibold">{t('sqColLineProfit')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.lines.map((l, i) => (
+              <tr key={i} className="border-t border-[var(--line)]">
+                <td className="px-3 py-2">
+                  <span className="font-semibold text-[var(--ink)]">{l.type === 'PACKAGE' ? `[${t('coPackage')}] ` : ''}{l.title}</span>
+                  <span className="block text-[10.5px] text-[var(--ink-soft)]">
+                    <bdi>{l.quantity} × {money(l.unitPriceCents)}</bdi>
+                    {l.unitCostCents != null ? <> · {t('sqUnitCost')} <bdi>{money(l.unitCostCents)}</bdi></> : null}
+                  </span>
+                </td>
+                <td className="px-3 py-2 tabular-nums">{money(l.revenueCents)}</td>
+                <td className={`px-3 py-2 tabular-nums ${l.costCents == null ? 'text-[var(--orange)]' : 'text-[var(--ink-soft)]'}`}>
+                  {l.costCents == null ? t('sqCostUnknownShort') : `− ${money(l.costCents)}`}
+                </td>
+                <td className={`px-3 py-2 tabular-nums font-semibold ${profitTone(l.profitCents)}`}>{money(l.profitCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="border-t-2 border-[var(--line)] font-bold">
+            <tr>
+              <td className="px-3 py-2">{t('sqBooksTotal')}</td>
+              <td className="px-3 py-2 tabular-nums">{money(c.goodsRevenueCents)}</td>
+              <td className="px-3 py-2 tabular-nums">{live.goodsCostCents == null ? '—' : `− ${money(live.goodsCostCents)}`}</td>
+              <td className={`px-3 py-2 tabular-nums ${profitTone(live.initial)}`}>{money(live.initial)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {live.missingCost ? (
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-semibold text-[var(--ink)]">{t('sqGoodsCostManual')}</label>
+          <input
+            inputMode="decimal"
+            className={field}
+            value={form.costOverride}
+            onChange={(e) => set({ costOverride: e.target.value })}
+            disabled={!canEdit}
+            placeholder="0"
+          />
+          <span className="mt-1 block text-[11px] text-[var(--orange)]">
+            {t('sqGoodsCostMissing', { count: c.costUnknownItems })}
+          </span>
+        </div>
+      ) : null}
+
       {/* Figures read from the order — never changed here */}
       <div className="divide-y divide-[var(--line)]">
         <Row label={t('sqCollected')} value={money(c.collectedCents)} />
-        <Row label={t('sqShippingBilled')} value={money(c.shippingBilledCents)} />
-        {live.missingCost ? (
-          <div className="py-2">
-            <label className="mb-1 block text-xs font-semibold text-[var(--ink)]">{t('sqGoodsCostManual')}</label>
-            <input
-              inputMode="decimal"
-              className={field}
-              value={form.costOverride}
-              onChange={(e) => set({ costOverride: e.target.value })}
-              disabled={!canEdit}
-              placeholder="0"
-            />
-            <span className="mt-1 block text-[11px] text-[var(--orange)]">
-              {t('sqGoodsCostMissing', { count: c.costUnknownItems })}
-            </span>
-          </div>
-        ) : (
-          <Row label={t('sqGoodsCost')} value={money(c.goodsCostCents)} />
-        )}
+        <div className="py-1.5">
+          <Row label={t('sqShippingBilled')} value={money(c.shippingBilledCents)} />
+          <p className="text-[11px] text-[var(--ink-soft)]">
+            {c.shippingBilledCents > 0 ? t('sqShippingPassThrough', { amount: money(c.shippingBilledCents) }) : t('sqShippingFreeNote')}
+          </p>
+        </div>
         <div className="py-1.5">
           <Row label={t('sqInitialProfit')} value={money(live.initial)} tone={profitTone(live.initial)} />
           <p className="text-[11px] text-[var(--ink-soft)]">

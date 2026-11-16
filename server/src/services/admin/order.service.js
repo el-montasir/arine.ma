@@ -1,11 +1,19 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { ApiError } from '../../utils/api-error.js'
 import { orderFinance } from '../../utils/admin-finance.js'
+import { generateOrderNumber } from '../../utils/order-number.js'
+import { calcShipping } from '../../utils/shipping.js'
+import { pickPrimaryImageUrl, widthsForImageUrl } from '../../lib/image-metadata.js'
 import { ORDER_STATUSES } from '../../validators/admin/order.validator.js'
 import { shippingService } from '../shipping/index.js'
 import { applyStockAndUpdateOrderStatus, StockConflictError } from '../stock/stock.service.js'
 
-const INCLUDE_ITEMS = { items: true, packageItems: true }
+const INCLUDE_ITEMS = {
+  items: true,
+  packageItems: true,
+  createdByAdmin: { select: { name: true, username: true } },
+}
 
 // Admin-only order shape. Embeds the finance block (per-line + order totals)
 // that is never sent to the public store API.
@@ -21,6 +29,8 @@ export function serializeAdminOrder(order) {
     note: order.note,
     paymentMethod: order.paymentMethod,
     status: order.status,
+    source: order.source,
+    createdBy: order.createdByAdmin ? order.createdByAdmin.name || order.createdByAdmin.username : null,
     subtotal: order.subtotal,
     shipping: order.shipping,
     total: order.total,
@@ -128,4 +138,126 @@ export async function deleteOrder(id) {
   })
 
   return order
+}
+
+// Steps a new order walks through so stock moves exactly as if an admin had
+// confirmed it by hand (deduction happens on CONFIRMED).
+const MANUAL_STATUS_PATH = {
+  PENDING: [],
+  CONFIRMED: ['CONFIRMED'],
+  SHIPPING: ['CONFIRMED', 'SHIPPING'],
+  DELIVERED: ['CONFIRMED', 'DELIVERED'],
+}
+
+/**
+ * Order typed by an admin (WhatsApp, phone, in-store…). Separate from the
+ * storefront checkout: catalog prices are the default but may be overridden
+ * per line, shipping is computed like the storefront unless given, and no
+ * customer notification, push or Meta event is sent.
+ */
+export async function createManualOrder(input, admin) {
+  const created = await prisma.$transaction(async (tx) => {
+    const [products, packages] = await Promise.all([
+      tx.product.findMany({ where: { id: { in: input.items.map((i) => i.productId) } }, include: { images: true } }),
+      tx.package.findMany({ where: { id: { in: input.packages.map((i) => i.packageId) } }, include: { images: true, items: { include: { product: true }, orderBy: { sortOrder: 'asc' } } } }),
+    ])
+    const productById = new Map(products.map((p) => [p.id, p]))
+    const packageById = new Map(packages.map((p) => [p.id, p]))
+
+    let subtotal = 0
+    const orderItems = input.items.map((item) => {
+      const product = productById.get(item.productId)
+      if (!product) throw new ApiError(404, 'PRODUCT_NOT_FOUND', 'أحد الكتب غير موجود')
+      const unitPrice = item.unitPrice ?? product.price
+      subtotal += unitPrice * item.quantity
+      const image = pickPrimaryImageUrl(product.images, product.image)
+      return {
+        productId: product.id,
+        productTitle: product.title,
+        productImage: image || null,
+        productImageVariantWidths: widthsForImageUrl(product.images || [], image),
+        quantity: item.quantity,
+        unitPrice,
+        totalPrice: unitPrice * item.quantity,
+        unitCostPrice: product.costPrice ?? null,
+      }
+    })
+    const packageItems = input.packages.map((item) => {
+      const pkg = packageById.get(item.packageId)
+      if (!pkg) throw new ApiError(404, 'PACKAGE_NOT_FOUND', 'إحدى الباقات غير موجودة')
+      const unitPrice = item.unitPrice ?? pkg.price
+      subtotal += unitPrice * item.quantity
+      const image = pickPrimaryImageUrl(pkg.images, pkg.image)
+      const snapshot = (pkg.items || []).map((pi) => ({
+        productId: pi.productId,
+        title: pi.product?.title || null,
+        author: pi.product?.author || null,
+        componentQuantity: pi.quantity ?? 1,
+      }))
+      return {
+        packageId: pkg.id,
+        packageTitle: pkg.title,
+        packageImage: image || null,
+        packageImageVariantWidths: widthsForImageUrl(pkg.images || [], image),
+        itemsSnapshot: snapshot.length > 0 ? snapshot : null,
+        quantity: item.quantity,
+        unitPrice,
+        totalPrice: unitPrice * item.quantity,
+        unitCostPrice: pkg.costPrice ?? null,
+      }
+    })
+
+    const shipping =
+      input.shipping ??
+      (await calcShipping(subtotal, [...products, ...packages].map((p) => ({ shippingMode: p.shippingMode, customShipping: p.customShipping }))))
+
+    const phone = input.phone.replace(/\s+/g, '')
+    const customer = await tx.customer.upsert({
+      where: { phone },
+      update: { fullName: input.fullName, ...(input.city ? { city: input.city } : {}), ...(input.address ? { address: input.address } : {}) },
+      create: { fullName: input.fullName, phone, city: input.city || null, address: input.address || null, status: 'ACTIVE' },
+    })
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        return await tx.order.create({
+          data: {
+            orderNumber: generateOrderNumber(),
+            fullName: input.fullName,
+            phone: input.phone,
+            city: input.city,
+            address: input.address,
+            note: input.note || null,
+            customerId: customer.id,
+            status: 'PENDING',
+            source: input.source,
+            createdByAdminId: admin?.id ?? null,
+            subtotal,
+            shipping,
+            total: subtotal + shipping,
+            items: { create: orderItems },
+            packageItems: { create: packageItems },
+          },
+        })
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue
+        throw e
+      }
+    }
+    throw new ApiError(500, 'ORDER_NUMBER_FAILED', 'تعذر إنشاء رقم الطلب')
+  })
+
+  // Walk the normal status flow (stock deduction on CONFIRMED). No shipping
+  // dispatch here: the admin is recording a sale, not requesting a courier.
+  try {
+    for (const step of MANUAL_STATUS_PATH[input.status]) {
+      await applyStockAndUpdateOrderStatus(created.id, step, INCLUDE_ITEMS, admin?.id ?? null)
+    }
+  } catch (err) {
+    // Not enough stock: nothing was deducted, so drop the half-made order.
+    if (err instanceof StockConflictError) await prisma.order.delete({ where: { id: created.id } })
+    throw err
+  }
+
+  return getOrder(created.id)
 }

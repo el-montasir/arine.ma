@@ -57,6 +57,20 @@ function orderRow(order, calc) {
 
 // ── Per-order profit ─────────────────────────────────────────────────────────
 
+function profitLine(type, title, item) {
+  const hasCost = item.unitCostPrice != null
+  return {
+    type,
+    title,
+    quantity: item.quantity,
+    unitPriceCents: item.unitPrice * 100,
+    unitCostCents: hasCost ? item.unitCostPrice * 100 : null,
+    revenueCents: item.unitPrice * item.quantity * 100,
+    costCents: hasCost ? item.unitCostPrice * item.quantity * 100 : null,
+    profitCents: hasCost ? (item.unitPrice - item.unitCostPrice) * item.quantity * 100 : null,
+  }
+}
+
 export async function getOrderProfit(orderId) {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: PROFIT_INCLUDE })
   if (!order) throw new ApiError(404, 'NOT_FOUND', 'الطلب غير موجود')
@@ -82,6 +96,11 @@ export async function getOrderProfit(orderId) {
     goodsCostOverrideCents: order.profit?.goodsCostOverrideCents ?? null,
     note: order.profit?.note ?? null,
     charges: order.charges.map((c) => ({ id: c.id, type: c.type, amountCents: c.amountCents, note: c.note })),
+    // Per-line detail so the admin can see where the goods profit comes from.
+    lines: [
+      ...order.items.map((i) => profitLine('BOOK', i.productTitle, i)),
+      ...order.packageItems.map((i) => profitLine('PACKAGE', i.packageTitle, i)),
+    ],
     calc,
     eligible: isSadaqaEligible(order),
     month,

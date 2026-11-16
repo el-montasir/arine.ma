@@ -35,6 +35,18 @@ enum PaymentMethod {
   CASH_ON_DELIVERY
 }
 
+// Where an order came from. WEBSITE = storefront checkout; the others are
+// orders typed in the Admin Panel.
+enum OrderSource {
+  WEBSITE
+  WHATSAPP
+  INSTAGRAM
+  FACEBOOK
+  PHONE
+  STORE
+  OTHER
+}
+
 enum AdminRole {
   SUPER_ADMIN
   ADMIN
@@ -208,6 +220,10 @@ model Order {
   // legacy orders backfilled from updatedAt; the admin can correct the date.
   deliveredAt           DateTime?
   deliveredAtEstimated  Boolean @default(false)
+  source                OrderSource @default(WEBSITE)
+  // Set when an admin typed the order in the panel; null for storefront orders.
+  createdByAdminId      Int?
+  createdByAdmin        Admin?  @relation("OrderCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
   profit                OrderProfit?
   charges               OrderCharge[]
   customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -294,6 +310,7 @@ model Admin {
   activityLogs ActivityLog[]
   notifications Notification[]
   stockMovements StockMovement[]
+  createdOrders Order[] @relation("OrderCreatedBy")
   updatedOrderProfits OrderProfit[] @relation("OrderProfitUpdatedBy")
   createdSadaqaRates SadaqaRate[] @relation("SadaqaRateCreatedBy")
   createdSadaqaPayments SadaqaPayment[] @relation("SadaqaPaymentCreatedBy")

@@ -180,7 +180,11 @@ export default function OrderDetails() {
 
       <PageHeader
         title={<span dir="ltr" className="inline-block font-mono font-bold text-[var(--purple)]">{order.orderNumber}</span>}
-        subtitle={`${t('orderCreatedOn')} ${formatDate(order.createdAt, language)}`}
+        subtitle={`${t('orderCreatedOn')} ${formatDate(order.createdAt, language)}${
+          order.source && order.source !== 'WEBSITE'
+            ? ` · ${t('manualOrderLabel')} (${t(`source_${order.source}`)})${order.createdBy ? ` — ${order.createdBy}` : ''}`
+            : ''
+        }`}
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge kind={st.color} label={st.label} />

@@ -7,6 +7,7 @@ import {
   updateOrderStatus,
   deleteOrder,
   getPendingOrdersCount,
+  createManualOrder,
 } from '../../services/admin/order.service.js'
 import { StockConflictError } from '../../services/stock/stock.service.js'
 import { logActivity } from '../../services/admin/activity-log.service.js'
@@ -31,6 +32,42 @@ export const getOrderById = asyncHandler(async (req, res) => {
   }
   const order = await getOrder(id)
   res.json({ success: true, data: order })
+})
+
+async function stockConflictResponse(res, err) {
+  const productIds = err.conflicts.map((c) => c.productId)
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, title: true },
+  })
+  const titleMap = new Map(products.map((p) => [p.id, p.title]))
+  return res.status(409).json({
+    success: false,
+    code: 'STOCK_CONFLICT',
+    message: 'لا يمكن تأكيد الطلب: المخزون غير كافٍ لبعض المنتجات',
+    conflicts: err.conflicts.map((c) => ({ ...c, productTitle: titleMap.get(c.productId) ?? null })),
+  })
+}
+
+export const createManualOrderHandler = asyncHandler(async (req, res) => {
+  let order
+  try {
+    order = await createManualOrder(req.validated, req.admin)
+  } catch (err) {
+    if (err instanceof StockConflictError) return stockConflictResponse(res, err)
+    throw err
+  }
+
+  await logActivity({
+    actor: req.admin,
+    action: 'ORDER_CREATED_MANUAL',
+    resourceType: 'ORDER',
+    resourceId: order.id,
+    details: { orderNumber: order.orderNumber, source: order.source, status: order.status, total: order.total },
+    req,
+  })
+
+  res.status(201).json({ success: true, data: order })
 })
 
 export const patchOrderStatus = asyncHandler(async (req, res) => {
