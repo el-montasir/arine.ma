@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, ChevronDown, Trash2, Plus } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, Plus } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { formatMoney, formatDate, getPaymentLabel, getOrderStatus } from '../lib/format.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
@@ -11,6 +11,7 @@ import Button from '../components/ui/Button.jsx'
 import Modal from '../components/ui/Modal.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import StatusMenu from '../components/StatusMenu.jsx'
 
 export default function Orders() {
   const navigate = useNavigate()
@@ -137,22 +138,7 @@ export default function Orders() {
         const meta = getOrderStatus(r.status, t)
         if (!canChangeStatus) return <Badge kind={meta.color}>{meta.label}</Badge>
         return (
-          <span className={`badge ${meta.color} relative cursor-pointer pe-1`} onClick={(e) => e.stopPropagation()}>
-            <select
-              value={r.status}
-              disabled={updatingId === r.id}
-              onChange={(e) => changeStatus(r, e.target.value)}
-              aria-label={t('orderStatus')}
-              className="cursor-pointer appearance-none border-0 bg-transparent pe-4 font-bold text-inherit outline-none disabled:opacity-50"
-            >
-              {STATUS_FILTERS.filter((f) => f.value).map((f) => (
-                <option key={f.value} value={f.value} className="bg-[var(--card)] text-[var(--ink)]">
-                  {f.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute end-1.5 h-3 w-3" aria-hidden="true" />
-          </span>
+          <StatusMenu status={r.status} busy={updatingId === r.id} onChange={(next) => changeStatus(r, next)} />
         )
       },
     },
@@ -245,7 +231,7 @@ export default function Orders() {
       )}
 
       {error ? <ErrorBanner message={error} /> : null}
-      <Card padded={false}>
+      <Card padded={false} className="hidden sm:block">
         <Table
           columns={columns}
           rows={rows}
@@ -255,6 +241,47 @@ export default function Orders() {
           onRowClick={(r) => navigate(`/orders/${r.id}`)}
         />
       </Card>
+
+      {/* Phones: one card per order instead of a cramped table */}
+      <div className="space-y-2.5 sm:hidden">
+        {loading ? (
+          <Card><p className="py-6 text-center text-xs text-[var(--ink-soft)]">{t('loadingData')}</p></Card>
+        ) : rows.length === 0 ? (
+          <Card><p className="py-6 text-center text-xs text-[var(--ink-soft)]">{t('noOrdersMatch')}</p></Card>
+        ) : (
+          rows.map((r) => (
+            <div
+              key={r.id}
+              role="link"
+              tabIndex={0}
+              onClick={() => navigate(`/orders/${r.id}`)}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/orders/${r.id}`)}
+              className="cursor-pointer rounded-[16px] border border-[var(--line)] bg-[var(--card)] p-3.5 shadow-[var(--shadow)] active:bg-[var(--bg)]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-[var(--ink)]">{r.fullName}</p>
+                  <p dir="ltr" className="text-start text-xs text-[var(--ink-soft)]">{r.phone}</p>
+                </div>
+                <span className="shrink-0 text-base font-extrabold tabular-nums text-[var(--purple)]">{formatMoney(r.total, language)}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--ink-soft)]">
+                <span dir="ltr" className="font-mono font-bold text-[var(--purple)]">{r.orderNumber}</span>
+                {r.city ? <span>{r.city}</span> : null}
+                {r.source && r.source !== 'WEBSITE' ? <span>{t('manualOrderLabel')} · {t(`source_${r.source}`)}</span> : null}
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--line)] pt-2.5">
+                {canChangeStatus ? (
+                  <StatusMenu status={r.status} busy={updatingId === r.id} onChange={(next) => changeStatus(r, next)} />
+                ) : (
+                  <Badge kind={getOrderStatus(r.status, t).color}>{getOrderStatus(r.status, t).label}</Badge>
+                )}
+                <span className="text-[11px] text-[var(--ink-soft)]">{formatDate(r.createdAt, language)}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       {/* Delete Order Confirmation Modal */}
       <Modal
