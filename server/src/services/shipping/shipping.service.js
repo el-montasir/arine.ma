@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js'
 import { calcShipping, getShippingBreakdown, DEFAULT_FREE_SHIPPING_THRESHOLD, DEFAULT_FLAT_SHIPPING_FEE } from './shipping-calculator.js'
 import { ManualShippingProvider } from './providers/manual.provider.js'
 import { DigylogShippingProvider } from './providers/digylog.provider.js'
+import { dispatchOrder } from './shipment.service.js'
 
 export const SETTING_KEY_ACTIVE_PROVIDER = 'shipping.active_provider'
 export const DEFAULT_PROVIDER_ID = 'manual'
@@ -163,6 +164,16 @@ export class ShippingService {
   async onOrderStatusChange(order, newStatus) {
     if (newStatus === 'CONFIRMED' || newStatus === 'SHIPPING') {
       const activeProvider = await this.getActiveProvider()
+      // Real couriers get a persisted, send-once shipment; the manual provider
+      // has nothing to record.
+      if (activeProvider.id !== DEFAULT_PROVIDER_ID) {
+        try {
+          return await dispatchOrder(order.id, activeProvider)
+        } catch (err) {
+          console.error('[shipping] dispatch failed:', err.message)
+          return null
+        }
+      }
       try {
         const dispatchResult = await activeProvider.createShipment(order)
         return {

@@ -23,6 +23,7 @@ const PROFIT_INCLUDE = {
   packageItems: true,
   profit: { include: { updatedByAdmin: ADMIN_NAME } },
   charges: { orderBy: { id: 'asc' } },
+  shipment: true,
 }
 
 function loadRates(client = prisma) {
@@ -32,7 +33,7 @@ function loadRates(client = prisma) {
 // Rate in force at delivery; an undelivered order previews today's rate.
 function calcOrder(order, rates) {
   const rateBp = rateAt(rates, order.deliveredAt ?? new Date())
-  return computeOrderProfit(order, order.profit, order.charges, rateBp)
+  return computeOrderProfit(order, order.profit, order.charges, rateBp, order.shipment?.costCents ?? null)
 }
 
 function orderRow(order, calc) {
@@ -161,7 +162,7 @@ export async function saveOrderProfit(orderId, input, admin) {
 function deliveredOrders(client, where = {}) {
   return client.order.findMany({
     where: { status: 'DELIVERED', deliveredAt: { not: null }, ...where },
-    include: { items: true, packageItems: true, profit: true, charges: true },
+    include: { items: true, packageItems: true, profit: true, charges: true, shipment: true },
     orderBy: { deliveredAt: 'asc' },
   })
 }

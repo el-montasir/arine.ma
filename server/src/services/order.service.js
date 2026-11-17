@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import { generateOrderNumber } from '../utils/order-number.js'
 import { calcShipping } from '../utils/shipping.js'
+import { resolveCity } from './shipping/digylog.client.js'
 import { recordOrderAttribution } from './marketing/attribution.service.js'
 import { sendCapiEvent, buildUserData } from './marketing/meta-capi.service.js'
 import { sendOrderPushNotificationToAdmins } from './admin/push.service.js'
@@ -27,6 +28,9 @@ export class OrderError extends Error {
  * Supports both regular book items and package items in the same cart.
  */
 export async function createOrder(input) {
+  // Resolved before the transaction: the DIGYLOG city list may need a fetch.
+  const cityKey = (await resolveCity(input.city))?.name ?? null
+
   const order = await prisma.$transaction(async (tx) => {
     // 1. Fetch the products (books) that the frontend claims are in the cart.
     const bookIds = (input.items || []).map((i) => i.productId)
@@ -188,7 +192,7 @@ export async function createOrder(input) {
       })),
     ]
 
-    const shipping = await calcShipping(subtotal, shippingOverrides)
+    const shipping = await calcShipping(subtotal, shippingOverrides, null, { cityKey })
     const total = subtotal + shipping
 
     // 6. Find or link customer based on phone
@@ -379,6 +383,6 @@ export async function findOrders() {
 export async function findOrder(orderNumber) {
   return prisma.order.findUnique({
     where: { orderNumber },
-    include: { items: true, packageItems: true },
+    include: { items: true, packageItems: true, shipment: { select: { tracking: true } } },
   })
 }

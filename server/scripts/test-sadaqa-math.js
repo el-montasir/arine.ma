@@ -55,6 +55,16 @@ const free = { subtotal: 100, shipping: 0, total: 100, items: [{ quantity: 1, un
 r = computeOrderProfit(free, null, [charge(35)], 700)
 assertEqual(r.realProfitCents, 1500, 'Free shipping: 100 − 50 − 35 (charge) = 15 DH')
 
+// Courier's real fee known (DIGYLOG): the margin billed − real fee counts.
+r = computeOrderProfit(book(), null, [], 700, 4500)
+assertEqual(r.initialProfitCents, 4000, 'Courier 45 vs billed 35: profit 50 − 10 = 40')
+assertEqual(r.sadaqaCents, 280, 'Courier 45: sadaqa 2.80 (same as the +10 charge)')
+const fesOrder = { subtotal: 100, shipping: 20, total: 120, items: [{ quantity: 1, unitPrice: 100, unitCostPrice: 50 }], packageItems: [] }
+r = computeOrderProfit(fesOrder, null, [], 700, 2000)
+assertEqual(r.initialProfitCents, 5000, 'Fes: billed 20, courier 20 → profit 50')
+r = computeOrderProfit(book(), null, [], 700, null)
+assertEqual(r.shippingMarginCents, 0, 'Unknown courier fee → billed shipping cancels out')
+
 // Zero and negative margins.
 r = computeOrderProfit(book(100), null, [], 700)
 assertEqual(r.sadaqaCents, 0, 'Zero margin → sadaqa 0')

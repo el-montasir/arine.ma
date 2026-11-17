@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MapPin, CreditCard, ArrowRight, ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
+import CityInput from '../components/CityInput'
 import { useCheckout } from '../hooks/useCheckout'
 import { formatPrice } from '../utils/format'
 
@@ -16,6 +17,7 @@ export default function Checkout() {
     subtotal,
     shipping,
     total,
+    cities,
   } = useCheckout()
   const { t, isRTL } = useLanguage()
 
@@ -140,8 +142,8 @@ export default function Checkout() {
                 </div>
                 <div>
                   <label className="block text-[0.8rem] sm:text-[0.82rem] text-[#4A3D50] font-semibold mb-1.5">{t('city')} *</label>
-                  <input
-                    type="text"
+                  <CityInput
+                    cities={cities}
                     placeholder={t('cityPlaceholder')}
                     value={form.city}
                     onChange={update('city')}

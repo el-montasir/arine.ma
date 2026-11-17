@@ -1,3 +1,4 @@
+import { getCities } from '../../services/shipping/digylog.client.js'
 import { prisma } from '../../lib/prisma.js'
 import {
   shippingService,
@@ -43,7 +44,7 @@ export async function getShippingConfigHandler(_req, res, next) {
 // PUT /api/admin/shipping/config
 export async function updateShippingConfigHandler(req, res, next) {
   try {
-    const { enabled, freeThreshold, flatFee, freeEnabled } = req.body
+    const { enabled, freeThreshold, flatFee, freeEnabled, cityPrices } = req.body
 
     const updates = []
 
@@ -97,6 +98,25 @@ export async function updateShippingConfigHandler(req, res, next) {
       )
     }
 
+    if (cityPrices !== undefined) {
+      // { "FES": 20 } — DIGYLOG city name → whole-dirham price.
+      const valid =
+        cityPrices && typeof cityPrices === 'object' && !Array.isArray(cityPrices) &&
+        Object.keys(cityPrices).length <= 200 &&
+        Object.entries(cityPrices).every(([k, v]) => /^[^\u0000-\u001f]{1,80}$/.test(k) && Number.isInteger(v) && v >= 0 && v <= 10000)
+      if (!valid) {
+        return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT', message: 'أسعار المدن غير صحيحة' } })
+      }
+      const value = JSON.stringify(cityPrices)
+      updates.push(
+        prisma.setting.upsert({
+          where: { key: 'shipping.city_prices' },
+          update: { value },
+          create: { key: 'shipping.city_prices', value },
+        })
+      )
+    }
+
     await prisma.$transaction(updates)
     invalidateShippingCache()
 
@@ -106,7 +126,7 @@ export async function updateShippingConfigHandler(req, res, next) {
       actor: req.admin,
       action: 'SHIPPING_CONFIG_UPDATED',
       resourceType: 'SHIPPING',
-      details: { flatFee, freeThreshold, enabled, freeEnabled },
+      details: { flatFee, freeThreshold, enabled, freeEnabled, cityPrices },
       req,
     })
 
@@ -140,6 +160,16 @@ export async function setActiveProviderHandler(req, res, next) {
 
     const result = await shippingService.setActiveProvider(providerId.trim())
     return res.json({ success: true, ...result })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// GET /api/admin/shipping/cities — DIGYLOG cities for the city-price picker.
+export async function getShippingCitiesHandler(_req, res, next) {
+  try {
+    const cities = await getCities()
+    return res.json({ success: true, data: cities.map((c) => ({ name: c.name, nameAr: c.nameAr })) })
   } catch (err) {
     next(err)
   }

@@ -70,7 +70,8 @@ export default function OrderProfitSadaqa({ orderId, refreshKey }) {
     const c = data.calc
     const missingCost = c.costSource !== 'SNAPSHOT'
     const goodsCostCents = missingCost ? parseDhToCents(form.costOverride) : c.goodsCostCents
-    const initial = goodsCostCents == null ? null : c.goodsRevenueCents - goodsCostCents
+    // shippingMarginCents is billed − the courier's real fee (0 when unknown).
+    const initial = goodsCostCents == null ? null : c.goodsRevenueCents - goodsCostCents + (c.shippingMarginCents || 0)
     const charges = form.charges.map((ch) => parseDhToCents(ch.amount))
     const chargesValid = charges.every((v) => v != null && v > 0)
     const extra = charges.reduce((s, v) => s + (v || 0), 0)
@@ -227,10 +228,20 @@ export default function OrderProfitSadaqa({ orderId, refreshKey }) {
         <Row label={t('sqCollected')} value={money(c.collectedCents)} />
         <div className="py-1.5">
           <Row label={t('sqShippingBilled')} value={money(c.shippingBilledCents)} />
-          <p className="text-[11px] text-[var(--ink-soft)]">
-            {c.shippingBilledCents > 0 ? t('sqShippingPassThrough', { amount: money(c.shippingBilledCents) }) : t('sqShippingFreeNote')}
-          </p>
+          {c.courierCostCents != null ? null : (
+            <p className="text-[11px] text-[var(--ink-soft)]">
+              {c.shippingBilledCents > 0 ? t('sqShippingPassThrough', { amount: money(c.shippingBilledCents) }) : t('sqShippingFreeNote')}
+            </p>
+          )}
         </div>
+        {c.courierCostCents != null ? (
+          <div className="py-1.5">
+            <Row label={t('sqCourierCost')} value={`− ${money(c.courierCostCents)}`} />
+            <p className="text-[11px] text-[var(--ink-soft)]">
+              {t('sqCourierMargin', { margin: money(c.shippingMarginCents) })}
+            </p>
+          </div>
+        ) : null}
         <div className="py-1.5">
           <Row label={t('sqInitialProfit')} value={money(live.initial)} tone={profitTone(live.initial)} />
           <p className="text-[11px] text-[var(--ink-soft)]">
@@ -238,7 +249,15 @@ export default function OrderProfitSadaqa({ orderId, refreshKey }) {
               t('sqInitialUnknown')
             ) : (
               <>
-                <bdi>{money(c.collectedCents)}</bdi> − <bdi>{money(c.shippingBilledCents)}</bdi> − <bdi>{money(live.goodsCostCents)}</bdi>
+                {c.courierCostCents != null ? (
+                  <>
+                    <bdi>{money(c.collectedCents)}</bdi> − <bdi>{money(c.courierCostCents)}</bdi> − <bdi>{money(live.goodsCostCents)}</bdi>
+                  </>
+                ) : (
+                  <>
+                    <bdi>{money(c.collectedCents)}</bdi> − <bdi>{money(c.shippingBilledCents)}</bdi> − <bdi>{money(live.goodsCostCents)}</bdi>
+                  </>
+                )}
               </>
             )}
           </p>

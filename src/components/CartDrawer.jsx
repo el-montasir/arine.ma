@@ -17,6 +17,7 @@ import {
 import BookCover from './BookCover'
 import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
+import CityInput from './CityInput'
 import { useCheckout } from '../hooks/useCheckout'
 import { formatPrice } from '../utils/format'
 import { getThumbnailImageProps, createVariantFallbackHandler } from '../utils/image-variants'
@@ -35,6 +36,7 @@ function CartDrawerCheckout({ onBack, onClose }) {
     shipping,
     total,
     shippingConfig,
+    cities,
   } = useCheckout({
     onSuccess: () => {
       onClose()
@@ -152,8 +154,8 @@ function CartDrawerCheckout({ onBack, onClose }) {
               </div>
               <div>
                 <label className="block text-[0.78rem] text-[#4A3D50] font-semibold mb-1">{t('city')} *</label>
-                <input
-                  type="text"
+                <CityInput
+                  cities={cities}
                   placeholder={t('cityPlaceholder')}
                   value={form.city}
                   onChange={update('city')}

@@ -25,7 +25,8 @@ import { prisma } from '../../lib/prisma.js'
  *         → shipping = MAX applicable customShipping amount ONCE (never multiplied by quantity or item count)
  *
  * RULE 5: Otherwise
- *         → shipping = global/default flatFee ONCE (never multiplied by quantity or item count)
+ *         → shipping = global/default flatFee ONCE (never multiplied by quantity or item count),
+ *           or the city's own price when one is set (shipping.city_prices, e.g. FES = 20)
  */
 
 export const DEFAULT_FREE_SHIPPING_THRESHOLD = 300
@@ -60,13 +61,15 @@ export async function getShippingConfig() {
     freeThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
     flatFee: DEFAULT_FLAT_SHIPPING_FEE,
     freeEnabled: DEFAULT_FREE_SHIPPING_ENABLED,
+    // { "FES": 20 } — keyed by the DIGYLOG city name.
+    cityPrices: {},
   }
 
   try {
     const settings = await prisma.setting.findMany({
       where: {
         key: {
-          in: ['shipping.enabled', 'shipping.free_threshold', 'shipping.flat_fee', 'shipping.free_enabled'],
+          in: ['shipping.enabled', 'shipping.free_threshold', 'shipping.flat_fee', 'shipping.free_enabled', 'shipping.city_prices'],
         },
       },
     })
@@ -82,6 +85,8 @@ export async function getShippingConfig() {
         if (!isNaN(val) && val >= 0) config.flatFee = val
       } else if (setting.key === 'shipping.free_enabled') {
         config.freeEnabled = setting.value === 'true'
+      } else if (setting.key === 'shipping.city_prices') {
+        config.cityPrices = parseCityPrices(setting.value)
       }
     }
 
@@ -92,6 +97,19 @@ export async function getShippingConfig() {
   }
 
   return config
+}
+
+// Tolerates a missing/corrupt setting: only whole, non-negative prices survive.
+export function parseCityPrices(raw) {
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([k, v]) => typeof k === 'string' && k && Number.isInteger(v) && v >= 0)
+    )
+  } catch {
+    return {}
+  }
 }
 
 /**
@@ -135,9 +153,10 @@ export function calcShippingSync(
  * @param {number} subtotal - Subtotal in Moroccan Dirhams
  * @param {Array<{ shippingMode?: string|null, customShipping?: number|null }>} [productOverrides=[]]
  * @param {Object} [configOverride]
+ * @param {{ cityKey?: string|null }} [options] - DIGYLOG city name of the delivery address
  * @returns {Promise<number>} Calculated shipping fee (ONCE per order)
  */
-export async function calcShipping(subtotal, productOverrides = [], configOverride = null) {
+export async function calcShipping(subtotal, productOverrides = [], configOverride = null, { cityKey = null } = {}) {
   if (typeof subtotal !== 'number' || isNaN(subtotal) || subtotal <= 0) {
     return 0
   }
@@ -180,8 +199,9 @@ export async function calcShipping(subtotal, productOverrides = [], configOverri
     }
   }
 
-  // RULE 5: Apply global default shipping price (flatFee) ONCE
-  return config.flatFee
+  // RULE 5: The city's own price when set, else the global flatFee — ONCE
+  const cityPrice = cityKey ? config.cityPrices?.[cityKey] : undefined
+  return cityPrice ?? config.flatFee
 }
 
 /**

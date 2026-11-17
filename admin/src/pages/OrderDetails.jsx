@@ -15,6 +15,7 @@ import Spinner from '../components/ui/Spinner.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import OrderProfitSadaqa from '../components/OrderProfitSadaqa.jsx'
+import OrderShipment from '../components/OrderShipment.jsx'
 
 const STATUS_KEYS = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED', 'RETURNED']
 
@@ -45,6 +46,8 @@ export default function OrderDetails() {
     setStockConflicts(null)
     try {
       await api.patch(`/orders/${id}/status`, { status })
+      // Show the saved status from the server (a courier sync may move it later).
+      setStatus('')
       setSaved(true)
       window.dispatchEvent(new Event('order-status-updated'))
       reload()
@@ -305,6 +308,7 @@ export default function OrderDetails() {
               </Button>
             </div>
           </Card>
+          <OrderShipment key={`${order.status}-${order.updatedAt}`} order={order} onChange={reload} />
         </div>
 
         {/* Order details & financial summary */}
@@ -360,7 +364,7 @@ export default function OrderDetails() {
           </Card>
 
           {can('FINANCE_VIEW') ? (
-            <OrderProfitSadaqa orderId={order.id} refreshKey={`${order.status}-${order.updatedAt}`} />
+            <OrderProfitSadaqa orderId={order.id} refreshKey={`${order.status}-${order.updatedAt}-${order.shipment?.lastSyncAt || ''}-${order.shipment?.costCents ?? ''}`} />
           ) : null}
         </div>
       </div>

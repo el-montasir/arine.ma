@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import CityShippingPrices from '../components/CityShippingPrices.jsx'
 import { Truck, ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, Save } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
@@ -248,6 +249,8 @@ export default function ShippingSettings() {
           </div>
         </form>
       </Card>
+
+      <CityShippingPrices />
 
       {/* 2. Registered Shipping Carriers / Providers */}
       <Card>

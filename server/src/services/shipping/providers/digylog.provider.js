@@ -1,15 +1,11 @@
 import { BaseShippingProvider } from '../base-provider.js'
+import { createParcel, getParcel, resolveCity, isDigylogConfigured } from '../digylog.client.js'
 
 /**
  * DigylogShippingProvider — Provider module for DIGYLOG delivery service (Morocco).
  *
- * Reads configuration safely from server-side environment variables:
- * - DIGYLOG_API_KEY
- * - DIGYLOG_API_URL (default: https://api.digylog.com)
- * - DIGYLOG_ACCOUNT_ID
- *
- * If credentials are not set (current state), this provider cleanly reports
- * as NOT CONFIGURED. No dummy credentials or fake API calls are used.
+ * Configuration lives in server env vars (see digylog.client.js). Without
+ * DIGYLOG_API_KEY the provider reports NOT CONFIGURED and sends nothing.
  */
 export class DigylogShippingProvider extends BaseShippingProvider {
   constructor() {
@@ -21,20 +17,8 @@ export class DigylogShippingProvider extends BaseShippingProvider {
     })
   }
 
-  get apiKey() {
-    return process.env.DIGYLOG_API_KEY || ''
-  }
-
-  get apiUrl() {
-    return process.env.DIGYLOG_API_URL || 'https://api.digylog.com'
-  }
-
-  get accountId() {
-    return process.env.DIGYLOG_ACCOUNT_ID || ''
-  }
-
   isConfigured() {
-    return Boolean(this.apiKey && this.apiKey.trim().length > 0)
+    return isDigylogConfigured()
   }
 
   async validateAddress(addressData) {
@@ -44,55 +28,49 @@ export class DigylogShippingProvider extends BaseShippingProvider {
     return { valid: true }
   }
 
-  async createShipment(_order) {
+  /**
+   * Sends the order to DIGYLOG. Expects the order with items + packageItems.
+   * Returns { success, tracking, costCents, city } or { success: false, message }.
+   */
+  async createShipment(order) {
     if (!this.isConfigured()) {
-      return {
-        success: false,
-        isConfigured: false,
-        status: 'NOT_CONFIGURED',
-        message: 'خدمة DIGYLOG غير مفعلة حالياً — لم يتم إدخال مفاتيح الربط في بيئة الخادم (DIGYLOG_API_KEY)',
-      }
+      return { success: false, status: 'NOT_CONFIGURED', message: 'خدمة DIGYLOG غير مفعلة — DIGYLOG_API_KEY غير مضبوط' }
     }
-
-    // Future implementation: when real DIGYLOG credentials are provided,
-    // the HTTP call to the DIGYLOG parcel creation endpoint lands here.
-    return {
-      success: false,
-      isConfigured: true,
-      status: 'READY_FOR_INTEGRATION',
-      message: 'الواجهة البرمجية لـ DIGYLOG بانتظار تفعيل نقطة النهاية المباشرة',
+    const city = await resolveCity(order.city)
+    if (!city) {
+      return { success: false, status: 'UNKNOWN_CITY', message: `المدينة «${order.city}» غير موجودة في لائحة DIGYLOG` }
+    }
+    const refs = [
+      ...(order.items || []).map((i) => ({ designation: i.productTitle, quantity: i.quantity })),
+      ...(order.packageItems || []).map((i) => ({ designation: `باقة: ${i.packageTitle}`, quantity: i.quantity })),
+    ]
+    try {
+      const { tracking, costCents } = await createParcel({
+        num: order.orderNumber,
+        name: order.fullName,
+        phone: order.phone,
+        address: order.address || order.city,
+        cityId: city.id,
+        price: order.total,
+        note: order.note || '',
+        refs,
+      })
+      return { success: true, tracking, costCents, city: city.name }
+    } catch (err) {
+      return { success: false, status: 'API_ERROR', message: err.message }
     }
   }
 
   async trackShipment(trackingNumber) {
-    if (!this.isConfigured()) {
-      return {
-        status: 'UNAVAILABLE',
-        history: [],
-        message: 'خدمة التتبع الآلي لـ DIGYLOG غير متصلة',
-      }
-    }
-
-    return {
-      status: 'PENDING_DISPATCH',
-      trackingNumber,
-      history: [],
-      message: 'بانتظار استلام الشحنة من قِبل DIGYLOG',
-    }
+    return getParcel(trackingNumber)
   }
 
+  // Cancelling a sent parcel goes through a DIGYLOG complaint; not automated.
   async cancelShipment(trackingNumber) {
-    if (!this.isConfigured()) {
-      return {
-        success: false,
-        message: 'خدمة DIGYLOG غير متصلة',
-      }
-    }
-
     return {
-      success: true,
+      success: false,
       trackingNumber,
-      message: 'تم إرسال طلب إلغاء الشحنة إلى DIGYLOG',
+      message: 'إلغاء الشحنة يتم من لوحة DIGYLOG',
     }
   }
 

@@ -259,6 +259,11 @@ export default function TrackOrder() {
                 </div>
                 <div className="text-[0.95rem] font-bold text-white mt-0.5">{order.city}</div>
                 {order.address && <div className="text-[0.78rem] text-[#B7A6C2] mt-0.5">{order.address}</div>}
+                {order.trackingNumber && (
+                  <div className="text-[0.76rem] text-[#B7A6C2] mt-1.5">
+                    {t('trackingNumberLabel')}: <span dir="ltr" className="font-mono font-bold text-white">{order.trackingNumber}</span>
+                  </div>
+                )}
               </div>
               <div className={`${glass} rounded-[20px] px-4 py-3.5 col-span-2 order-last sm:col-span-1 sm:order-none`}>
                 <div className="flex items-center gap-1.5 text-[0.74rem] text-[#B7A6C2]">

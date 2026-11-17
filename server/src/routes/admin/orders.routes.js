@@ -11,6 +11,8 @@ import {
   deleteOrderHandler,
   getPendingOrdersCountHandler,
   createManualOrderHandler,
+  sendShipmentHandler,
+  syncShipmentHandler,
 } from '../../controllers/admin/order.controller.js'
 import { getOrderProfitHandler, saveOrderProfitHandler } from '../../controllers/admin/sadaqa.controller.js'
 
@@ -26,6 +28,8 @@ router.patch(
   validate(updateOrderStatusSchema),
   patchOrderStatus
 )
+router.post('/:id/shipment/send', requirePermission(PERMISSIONS.ORDERS_STATUS_UPDATE), sendShipmentHandler)
+router.post('/:id/shipment/sync', requirePermission(PERMISSIONS.ORDERS_VIEW), syncShipmentHandler)
 router.get('/:id/profit', requirePermission(PERMISSIONS.FINANCE_VIEW), getOrderProfitHandler)
 router.put(
   '/:id/profit',

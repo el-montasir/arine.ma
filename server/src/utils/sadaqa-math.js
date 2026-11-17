@@ -5,11 +5,12 @@
 // integer centimes (1 DH = 100), because 7 % of a whole-dirham profit is not a
 // whole dirham. Rates are basis points (700 = 7 %).
 //
-// Shipping reconciliation: the shipping billed to the customer (order.shipping)
-// is treated as passing straight through to the courier, so it cancels out:
+// Shipping reconciliation: when the courier's real fee is known (DIGYLOG
+// shipment), the margin billed − real fee is part of the profit (35 billed,
+// 45 paid → −10). Otherwise the billed shipping is assumed to pass straight
+// through to the courier and cancels out:
 //   collected − goods cost − standard shipping = (total − shipping) − goods cost
-// Anything the courier charged above that (35 → 40/45, or the whole fee on a
-// free-shipping order) is entered by the admin as an extra charge.
+// and any courier surcharge is entered by the admin as an extra charge.
 
 import { orderFinance } from './admin-finance.js'
 
@@ -28,8 +29,9 @@ export function applyRate(cents, rateBp) {
  * @param {object|null} profit  - OrderProfit row or null (never edited yet)
  * @param {Array} charges  - OrderCharge rows ({ amountCents })
  * @param {number} rateBp
+ * @param {number|null} courierCostCents - the courier's real fee, when known
  */
-export function computeOrderProfit(order, profit, charges = [], rateBp = DEFAULT_SADAQA_RATE_BP) {
+export function computeOrderProfit(order, profit, charges = [], rateBp = DEFAULT_SADAQA_RATE_BP, courierCostCents = null) {
   const fin = orderFinance(order)
   const mode = profit?.mode === 'MANUAL' ? 'MANUAL' : 'AUTO'
 
@@ -48,7 +50,8 @@ export function computeOrderProfit(order, profit, charges = [], rateBp = DEFAULT
     costSource = 'MANUAL'
   }
 
-  const initialProfitCents = goodsCostCents == null ? null : goodsRevenueCents - goodsCostCents
+  const shippingMarginCents = courierCostCents == null ? 0 : shippingBilledCents - courierCostCents
+  const initialProfitCents = goodsCostCents == null ? null : goodsRevenueCents - goodsCostCents + shippingMarginCents
   const extraChargesCents = charges.reduce((sum, c) => sum + c.amountCents, 0)
 
   // Exactly one correction applies: AUTO subtracts the charges, MANUAL takes the
@@ -70,6 +73,8 @@ export function computeOrderProfit(order, profit, charges = [], rateBp = DEFAULT
     collectedCents,
     shippingBilledCents,
     goodsRevenueCents,
+    courierCostCents,
+    shippingMarginCents,
     goodsCostCents,
     costSource,
     costUnknownItems: fin.costUnknownItems,

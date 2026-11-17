@@ -11,6 +11,9 @@ import {
 } from '../../services/admin/order.service.js'
 import { StockConflictError } from '../../services/stock/stock.service.js'
 import { logActivity } from '../../services/admin/activity-log.service.js'
+import { shippingService } from '../../services/shipping/index.js'
+import { syncShipment } from '../../services/shipping/shipment.service.js'
+import { DigylogError, resolveCity } from '../../services/shipping/digylog.client.js'
 
 export const getOrders = asyncHandler(async (req, res) => {
   const orders = await listOrders({
@@ -141,4 +144,58 @@ export const deleteOrderHandler = asyncHandler(async (req, res) => {
     message: 'تم حذف الطلب بنجاح',
     orderNumber: order.orderNumber,
   })
+})
+
+// POST /admin/orders/:id/shipment/send — (re)send a confirmed order whose
+// automatic dispatch failed (unknown city, courier down…).
+export const sendShipmentHandler = asyncHandler(async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id) || id <= 0) return errorResponse(res, 400, 'INVALID_ID', 'معرف الطلب غير صحيح')
+
+  const order = await getOrder(id)
+  if (!['CONFIRMED', 'SHIPPING'].includes(order.status)) {
+    return errorResponse(res, 409, 'NOT_CONFIRMED', 'أكّد الطلب أولاً قبل إرساله لشركة التوصيل')
+  }
+  if (order.shipment?.tracking) {
+    return errorResponse(res, 409, 'ALREADY_SENT', 'الطلب أُرسل من قبل')
+  }
+  const provider = await shippingService.getActiveProvider()
+  if (provider.id === 'manual') {
+    return errorResponse(res, 409, 'NO_COURIER', 'اختر شركة التوصيل في إعدادات الشحن أولاً')
+  }
+  // The admin may correct a city the courier did not recognise.
+  const newCity = typeof req.body?.city === 'string' ? req.body.city.trim() : ''
+  if (newCity && newCity !== order.city) {
+    if (!(await resolveCity(newCity))) {
+      return errorResponse(res, 400, 'UNKNOWN_CITY', `المدينة «${newCity}» غير موجودة في لائحة DIGYLOG`)
+    }
+    await prisma.order.update({ where: { id }, data: { city: newCity } })
+  }
+  const shipment = await shippingService.onOrderStatusChange(order, 'CONFIRMED')
+
+  await logActivity({
+    actor: req.admin,
+    action: 'ORDER_SHIPMENT_SENT',
+    resourceType: 'ORDER',
+    resourceId: id,
+    details: { orderNumber: order.orderNumber, tracking: shipment?.tracking || null, error: shipment?.error || null, ...(newCity && newCity !== order.city ? { cityFrom: order.city, cityTo: newCity } : {}) },
+    req,
+  })
+  res.json({ success: true, data: await getOrder(id) })
+})
+
+// POST /admin/orders/:id/shipment/sync — pull the courier's status now.
+export const syncShipmentHandler = asyncHandler(async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id) || id <= 0) return errorResponse(res, 400, 'INVALID_ID', 'معرف الطلب غير صحيح')
+
+  const order = await getOrder(id)
+  if (!order.shipment?.tracking) return errorResponse(res, 409, 'NOT_SENT', 'الطلب لم يُرسل بعد')
+  try {
+    await syncShipment(order.shipment.tracking)
+  } catch (err) {
+    if (err instanceof DigylogError) return errorResponse(res, 502, 'COURIER_ERROR', err.message)
+    throw err
+  }
+  res.json({ success: true, data: await getOrder(id) })
 })

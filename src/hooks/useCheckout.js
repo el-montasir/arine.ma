@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext'
 import { useLanguage } from '../context/LanguageContext'
 import { trackInitiateCheckout, generateClientEventId, getAttributionData } from '../utils/tracking'
 import api from '../utils/api'
+import { useCities, resolveCityKey } from '../utils/cities'
 
 const INITIAL_FORM = {
   fullName: '',
@@ -15,14 +16,20 @@ const INITIAL_FORM = {
 }
 
 export function useCheckout({ onSuccess } = {}) {
-  const { items, subtotal, shipping, total, shippingConfig, clearCart } = useCart()
+  const { items, subtotal, shippingFor, shippingConfig, clearCart } = useCart()
   const { t } = useLanguage()
+  const cities = useCities()
   const navigate = useNavigate()
 
   const [form, setForm] = useState(INITIAL_FORM)
   const [fieldErrors, setFieldErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Shipping follows the picked city (e.g. Fes has its own price).
+  const cityKey = resolveCityKey(cities, form.city)
+  const shipping = shippingFor(cityKey)
+  const total = subtotal + shipping
 
   useEffect(() => {
     if (items.length > 0) {
@@ -44,6 +51,8 @@ export function useCheckout({ onSuccess } = {}) {
       errors.phone = t('invalidPhone')
     }
     if (!form.city.trim()) errors.city = t('reqCity')
+    // With the courier's list loaded, the city must be one it delivers to.
+    else if (cities.length > 0 && !cityKey) errors.city = t('cityNotInList')
     if (!form.address.trim()) errors.address = t('reqAddress')
     return errors
   }
@@ -139,5 +148,6 @@ export function useCheckout({ onSuccess } = {}) {
     total,
     shippingConfig,
     clearCart,
+    cities,
   }
 }

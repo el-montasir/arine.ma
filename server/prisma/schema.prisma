@@ -226,6 +226,7 @@ model Order {
   createdByAdmin        Admin?  @relation("OrderCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
   profit                OrderProfit?
   charges               OrderCharge[]
+  shipment              Shipment?
   customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   items         OrderItem[]
   packageItems  PackageOrderItem[]
@@ -990,4 +991,31 @@ model SadaqaPayment {
 
   @@index([periodMonth])
   @@map("sadaqa_payments")
+}
+
+// Parcel handed to a delivery company (DIGYLOG). One per order.
+model Shipment {
+  id          Int       @id @default(autoincrement())
+  orderId     Int       @unique
+  provider    String // 'digylog'
+  tracking    String?   @unique
+  // Provider's own status, kept verbatim (e.g. 6 / "Livrée").
+  statusId    Int?
+  statusLabel String?
+  motif       String?
+  driverPhone String?
+  // What the courier really charges ARINE for this parcel (delivery, plus
+  // return/refusal fees when any), in centimes. Feeds the real-profit math.
+  costCents   Int?
+  city        String?
+  // Last failure to send or sync, shown to the admin with a retry button.
+  error       String?
+  sentAt      DateTime?
+  lastSyncAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("shipments")
 }

@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/api-error.js'
 import { orderFinance } from '../../utils/admin-finance.js'
 import { generateOrderNumber } from '../../utils/order-number.js'
 import { calcShipping } from '../../utils/shipping.js'
+import { resolveCity } from '../shipping/digylog.client.js'
 import { pickPrimaryImageUrl, widthsForImageUrl } from '../../lib/image-metadata.js'
 import { ORDER_STATUSES } from '../../validators/admin/order.validator.js'
 import { shippingService } from '../shipping/index.js'
@@ -13,6 +14,7 @@ const INCLUDE_ITEMS = {
   items: true,
   packageItems: true,
   createdByAdmin: { select: { name: true, username: true } },
+  shipment: true,
 }
 
 // Admin-only order shape. Embeds the finance block (per-line + order totals)
@@ -31,6 +33,21 @@ export function serializeAdminOrder(order) {
     status: order.status,
     source: order.source,
     createdBy: order.createdByAdmin ? order.createdByAdmin.name || order.createdByAdmin.username : null,
+    shipment: order.shipment
+      ? {
+          provider: order.shipment.provider,
+          tracking: order.shipment.tracking,
+          statusId: order.shipment.statusId,
+          statusLabel: order.shipment.statusLabel,
+          motif: order.shipment.motif,
+          driverPhone: order.shipment.driverPhone,
+          costCents: order.shipment.costCents,
+          city: order.shipment.city,
+          error: order.shipment.error,
+          sentAt: order.shipment.sentAt,
+          lastSyncAt: order.shipment.lastSyncAt,
+        }
+      : null,
     subtotal: order.subtotal,
     shipping: order.shipping,
     total: order.total,
@@ -156,6 +173,8 @@ const MANUAL_STATUS_PATH = {
  * customer notification, push or Meta event is sent.
  */
 export async function createManualOrder(input, admin) {
+  const cityKey = (await resolveCity(input.city))?.name ?? null
+
   const created = await prisma.$transaction(async (tx) => {
     const [products, packages] = await Promise.all([
       tx.product.findMany({ where: { id: { in: input.items.map((i) => i.productId) } }, include: { images: true } }),
@@ -209,7 +228,12 @@ export async function createManualOrder(input, admin) {
 
     const shipping =
       input.shipping ??
-      (await calcShipping(subtotal, [...products, ...packages].map((p) => ({ shippingMode: p.shippingMode, customShipping: p.customShipping }))))
+      (await calcShipping(
+        subtotal,
+        [...products, ...packages].map((p) => ({ shippingMode: p.shippingMode, customShipping: p.customShipping })),
+        null,
+        { cityKey }
+      ))
 
     const phone = input.phone.replace(/\s+/g, '')
     const customer = await tx.customer.upsert({
@@ -257,6 +281,12 @@ export async function createManualOrder(input, admin) {
     // Not enough stock: nothing was deducted, so drop the half-made order.
     if (err instanceof StockConflictError) await prisma.order.delete({ where: { id: created.id } })
     throw err
+  }
+
+  // Confirmed typed orders go to the courier like storefront ones; shop sales
+  // are skipped inside the dispatch.
+  if (input.status !== 'PENDING') {
+    await shippingService.onOrderStatusChange(created, 'CONFIRMED').catch(() => {})
   }
 
   return getOrder(created.id)

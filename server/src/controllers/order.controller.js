@@ -23,6 +23,8 @@ function publicOrder(order) {
     city: order.city,
     paymentMethod: order.paymentMethod,
     status: order.status,
+    // Courier tracking number (DIGYLOG), so the customer can follow the parcel.
+    trackingNumber: order.shipment?.tracking ?? null,
     subtotal: order.subtotal,
     shipping: order.shipping,
     total: order.total,

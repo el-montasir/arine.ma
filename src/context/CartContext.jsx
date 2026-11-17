@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import api from '../utils/api'
 import { trackAddToCart } from '../utils/tracking'
 
@@ -31,6 +31,7 @@ export function CartProvider({ children }) {
     freeThreshold: 300,
     flatFee: 25,
     freeEnabled: false,
+    cityPrices: {},
   })
 
   const showToast = (message) => setToast({ id: Date.now(), message })
@@ -47,6 +48,7 @@ export function CartProvider({ children }) {
             freeThreshold: res.data.freeThreshold ?? 300,
             flatFee: res.data.flatFee ?? 25,
             freeEnabled: res.data.freeEnabled ?? true,
+            cityPrices: res.data.cityPrices || {},
           })
         }
       })
@@ -155,37 +157,45 @@ export function CartProvider({ children }) {
     [items]
   )
 
-  const shipping = useMemo(() => {
-    if (items.length === 0) return 0
+  // Mirrors the server's calcShipping; the server's figure is the one charged.
+  // `cityKey` is the courier's city name ("FES") once the customer picked one.
+  const shippingFor = useCallback(
+    (cityKey = null) => {
+      if (items.length === 0) return 0
 
-    // RULE 1: If shipping is globally disabled → 0 DH
-    if (shippingConfig.enabled === false) return 0
+      // RULE 1: If shipping is globally disabled → 0 DH
+      if (shippingConfig.enabled === false) return 0
 
-    // RULE 2: If ANY item in cart has 'free' shipping → 0 DH (entire order)
-    const hasFree = items.some(
-      (item) => item.shippingMode === 'free' || item.shippingMode === 'FREE'
-    )
-    if (hasFree) return 0
+      // RULE 2: If ANY item in cart has 'free' shipping → 0 DH (entire order)
+      const hasFree = items.some(
+        (item) => item.shippingMode === 'free' || item.shippingMode === 'FREE'
+      )
+      if (hasFree) return 0
 
-    // RULE 3: If order-value free shipping is ENABLED AND subtotal >= configured threshold → 0 DH
-    if (shippingConfig.freeEnabled && subtotal >= shippingConfig.freeThreshold) {
-      return 0
-    }
+      // RULE 3: If order-value free shipping is ENABLED AND subtotal >= configured threshold → 0 DH
+      if (shippingConfig.freeEnabled && subtotal >= shippingConfig.freeThreshold) {
+        return 0
+      }
 
-    // RULE 4: If one or more items have 'custom' shipping → max(customShipping) ONCE
-    const customItems = items.filter(
-      (item) =>
-        (item.shippingMode === 'custom' || item.shippingMode === 'CUSTOM') &&
-        typeof item.customShipping === 'number' &&
-        item.customShipping >= 0
-    )
-    if (customItems.length > 0) {
-      return Math.max(...customItems.map((item) => item.customShipping))
-    }
+      // RULE 4: If one or more items have 'custom' shipping → max(customShipping) ONCE
+      const customItems = items.filter(
+        (item) =>
+          (item.shippingMode === 'custom' || item.shippingMode === 'CUSTOM') &&
+          typeof item.customShipping === 'number' &&
+          item.customShipping >= 0
+      )
+      if (customItems.length > 0) {
+        return Math.max(...customItems.map((item) => item.customShipping))
+      }
 
-    // RULE 5: Apply global default shipping price (flatFee) ONCE
-    return shippingConfig.flatFee
-  }, [items, subtotal, shippingConfig])
+      // RULE 5: The city's own price when set (e.g. FES = 20), else the flat fee ONCE
+      const cityPrice = cityKey ? shippingConfig.cityPrices?.[cityKey] : undefined
+      return cityPrice ?? shippingConfig.flatFee
+    },
+    [items, subtotal, shippingConfig]
+  )
+
+  const shipping = useMemo(() => shippingFor(null), [shippingFor])
 
   const total = subtotal + shipping
 
@@ -194,6 +204,7 @@ export function CartProvider({ children }) {
     count,
     subtotal,
     shipping,
+    shippingFor,
     total,
     shippingConfig,
     isCartOpen,

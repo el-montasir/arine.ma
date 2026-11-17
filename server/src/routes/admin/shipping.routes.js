@@ -7,6 +7,7 @@ import {
   updateShippingConfigHandler,
   getShippingProvidersHandler,
   setActiveProviderHandler,
+  getShippingCitiesHandler,
 } from '../../controllers/admin/shipping.controller.js'
 
 const router = Router()
@@ -14,6 +15,7 @@ const router = Router()
 router.get('/status', requirePermission(PERMISSIONS.SHIPPING_VIEW), getShippingStatusHandler)
 router.get('/config', requirePermission(PERMISSIONS.SHIPPING_VIEW), getShippingConfigHandler)
 router.put('/config', requirePermission(PERMISSIONS.SHIPPING_UPDATE), updateShippingConfigHandler)
+router.get('/cities', requirePermission(PERMISSIONS.SHIPPING_VIEW), getShippingCitiesHandler)
 router.get('/providers', requirePermission(PERMISSIONS.SHIPPING_VIEW), getShippingProvidersHandler)
 router.post('/active-provider', requirePermission(PERMISSIONS.SHIPPING_UPDATE), setActiveProviderHandler)
 
