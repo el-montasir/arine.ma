@@ -150,6 +150,8 @@ try {
   assertEqual(s2?.tracking, 'TK1', 'Confirmed order sent → tracking saved')
   assertEqual(s2?.costCents, 4500, 'Courier fee 45.00 saved')
   const sent = mock.created[0]
+  assertEqual(sent.sentType, 0, 'Created as "No sent" (seller books the pickup)')
+  assertEqual(s2?.statusLabel, 'Non envoyée', 'Shipment shows Non envoyée')
   assertEqual(sent.store, 'arine.ma', 'Store arine.ma')
   assertEqual(sent.network, 15, 'Network 15')
   assertEqual(sent.orders[0].price, 135, 'COD price = full order total')

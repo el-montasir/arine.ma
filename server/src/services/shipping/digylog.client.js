@@ -105,9 +105,11 @@ export async function resolveCity(text) {
 // ── Orders ───────────────────────────────────────────────────────────────────
 
 /**
- * Creates and sends one standard parcel. Returns { tracking, costCents }.
+ * Registers one standard parcel in DIGYLOG's "No sent orders" list. The seller
+ * books the pickup and sends it from the DIGYLOG dashboard; the webhook then
+ * follows it. Returns { tracking, costCents, statusId, statusLabel }.
  * `checkDuplicate` makes DIGYLOG refuse a second parcel with the same num, so
- * a retried request can never ship an order twice.
+ * a retried request can never register an order twice.
  */
 export async function createParcel({ num, name, phone, address, cityId, price, note, refs }) {
   const network = Number(process.env.DIGYLOG_NETWORK_ID)
@@ -117,7 +119,7 @@ export async function createParcel({ num, name, phone, address, cityId, price, n
   const result = await request('POST', '/orders/standard', {
     network,
     store,
-    sentType: 1, // send to the delivery service right away
+    sentType: 0, // create only: stays in "No sent orders" until the seller sends it
     checkDuplicate: 1,
     orders: [
       {
@@ -143,6 +145,8 @@ export async function createParcel({ num, name, phone, address, cityId, price, n
   return {
     tracking: row.traking || row.tracking,
     costCents: row.cost != null ? Math.round(Number(row.cost) * 100) : null,
+    statusId: 0,
+    statusLabel: 'Non envoyée',
   }
 }
 

@@ -45,7 +45,7 @@ export class DigylogShippingProvider extends BaseShippingProvider {
       ...(order.packageItems || []).map((i) => ({ designation: `باقة: ${i.packageTitle}`, quantity: i.quantity })),
     ]
     try {
-      const { tracking, costCents } = await createParcel({
+      const { tracking, costCents, statusId, statusLabel } = await createParcel({
         num: order.orderNumber,
         name: order.fullName,
         phone: order.phone,
@@ -55,7 +55,7 @@ export class DigylogShippingProvider extends BaseShippingProvider {
         note: order.note || '',
         refs,
       })
-      return { success: true, tracking, costCents, city: city.name }
+      return { success: true, tracking, costCents, statusId, statusLabel, city: city.name }
     } catch (err) {
       return { success: false, status: 'API_ERROR', message: err.message }
     }

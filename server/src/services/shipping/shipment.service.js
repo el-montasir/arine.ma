@@ -52,6 +52,8 @@ export async function dispatchOrder(orderId, provider) {
     ? {
         tracking: result.tracking,
         costCents: result.costCents,
+        statusId: result.statusId ?? null,
+        statusLabel: result.statusLabel ?? null,
         city: result.city,
         sentAt: new Date(),
         error: null,
