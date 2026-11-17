@@ -95,6 +95,18 @@ try {
   stock = (await prisma.product.findUnique({ where: { id: book.id } })).currentStock
   assertEqual(stock, 4, 'Stock unchanged after refusal')
 
+  // Off-catalog book typed by the admin.
+  const custom = await createManualOrder(
+    order({ status: 'CONFIRMED', shipping: 0, items: [{ productId: book.id, quantity: 1 }], customItems: [{ title: 'كتاب نادر', quantity: 2, unitPrice: 80, unitCostPrice: 50 }] }),
+    admin
+  )
+  assertEqual(custom.subtotal, 260, 'Catalog 100 + custom 2 × 80 = 260')
+  const customLine = custom.items.find((i) => i.productId == null)
+  assertEqual(customLine?.productTitle, 'كتاب نادر', 'Custom line keeps its typed title')
+  assertEqual(customLine?.unitCostPrice, 50, 'Custom line keeps its typed cost')
+  assertEqual((await getOrderProfit(custom.id)).calc.goodsCostCents, 15000, 'Cost 50 + 2 × 50 = 150')
+  assertEqual(createManualOrderSchema.safeParse({ fullName: 'Ali', phone: PHONE, source: 'STORE', status: 'PENDING', customItems: [{ title: 'X book', quantity: 1, unitPrice: 30 }] }).success, true, 'Custom-only order is valid')
+
   // Customer linked once by phone.
   assertEqual(await prisma.customer.count({ where: { phone: PHONE } }), 1, 'One customer for the phone')
 

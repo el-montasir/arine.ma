@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Trash2, Plus } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, ChevronDown, Trash2, Plus } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { formatMoney, formatDate, getPaymentLabel, getOrderStatus } from '../lib/format.js'
 import { PageHeader, Card } from '../components/ui/Card.jsx'
@@ -28,6 +28,8 @@ export default function Orders() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
+  const [updatingId, setUpdatingId] = useState(null)
+  const canChangeStatus = can('ORDERS_STATUS_UPDATE') || isOwner
 
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight
 
@@ -62,6 +64,28 @@ export default function Orders() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, status])
+
+  // Change an order's status straight from the list (same API as the order page).
+  async function changeStatus(row, next) {
+    if (next === row.status) return
+    setUpdatingId(row.id)
+    setError('')
+    setActionSuccess('')
+    try {
+      const json = await api.patch(`/orders/${row.id}/status`, { status: next })
+      setRows((rs) => rs.map((r) => (r.id === row.id ? { ...r, ...json.data } : r)))
+      setActionSuccess(`${row.orderNumber}: ${getOrderStatus(next, t).label}`)
+      window.dispatchEvent(new Event('order-status-updated'))
+    } catch (err) {
+      if (err.code === 'STOCK_CONFLICT' && err.conflicts?.length) {
+        setError(`${err.message}: ${err.conflicts.map((c) => `${c.productTitle} (${c.available}/${c.requested})`).join('، ')}`)
+      } else {
+        setError(err.message)
+      }
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   async function handleConfirmDelete() {
     if (!orderToDelete) return
@@ -111,7 +135,25 @@ export default function Orders() {
       label: t('orderStatus'),
       render: (r) => {
         const meta = getOrderStatus(r.status, t)
-        return <Badge kind={meta.color}>{meta.label}</Badge>
+        if (!canChangeStatus) return <Badge kind={meta.color}>{meta.label}</Badge>
+        return (
+          <span className={`badge ${meta.color} relative cursor-pointer pe-1`} onClick={(e) => e.stopPropagation()}>
+            <select
+              value={r.status}
+              disabled={updatingId === r.id}
+              onChange={(e) => changeStatus(r, e.target.value)}
+              aria-label={t('orderStatus')}
+              className="cursor-pointer appearance-none border-0 bg-transparent pe-4 font-bold text-inherit outline-none disabled:opacity-50"
+            >
+              {STATUS_FILTERS.filter((f) => f.value).map((f) => (
+                <option key={f.value} value={f.value} className="bg-[var(--card)] text-[var(--ink)]">
+                  {f.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute end-1.5 h-3 w-3" aria-hidden="true" />
+          </span>
+        )
       },
     },
     { key: 'created', label: t('orderDate'), render: (r) => <span className="text-xs text-[var(--ink-soft)]">{formatDate(r.createdAt, language)}</span> },

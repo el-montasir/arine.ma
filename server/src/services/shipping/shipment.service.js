@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js'
-import { getParcel } from './digylog.client.js'
+import { getParcel, deleteParcel } from './digylog.client.js'
 import { applyStockAndUpdateOrderStatus } from '../stock/stock.service.js'
 import { logActivity } from '../admin/activity-log.service.js'
 
@@ -65,6 +65,35 @@ export async function dispatchOrder(orderId, provider) {
     update: data,
     create: { orderId, provider: provider.id, ...data },
   })
+}
+
+/**
+ * An admin cancelled an order that was already registered at the courier:
+ * remove the parcel from DIGYLOG's "No sent" list. A parcel the seller has
+ * already sent cannot be deleted through the API — the shipment keeps it and
+ * shows why, so it can be cancelled from the DIGYLOG dashboard.
+ */
+export async function withdrawShipment(orderId) {
+  const shipment = await prisma.shipment.findUnique({ where: { orderId } })
+  if (!shipment?.tracking || shipment.provider !== 'digylog') return null
+
+  let outcome
+  try {
+    outcome = await deleteParcel(shipment.tracking)
+  } catch (err) {
+    outcome = { deleted: false, error: err.message }
+  }
+
+  if (outcome.deleted) {
+    // Gone at the courier: forget it, so a later re-confirmation registers it again.
+    await prisma.shipment.delete({ where: { id: shipment.id } })
+    return { deleted: true }
+  }
+  await prisma.shipment.update({
+    where: { id: shipment.id },
+    data: { error: `لم يُحذف من DIGYLOG (${outcome.error}) — ألغِه من لوحة DIGYLOG` },
+  })
+  return { deleted: false, error: outcome.error }
 }
 
 /**

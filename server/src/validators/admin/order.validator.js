@@ -39,5 +39,18 @@ export const createManualOrderSchema = z
     shipping: z.number().int('التوصيل بالدرهم فقط').min(0, 'التوصيل لا يمكن أن يكون سالباً').max(10_000, 'التوصيل كبير جداً').nullable().optional(),
     items: z.array(line('productId', 'معرف الكتاب غير صحيح')).max(50, 'عدد كبير جداً من العناصر').default([]),
     packages: z.array(line('packageId', 'معرف الباقة غير صحيح')).max(20, 'عدد كبير جداً من الباقات').default([]),
+    // Books/packages that are not in the store catalog, typed by the admin.
+    customItems: z
+      .array(
+        z.object({
+          title: z.string().trim().min(2, 'اسم الكتاب قصير جداً').max(200, 'اسم الكتاب طويل جداً'),
+          quantity: z.number().int().positive('الكمية يجب أن تكون أكبر من صفر').max(999, 'الكمية كبيرة جداً'),
+          unitPrice: z.number().int('الثمن بالدرهم فقط').min(0, 'الثمن لا يمكن أن يكون سالباً').max(1_000_000, 'الثمن كبير جداً'),
+          // Optional: without it the order's profit stays "to complete".
+          unitCostPrice: z.number().int('ثمن الشراء بالدرهم فقط').min(0, 'ثمن الشراء لا يمكن أن يكون سالباً').max(1_000_000, 'ثمن الشراء كبير جداً').nullable().optional(),
+        })
+      )
+      .max(20, 'عدد كبير جداً من العناصر')
+      .default([]),
   })
-  .refine((v) => v.items.length + v.packages.length > 0, { message: 'أضف كتاباً أو باقة واحدة على الأقل' })
+  .refine((v) => v.items.length + v.packages.length + v.customItems.length > 0, { message: 'أضف كتاباً أو باقة واحدة على الأقل' })

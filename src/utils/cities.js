@@ -64,3 +64,37 @@ export function resolveCityKey(cities, text) {
 export function cityLabel(city, language) {
   return language === 'ar' && city.nameAr ? city.nameAr : titleCaseCity(city.name)
 }
+
+// Edit distance, for "did you mean" suggestions on a misspelled city.
+function levenshtein(a, b) {
+  if (a === b) return 0
+  if (!a.length) return b.length
+  if (!b.length) return a.length
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+    }
+    prev = cur
+  }
+  return prev[b.length]
+}
+
+// Closest names to a typed (normalized) query: compares against the whole
+// name and its same-length prefix, so "casablanka" and "casab" both find
+// Casablanca. `items` carry n1/n2 normalized names.
+export function closestCities(items, query, limit = 5) {
+  if (!query) return []
+  const score = (n) => {
+    if (!n) return Infinity
+    return Math.min(levenshtein(query, n), levenshtein(query, n.slice(0, query.length)) + 1)
+  }
+  const maxDistance = Math.max(2, Math.ceil(query.length / 3))
+  return items
+    .map((it) => ({ it, d: Math.min(score(it.n1), score(it.n2)) }))
+    .filter((x) => x.d <= maxDistance)
+    .sort((a, b) => a.d - b.d)
+    .slice(0, limit)
+    .map((x) => x.it)
+}

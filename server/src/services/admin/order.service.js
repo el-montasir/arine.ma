@@ -201,6 +201,20 @@ export async function createManualOrder(input, admin) {
         unitCostPrice: product.costPrice ?? null,
       }
     })
+    // Off-catalog lines: no product link, so stock and images are skipped.
+    for (const item of input.customItems) {
+      subtotal += item.unitPrice * item.quantity
+      orderItems.push({
+        productId: null,
+        productTitle: item.title,
+        productImage: null,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.unitPrice * item.quantity,
+        unitCostPrice: item.unitCostPrice ?? null,
+      })
+    }
+
     const packageItems = input.packages.map((item) => {
       const pkg = packageById.get(item.packageId)
       if (!pkg) throw new ApiError(404, 'PACKAGE_NOT_FOUND', 'إحدى الباقات غير موجودة')

@@ -171,6 +171,15 @@ export async function getParcel(tracking) {
   }
 }
 
+// Removes parcels DIGYLOG has not received yet ("No sent"). Returns
+// { deleted, error }: a parcel already sent cannot be deleted through the API.
+export async function deleteParcel(tracking) {
+  const result = await request('DELETE', '/orders', { trackings: [tracking] })
+  if (result?.success >= 1) return { deleted: true, error: null }
+  const reason = result?.errors?.[0]?.message || 'تعذر الحذف'
+  return { deleted: false, error: reason }
+}
+
 export function registerWebhook(url) {
   return request('PUT', '/webhook', { url })
 }

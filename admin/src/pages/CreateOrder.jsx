@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, ArrowLeft, Plus, X, Search, Package as PackageIcon, BookOpen, Save } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Plus, X, Search, Package as PackageIcon, BookOpen, Save, PenLine } from 'lucide-react'
 import useFetch from '../lib/useFetch.js'
 import { api } from '../lib/api.js'
 import { formatMoney, getOrderStatus } from '../lib/format.js'
@@ -37,6 +37,8 @@ export default function CreateOrder() {
   const [shipping, setShipping] = useState('')
   const [lines, setLines] = useState([])
   const [search, setSearch] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const pickerRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [conflicts, setConflicts] = useState(null)
@@ -48,24 +50,46 @@ export default function CreateOrder() {
     ],
     [products, packages, t]
   )
+  // Whole catalog when the field is empty; filtered while typing.
   const results = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return []
     return catalog
       .filter((c) => !lines.some((l) => l.kind === c.kind && l.id === c.id))
-      .filter((c) => `${c.title} ${c.sub || ''}`.toLowerCase().includes(q))
-      .slice(0, 8)
+      .filter((c) => !q || `${c.title} ${c.sub || ''}`.toLowerCase().includes(q))
   }, [catalog, search, lines])
+
+  useEffect(() => {
+    if (!pickerOpen) return undefined
+    const close = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) setPickerOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [pickerOpen])
 
   const addLine = (c) => {
     setLines((ls) => [...ls, { ...c, quantity: '1', unitPrice: String(c.price) }])
     setSearch('')
+    setPickerOpen(false)
+  }
+  // A book that is not on the site: the admin types its name, price and cost.
+  const addCustomLine = (title = '') => {
+    setLines((ls) => [...ls, { kind: 'CUSTOM', id: `c-${Date.now()}-${ls.length}`, title, quantity: '1', unitPrice: '', costInput: '' }])
+    setSearch('')
+    setPickerOpen(false)
   }
   const setLine = (i, patch) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
   const removeLine = (i) => setLines((ls) => ls.filter((_, j) => j !== i))
 
-  const parsed = lines.map((l) => ({ ...l, qty: toDh(l.quantity), price: toDh(l.unitPrice) }))
-  const linesValid = parsed.length > 0 && parsed.every((l) => l.qty > 0 && l.price != null)
+  const parsed = lines.map((l) => ({
+    ...l,
+    qty: toDh(l.quantity),
+    price: toDh(l.unitPrice),
+    ...(l.kind === 'CUSTOM' ? { cost: toDh(l.costInput) } : {}),
+  }))
+  const linesValid =
+    parsed.length > 0 &&
+    parsed.every((l) => l.qty > 0 && l.price != null && (l.kind !== 'CUSTOM' || l.title.trim().length >= 2))
   const subtotal = parsed.reduce((s, l) => s + (l.qty || 0) * (l.price || 0), 0)
   const shippingValue = shipping.trim() === '' ? null : toDh(shipping)
   const shippingValid = shipping.trim() === '' || shippingValue != null
@@ -91,6 +115,9 @@ export default function CreateOrder() {
         shipping: shippingValue,
         items: parsed.filter((l) => l.kind === 'BOOK').map((l) => ({ productId: l.id, quantity: l.qty, unitPrice: l.price })),
         packages: parsed.filter((l) => l.kind === 'PACKAGE').map((l) => ({ packageId: l.id, quantity: l.qty, unitPrice: l.price })),
+        customItems: parsed
+          .filter((l) => l.kind === 'CUSTOM')
+          .map((l) => ({ title: l.title.trim(), quantity: l.qty, unitPrice: l.price, unitCostPrice: l.cost })),
       })
       window.dispatchEvent(new Event('order-status-updated'))
       navigate(`/orders/${res.data.id}`)
@@ -144,34 +171,52 @@ export default function CreateOrder() {
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <h2 className="mb-3 text-sm font-bold text-[var(--ink)]">{t('coItems')}</h2>
-            <div className="relative mb-3">
+            <div ref={pickerRef} className="relative mb-3">
               <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-[var(--ink-soft)]" aria-hidden="true" />
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPickerOpen(true)
+                }}
+                onFocus={() => setPickerOpen(true)}
+                onKeyDown={(e) => e.key === 'Escape' && setPickerOpen(false)}
                 placeholder={t('coSearchPlaceholder')}
                 className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-2 pe-3 ps-9 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--purple)] focus:outline-none"
               />
-              {results.length > 0 ? (
-                <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-[10px] border border-[var(--line)] bg-[var(--card)] shadow-lg">
-                  {results.map((c) => (
-                    <button
-                      key={`${c.kind}-${c.id}`}
-                      type="button"
-                      onClick={() => addLine(c)}
-                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-xs hover:bg-[var(--bg)]"
-                    >
-                      <span className="flex items-center gap-2">
-                        {c.kind === 'PACKAGE' ? <PackageIcon className="h-3.5 w-3.5 text-[var(--purple)]" /> : <BookOpen className="h-3.5 w-3.5 text-[var(--ink-soft)]" />}
-                        <span className="font-semibold text-[var(--ink)]">{c.title}</span>
-                        <span className="text-[var(--ink-soft)]">{c.sub}</span>
-                      </span>
-                      <span className="flex items-center gap-2 tabular-nums">
-                        {money(c.price)} <Plus className="h-3.5 w-3.5 text-[var(--purple)]" />
-                      </span>
-                    </button>
-                  ))}
+              {pickerOpen ? (
+                <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-[10px] border border-[var(--line)] bg-[var(--card)] shadow-lg">
+                  {/* Not on the site? Use the typed text as a new book. */}
+                  <button
+                    type="button"
+                    onClick={() => addCustomLine(search.trim())}
+                    className="sticky top-0 flex w-full items-center gap-2 border-b border-[var(--line)] bg-[var(--card)] px-3 py-2.5 text-start text-xs font-semibold text-[var(--purple)] hover:bg-[var(--purple-bg)]"
+                  >
+                    <PenLine className="h-3.5 w-3.5" />
+                    {search.trim() ? t('coAddCustomNamed', { name: search.trim() }) : t('coAddCustom')}
+                  </button>
+                  {results.length === 0 ? (
+                    <p className="px-3 py-3 text-center text-xs text-[var(--ink-soft)]">{t('coNoCatalogMatch')}</p>
+                  ) : (
+                    results.map((c) => (
+                      <button
+                        key={`${c.kind}-${c.id}`}
+                        type="button"
+                        onClick={() => addLine(c)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-xs hover:bg-[var(--bg)]"
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          {c.kind === 'PACKAGE' ? <PackageIcon className="h-3.5 w-3.5 shrink-0 text-[var(--purple)]" /> : <BookOpen className="h-3.5 w-3.5 shrink-0 text-[var(--ink-soft)]" />}
+                          <span className="truncate font-semibold text-[var(--ink)]">{c.title}</span>
+                          <span className="truncate text-[var(--ink-soft)]">{c.sub}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2 tabular-nums">
+                          {money(c.price)} <Plus className="h-3.5 w-3.5 text-[var(--purple)]" />
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </div>
               ) : null}
             </div>
@@ -194,12 +239,27 @@ export default function CreateOrder() {
                   <tbody>
                     {parsed.map((l, i) => (
                       <tr key={`${l.kind}-${l.id}`} className="border-b border-[var(--line)] last:border-0">
-                        <td className="py-2 font-semibold text-[var(--ink)]">
-                          {l.title}
-                          {/* lines[i].price is the catalog price; l.price is the typed one */}
-                          {l.price != null && l.price !== lines[i].price ? (
-                            <span className="block text-[10.5px] font-normal text-[var(--orange)]">{t('coPriceChanged')}</span>
-                          ) : null}
+                        <td className="py-2 pe-2 font-semibold text-[var(--ink)]">
+                          {l.kind === 'CUSTOM' ? (
+                            <>
+                              <input
+                                className={`${field} ${l.title.trim().length >= 2 ? '' : 'border-[var(--red)]'}`}
+                                value={lines[i].title}
+                                onChange={(e) => setLine(i, { title: e.target.value })}
+                                placeholder={t('coCustomTitle')}
+                                maxLength={200}
+                              />
+                              <span className="block text-[10.5px] font-normal text-[var(--purple)]">{t('coCustomBadge')}</span>
+                            </>
+                          ) : (
+                            <>
+                              {l.title}
+                              {/* lines[i].price is the catalog price; l.price is the typed one */}
+                              {l.price != null && l.price !== lines[i].price ? (
+                                <span className="block text-[10.5px] font-normal text-[var(--orange)]">{t('coPriceChanged')}</span>
+                              ) : null}
+                            </>
+                          )}
                         </td>
                         <td className="py-2 pe-2">
                           <input className={`${field} ${l.qty > 0 ? '' : 'border-[var(--red)]'}`} inputMode="numeric" value={lines[i].quantity} onChange={(e) => setLine(i, { quantity: e.target.value })} />
@@ -207,7 +267,15 @@ export default function CreateOrder() {
                         <td className="py-2 pe-2">
                           <input className={`${field} ${l.price != null ? '' : 'border-[var(--red)]'}`} inputMode="numeric" value={lines[i].unitPrice} onChange={(e) => setLine(i, { unitPrice: e.target.value })} />
                         </td>
-                        <td className="py-2 tabular-nums text-[var(--ink-soft)]">{l.cost == null ? '—' : money(l.cost)}</td>
+                        <td className="py-2 pe-2 tabular-nums text-[var(--ink-soft)]">
+                          {l.kind === 'CUSTOM' ? (
+                            <input className={field} inputMode="numeric" value={lines[i].costInput} onChange={(e) => setLine(i, { costInput: e.target.value })} placeholder={t('coCustomCost')} />
+                          ) : l.cost == null ? (
+                            '—'
+                          ) : (
+                            money(l.cost)
+                          )}
+                        </td>
                         <td className="py-2 tabular-nums font-semibold">{money((l.qty || 0) * (l.price || 0))}</td>
                         <td className="py-2">
                           <button type="button" onClick={() => removeLine(i)} className="rounded-[8px] p-1.5 text-[var(--ink-soft)] hover:bg-[var(--red-bg)] hover:text-[var(--red)]" aria-label={t('delete')}>

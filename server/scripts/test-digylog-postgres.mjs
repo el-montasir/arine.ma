@@ -38,6 +38,15 @@ const server = http.createServer((req, res) => {
       mock.parcels.set(tracking, { statusId: 0, status: 'Non envoyée', city: o.city, num: o.num })
       return send(200, [{ isSuccess: true, errors: [], num: o.num, cost: COST[o.city], traking: tracking, tracking }])
     }
+    if (req.method === 'DELETE' && path === '/orders') {
+      const t = JSON.parse(raw).trackings[0]
+      const p = mock.parcels.get(t)
+      if (p && p.statusId === 0) {
+        mock.parcels.delete(t)
+        return send(200, { message: 'Orders removed', success: 1, failed: 0, errors: [] })
+      }
+      return send(200, { message: 'Orders removed', success: 0, failed: 1, errors: [{ traking: t, status: p?.status, message: 'Unable to delete a sended order' }] })
+    }
     const m = path.match(/^\/order\/([^/]+)\/infos$/)
     if (req.method === 'GET' && m) {
       const p = mock.parcels.get(m[1])
@@ -187,6 +196,21 @@ try {
   const wa = await createManualOrder(manual({ source: 'WHATSAPP', status: 'CONFIRMED' }), null)
   assertEqual(mock.created.length, before + 1, 'Confirmed WhatsApp order is sent')
   assertEqual((await prisma.shipment.findUnique({ where: { orderId: wa.id } }))?.costCents, 3500, 'Casablanca fee 35 saved')
+
+  // ── Cancelled by the admin after confirmation ──
+  const oc = await createManualOrder(manual({ source: 'PHONE', status: 'CONFIRMED' }), null)
+  const tc = (await prisma.shipment.findUnique({ where: { orderId: oc.id } })).tracking
+  await updateOrderStatus(oc.id, 'CANCELLED')
+  assertEqual(mock.parcels.has(tc), false, 'Cancel → parcel deleted from DIGYLOG "No sent"')
+  assertEqual(await prisma.shipment.count({ where: { orderId: oc.id } }), 0, 'Cancel → shipment forgotten')
+  await updateOrderStatus(oc.id, 'CONFIRMED')
+  const tc2 = (await prisma.shipment.findUnique({ where: { orderId: oc.id } }))?.tracking
+  assertEqual(Boolean(tc2) && tc2 !== tc, true, 'Re-confirming registers a new parcel')
+  mock.parcels.get(tc2).statusId = 3 // the seller already sent it
+  await updateOrderStatus(oc.id, 'CANCELLED')
+  const kept = await prisma.shipment.findUnique({ where: { orderId: oc.id } })
+  assertEqual(kept?.tracking, tc2, 'Already-sent parcel is kept')
+  assertEqual(Boolean(kept?.error?.includes('Unable to delete')), true, 'Admin is told to cancel it in DIGYLOG')
 
   // ── Status sync ──
   assertEqual(nextOrderStatus('DELIVERED', 3), null, 'Never moves a delivered order back to shipping')
