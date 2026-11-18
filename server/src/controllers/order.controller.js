@@ -15,6 +15,25 @@ function maskName(fullName) {
 // Anyone who knows (or guesses) an order number can call the public lookup, so
 // it carries no contact data: no phone, street address or note, and only a
 // shortened name. The admin API still has the full record.
+// Courier statuses (DIGYLOG ids) translated into what a customer cares about:
+// a delivery stage for the progress bar, and an optional short note. Internal
+// labels (hubs, call-centre, "suspect client"…) are never shown.
+const PICKED_UP = new Set([15, 16, 37, 49, 50, 76])
+const ON_THE_WAY = new Set([1, 2, 3, 14, 17, 18, 19, 26, 31, 39, 53, 54, 73, 77])
+const NOTES = [
+  ['UNREACHABLE', [4, 21, 22, 43, 72]],
+  ['POSTPONED', [5, 23, 44]],
+  ['ADDRESS_ISSUE', [24, 55, 64, 65, 70, 71, 74, 75]],
+  ['RETURNING', [9, 10, 11, 30, 32, 40, 41, 42, 47, 78, 79, 81]],
+]
+
+function courierProgress(statusId) {
+  if (statusId == null) return { courierStage: null, courierNote: null }
+  const courierStage = PICKED_UP.has(statusId) ? 'PICKED_UP' : ON_THE_WAY.has(statusId) ? 'ON_THE_WAY' : null
+  const courierNote = NOTES.find(([, ids]) => ids.includes(statusId))?.[0] ?? null
+  return { courierStage, courierNote }
+}
+
 function publicOrder(order) {
   return {
     id: order.id,
@@ -25,6 +44,7 @@ function publicOrder(order) {
     status: order.status,
     // Courier tracking number (DIGYLOG), so the customer can follow the parcel.
     trackingNumber: order.shipment?.tracking ?? null,
+    ...courierProgress(order.shipment?.statusId ?? null),
     subtotal: order.subtotal,
     shipping: order.shipping,
     total: order.total,

@@ -23,19 +23,17 @@ async function digylogWebhook(req, res) {
     return res.json({ key: body.key })
   }
 
+  // Answer at once: DIGYLOG drops the call after ~0.2 s (HTTP 499), and
+  // re-reading the parcel takes longer. The sync runs after the reply.
+  res.json({ success: true })
+
   if (body.eventType === 'order-status-changed' && body.payload?.traking) {
-    try {
-      await syncShipment(String(body.payload.traking), {
-        motif: body.payload.motif,
-        driverPhone: body.payload.driverPhone,
-      })
-    } catch (err) {
-      // Acknowledge anyway: DIGYLOG retrying will not fix our side, and the
-      // admin can re-sync the order by hand.
-      console.error('[digylog webhook] sync failed:', err.message)
-    }
+    const tracking = String(body.payload.traking)
+    syncShipment(tracking, { motif: body.payload.motif, driverPhone: body.payload.driverPhone }).catch((err) => {
+      // The periodic sync (syncOpenShipments) picks it up later.
+      console.error('[digylog webhook] sync failed:', tracking, err.message)
+    })
   }
-  return res.json({ success: true })
 }
 
 router.put('/digylog/:secret', digylogWebhook)

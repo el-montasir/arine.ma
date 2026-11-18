@@ -248,6 +248,7 @@ try {
   Object.assign(mock.parcels.get(tWa), { statusId: 3, status: 'En cours de livraison' })
   res = await hook('a'.repeat(48), { eventType: 'order-status-changed', payload: { traking: tWa, idStatus: '6', status: 'Livrée' } })
   assertEqual(res.status, 200, 'Status event acknowledged')
+  await new Promise((r) => setTimeout(r, 500)) // the sync runs after the reply
   row = await prisma.order.findUnique({ where: { id: wa.id } })
   assertEqual(row.status, 'SHIPPING', 'Webhook body is not trusted: status re-read from DIGYLOG')
 

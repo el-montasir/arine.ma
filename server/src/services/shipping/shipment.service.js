@@ -132,3 +132,29 @@ export async function syncShipment(tracking, extra = {}) {
   }
   return { shipment: updated, orderStatus: next || shipment.order.status }
 }
+
+// Parcels still on their way (order confirmed or shipping). Read-only towards
+// DIGYLOG: nothing is created, sent or deleted there.
+export async function syncOpenShipments() {
+  const open = await prisma.shipment.findMany({
+    where: { provider: 'digylog', tracking: { not: null }, order: { status: { in: ['CONFIRMED', 'SHIPPING'] } } },
+    select: { tracking: true },
+  })
+  let failed = 0
+  for (const { tracking } of open) {
+    try {
+      await syncShipment(tracking)
+    } catch (err) {
+      failed += 1
+      console.error('[digylog sync] failed:', tracking, err.message)
+    }
+  }
+  return { checked: open.length, failed }
+}
+
+// Safety net for missed webhooks: re-read open parcels every 15 minutes.
+export function startShipmentSyncLoop(intervalMs = 15 * 60 * 1000) {
+  const run = () => syncOpenShipments().catch((err) => console.error('[digylog sync] loop failed:', err.message))
+  setTimeout(run, 60 * 1000)
+  return setInterval(run, intervalMs)
+}

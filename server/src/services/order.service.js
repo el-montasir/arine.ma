@@ -383,6 +383,6 @@ export async function findOrders() {
 export async function findOrder(orderNumber) {
   return prisma.order.findUnique({
     where: { orderNumber },
-    include: { items: true, packageItems: true, shipment: { select: { tracking: true } } },
+    include: { items: true, packageItems: true, shipment: { select: { tracking: true, statusId: true } } },
   })
 }

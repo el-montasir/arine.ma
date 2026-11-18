@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { Search, Package, MapPin, CreditCard, Clock, CheckCircle2, Truck, AlertCircle, ArrowLeft, ArrowRight, Loader2, XCircle } from 'lucide-react'
+import { Search, Package, MapPin, CreditCard, Clock, CheckCircle2, Truck, AlertCircle, ArrowLeft, ArrowRight, Loader2, XCircle, PackageCheck, Info } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import api from '../utils/api'
 import { formatPrice } from '../utils/format'
@@ -51,7 +51,7 @@ export default function TrackOrder() {
       label: t('orderStatusDelivered'),
       desc: t('orderStatusDelivered'),
       color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-      step: 4,
+      step: 5,
     },
     CANCELLED: {
       label: t('orderStatusCancelled'),
@@ -70,8 +70,9 @@ export default function TrackOrder() {
   const STEPS = [
     { step: 1, label: language === 'ar' ? 'تم الاستلام' : language === 'fr' ? 'Reçue' : 'Received', icon: Clock },
     { step: 2, label: language === 'ar' ? 'تم التأكيد' : language === 'fr' ? 'Confirmée' : 'Confirmed', icon: CheckCircle2 },
-    { step: 3, label: language === 'ar' ? 'قيد الشحن' : language === 'fr' ? 'En cours' : 'Shipping', icon: Truck },
-    { step: 4, label: language === 'ar' ? 'تم التوصيل' : language === 'fr' ? 'Livrée' : 'Delivered', icon: Package },
+    { step: 3, label: t('trackStepPickedUp'), icon: PackageCheck },
+    { step: 4, label: t('trackStepOnTheWay'), icon: Truck },
+    { step: 5, label: language === 'ar' ? 'تم التوصيل' : language === 'fr' ? 'Livrée' : 'Delivered', icon: Package },
   ]
 
   const fetchOrder = async (numberToSearch) => {
@@ -111,7 +112,17 @@ export default function TrackOrder() {
     fetchOrder(orderNumberInput)
   }
 
-  const currentStatus = order ? ORDER_STATUS_META[order.status] || ORDER_STATUS_META.PENDING : null
+  const baseStatus = order ? ORDER_STATUS_META[order.status] || ORDER_STATUS_META.PENDING : null
+  // While shipping, the courier's stage decides between "picked up" (3) and
+  // "on the way" (4); without courier data it shows "on the way".
+  const shippingStep = order?.courierStage === 'PICKED_UP' ? 3 : 4
+  const currentStatus =
+    baseStatus && order.status === 'SHIPPING'
+      ? { ...baseStatus, step: shippingStep, label: shippingStep === 3 ? t('trackStepPickedUp') : t('trackStepOnTheWay') }
+      : baseStatus
+  // Short courier note for the customer (unreachable, postponed…), only while in progress.
+  const courierNote =
+    order && ['CONFIRMED', 'SHIPPING'].includes(order.status) && order.courierNote ? t(`trackNote_${order.courierNote}`) : null
 
   const glass =
     'bg-gradient-to-br from-white/[0.11] to-white/[0.04] backdrop-blur-[22px] backdrop-saturate-150 border border-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_18px_40px_-20px_rgba(0,0,0,0.8)]'
@@ -242,12 +253,19 @@ export default function TrackOrder() {
                     )
                   })}
                 </ol>
-              ) : (
+              ) : null}
+              {courierNote ? (
+                <div className="mt-4 flex items-start gap-2.5 rounded-[16px] border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-amber-100">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                  <p className="text-[0.86rem] font-semibold">{courierNote}</p>
+                </div>
+              ) : null}
+              {order.status === 'CANCELLED' || order.status === 'RETURNED' ? (
                 <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-red-300/30 bg-red-500/10 px-4 py-3.5 text-red-100">
                   <XCircle className="w-5 h-5 shrink-0 text-red-300" />
                   <p className="font-semibold text-[0.9rem]">{currentStatus.label}</p>
                 </div>
-              )}
+              ) : null}
             </section>
 
             {/* Delivery, payment, date */}
